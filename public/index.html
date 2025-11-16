@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Lohit SOAP App (Beta v1.0)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header>
+    <h1>Lohit SOAP App (Beta v1.0)</h1>
+    <nav>
+      <button onclick="showTab('soap')">SOAP</button>
+      <button onclick="showTab('toolbox')">Toolbox</button>
+      <button onclick="showTab('feedback')">Feedback</button>
+    </nav>
+  </header>
+
+  <!-- SOAP TAB -->
+  <section id="soap" class="tab">
+    <h2>SOAP Generator (Stub Mode)</h2>
+
+    <label>Case Label (optional)</label>
+    <input id="caseLabel" placeholder="Ex: Bella spay">
+
+    <label>Type</label>
+    <select id="soapType">
+      <option value="appointment">Appointment</option>
+      <option value="surgery">Surgery</option>
+    </select>
+
+    <label>Template</label>
+    <select id="soapTemplate">
+      <option>General</option>
+      <option>GI Upset</option>
+      <option>Derm/Otitis</option>
+      <option>Wellness</option>
+      <option>Canine Neuter</option>
+      <option>Canine Spay</option>
+      <option>Dental – COHAT</option>
+      <option>Dental – COHAT (no radiographs)</option>
+      <option>Pyometra</option>
+      <option>Exploratory</option>
+      <option>Enterotomy</option>
+      <option>Gastrotomy</option>
+      <option>Gastropexy</option>
+      <option>Feline Unblock</option>
+      <option>Cystotomy</option>
+    </select>
+
+    <label>Reason for Visit</label>
+    <textarea id="reason"></textarea>
+
+    <label>Plan / Notes</label>
+    <textarea id="planInput"></textarea>
+
+    <button onclick="generateSOAP()">Generate SOAP (stub)</button>
+
+    <h3>Output</h3>
+    <div class="soap-output">
+      <h4>Subjective</h4><pre id="oSubjective"></pre>
+      <h4>Objective</h4><pre id="oObjective"></pre>
+      <h4>Assessment</h4><pre id="oAssessment"></pre>
+      <h4>Plan</h4><pre id="oPlan"></pre>
+      <h4>Medications</h4><pre id="oMeds"></pre>
+      <h4>Aftercare</h4><pre id="oAftercare"></pre>
+    </div>
+  </section>
+
+  <!-- TOOLBOX TAB -->
+  <section id="toolbox" class="tab" style="display:none;">
+    <h2>Toolbox (Stub Mode)</h2>
+
+    <label>Enter notes or paste screenshot text</label>
+    <textarea id="toolboxInput"></textarea>
+
+    <button onclick="processToolbox()">Process (stub)</button>
+
+    <h3>Output</h3>
+    <pre id="toolboxOutput"></pre>
+  </section>
+
+  <!-- FEEDBACK TAB -->
+  <section id="feedback" class="tab" style="display:none;">
+    <h2>Feedback (Stub Mode)</h2>
+
+    <label>Type</label>
+    <select id="feedbackType">
+      <option value="surgery">Surgery Template</option>
+      <option value="appointment">Appointment Template</option>
+      <option value="misc">Misc / Other</option>
+    </select>
+
+    <label>Paste example, rant, or training data</label>
+    <textarea id="feedbackText"></textarea>
+
+    <button onclick="sendFeedback()">Submit feedback (stub)</button>
+
+    <h3>Status</h3>
+    <pre id="feedbackStatus"></pre>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
