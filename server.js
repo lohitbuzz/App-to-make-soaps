@@ -1,4 +1,4 @@
-// server.js - backend for Lohit SOAP App v1.6
+// server.js - backend for Lohit SOAP App v1.6 (flat layout, no /public folder)
 
 import express from 'express';
 import path from 'path';
@@ -7,16 +7,18 @@ import OpenAI from 'openai';
 
 const app = express();
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // set on Render
+  apiKey: process.env.OPENAI_API_KEY, // set in Render
 });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
 
-// helper
+// serve index.html, style.css, app.js from the same folder
+app.use(express.static(__dirname));
+
+// ------- OpenAI helper -------
 async function callOpenAI({ system, user }) {
   const response = await openai.chat.completions.create({
     model: 'gpt-4.1-mini',
@@ -29,6 +31,7 @@ async function callOpenAI({ system, user }) {
   return response.choices[0].message.content;
 }
 
+// ------- Main API -------
 app.post('/api/run', async (req, res) => {
   try {
     const { mode, payload } = req.body;
@@ -180,7 +183,6 @@ Use:
 `;
 
       user = message;
-
     } else {
       return res.status(400).json({ error: 'Unknown mode' });
     }
@@ -193,8 +195,9 @@ Use:
   }
 });
 
+// SPA fallback
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
