@@ -1,207 +1,216 @@
-// Lohit SOAP App v1.4 – flat layout (no /public folder)
-// CommonJS, no dotenv. Designed for Render with files in repo root.
+// server.js
+// Simple Express backend for Lohit SOAP App v1.6
 
-const express = require('express');
-const path = require('path');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import OpenAI from 'openai';
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-
-// Simple in-memory store for attachments (resets on restart)
-const cases = {};
-
-// ---------- MIDDLEWARE ----------
-
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
-
-// Serve static files from repo root (index.html, app.js, style.css, etc.)
-app.use(express.static(__dirname));
-
-// ---------- ATTACHMENT ROUTES ----------
-
-// Get attachments for a case
-app.get('/api/cases/:caseId/attachments', (req, res) => {
-  const { caseId } = req.params;
-  if (!caseId) {
-    return res.status(400).json({ error: 'Missing caseId' });
-  }
-  const record = cases[caseId] || { attachments: [] };
-  res.json({ attachments: record.attachments });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // set this in Render / locally
 });
 
-// Add a redacted attachment (image data URL) for a case
-app.post('/api/cases/:caseId/attachments', (req, res) => {
-  const { caseId } = req.params;
-  const { dataUrl } = req.body;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  if (!caseId || !dataUrl) {
-    return res.status(400).json({ error: 'caseId and dataUrl are required' });
-  }
+app.use(express.json({ limit: '10mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-  // Only allow image data URLs
-  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
-    return res.status(400).json({ error: 'Invalid image format' });
-  }
+// Helper to call OpenAI in one place
+async function callOpenAI({ system, user }) {
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4.1-mini', // or any model you prefer
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+    temperature: 0.4,
+  });
 
-  if (!cases[caseId]) {
-    cases[caseId] = { attachments: [] };
-  }
-
-  const attachment = {
-    id: Date.now().toString(),
-    dataUrl
-  };
-
-  cases[caseId].attachments.push(attachment);
-  res.json({ ok: true, attachment });
-});
-
-// ---------- SOAP GENERATOR ----------
-
-app.post('/api/generate-soap', async (req, res) => {
-  try {
-    const apiKey =
-      process.env.OPENAI_API_KEY ||
-      process.env.OPENAI_APIKEY ||
-      process.env.OPENAI_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({
-        error:
-          'OPENAI_API_KEY is not set in Render environment variables. Add it and redeploy.'
-      });
-    }
-
-    const assistantId = process.env.OPENAI_ASSISTANT_ID || null;
-    if (assistantId) {
-      console.log('Assistant ID configured (not used directly yet).');
-    } else {
-      console.log('Assistant ID not set (OPENAI_ASSISTANT_ID env var empty).');
-    }
-
-    const payload = req.body || {};
-
-    const systemPrompt = `
-You are the backend brain for "Lohit SOAP App", a veterinary SOAP generator.
-
-You receive structured intake JSON from the web app and MUST output a single JSON object:
-
-{
-  "subjective": "...",
-  "objective": "...",
-  "assessment": "...",
-  "plan": "...",
-  "medications_dispensed": "...",
-  "aftercare": "..."
+  return response.choices[0].message.content;
 }
 
-RULES:
+// MAIN endpoint: SOAP + Toolbox + Consult
+app.post('/api/run', async (req, res) => {
+  try {
+    const { mode, payload } = req.body; // mode: 'soap', 'toolbox-bloodwork', 'toolbox-email', 'consult'
 
-- For surgeries use sections: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare.
-- Subjective: concise, owner concerns + presenting problem.
-- Objective: full PE body systems paragraph-style. Order:
-  General, Vitals (only if provided), Eyes/Ears/Oral/Nose, Respiratory,
-  Cardiovascular, Abdomen, Urogenital, Musculoskeletal, Neurological,
-  Integument (include surgical site), Lymphatic.
-  If a system is not mentioned in input, write:
-  "Not specifically documented, within normal limits unless otherwise noted."
-- Assessment: problem list + overall assessment (e.g. "Healthy for spay").
-  Interpret diagnostics here only.
-- Plan (surgery) MUST be ordered:
-  1) IV Catheter / Fluids
-  2) Pre-medications
-  3) Induction / Maintenance
-  4) Surgical Prep
-  5) Surgical Procedure
-  6) Intra-op Medications
-  7) Recovery
-  8) Medications Dispensed
-  9) Aftercare
-- Mention that detailed drug doses and vitals are on the anesthesia sheet if not fully provided.
-- Medications Dispensed: take-home meds only, with name, concentration in [brackets],
-  dose, route, frequency, and duration (no exact times).
-- Aftercare: activity restriction, incision monitoring, e-collar, recheck, and any extra notes.
-- Diagnostics: raw values/summaries belong in Objective; meaning belongs in Assessment.
-- Do NOT invent vitals, drugs, doses, or diagnostics. If unknown, keep generic
-  (e.g. "See anesthesia sheet for details").
-- Output MUST be valid JSON only. No markdown, no explanations.
-    `.trim();
-
-    const userContent = JSON.stringify(payload, null, 2);
-
-    // Node 22+ on Render has global fetch
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-mini',
-        temperature: 0.2,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content:
-              'Here is the structured intake JSON from the SOAP app. Generate the SOAP JSON object:\n\n' +
-              userContent
-          }
-        ]
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error('OpenAI error:', data);
-      return res
-        .status(500)
-        .json({ error: data.error?.message || 'OpenAI API error' });
+    if (!mode || !payload) {
+      return res.status(400).json({ error: 'Missing mode or payload' });
     }
 
-    let content = (data.choices?.[0]?.message?.content || '').trim();
-    let soap;
+    let system = '';
+    let user = '';
 
-    try {
-      soap = JSON.parse(content);
-    } catch (e) {
-      console.warn('Failed to parse JSON from model, returning fallback.', e);
-      soap = {
-        subjective: '',
-        objective: content,
-        assessment: '',
-        plan: '',
-        medications_dispensed: '',
-        aftercare: ''
-      };
+    if (mode === 'soap') {
+      // payload: { soapType, strictMode, caseLabel, fields, refinementNote? }
+      const { soapType, strictMode, caseLabel, fields, refinementNote } = payload;
+
+      // NOTE: KEEP THIS SYSTEM PROMPT SHORTISH.
+      // LATER we’ll replace with your full “master script” once we finalize it.
+      system = `
+You are a veterinary SOAP generator for Dr. Lohit Busanelli.
+
+Global rules:
+- Output MUST be Avimark-compatible plain text (no bullets, no weird symbols).
+- Sections in this order with headings on their own lines:
+  Subjective:
+  Objective:
+  Assessment:
+  Plan:
+  Medications Dispensed:
+  Aftercare:
+- Within Plan, use numbered subheadings in this exact order, separated by ONE blank line between categories and no extra blank lines inside a category:
+  1. IV Catheter / Fluids
+  2. Pre-medications
+  3. Induction / Maintenance
+  4. Surgical Prep
+  5. Surgical Procedure
+  6. Intra-op Medications
+  7. Recovery
+  8. Medications Dispensed
+  9. Aftercare
+- Drug formatting: every drug name must be followed by its concentration in brackets, e.g. "Hydromorphone (2 mg/ml)". Midazolam must always appear as "Midazolam (5 mg/ml)".
+- In Objective, bloodwork is DATA ONLY (values/findings). All interpretation goes in Assessment.
+- Use single spacing within sections. Only put blank lines between Plan subsections (1–9) as described.
+- Use a full physical exam list in Objective (General, Vitals, Eyes, Ears, Oral, Nose, Respiratory, Cardiovascular, Abdomen, Urogenital, Musculoskeletal, Neurological, Integument, Lymphatic). If PE is missing and Help Me mode is enabled, you may use safe templated normals and clearly note assumptions.
+- For surgery/dental cases, include ASA status in Assessment.
+- Default oral findings rule: under 4 years, normal mouth; 4–8 years mild tartar; over 8 years moderate tartar unless otherwise specified.
+- Surgical and dental closure details:
+  - For dental extractions: mention AAHA/AVDC standards, tension-free flap, no denuded bone, suture line not over defect, closure with 4-0 Monocryl in simple interrupted pattern when appropriate.
+
+STRICT MODE vs HELP ME:
+- If strictMode is true: do NOT invent any data. Explicitly write when information is missing (e.g., "No vitals provided.").
+- If strictMode is false (Help Me mode): you may lightly fill in safe, generic normals for missing items (especially PE), but:
+  - NEVER invent doses that contradict provided data.
+  - Add a short "Missing/Assumed" summary at the END of Assessment listing what you assumed.
+
+Formatting:
+- Make it easy to paste into Avimark. No bullet symbols, no emojis, no fancy characters.
+- Keep sentences short and clinical.
+`;
+
+      user = `
+You will receive:
+- soapType: "appointment" or "surgery"
+- caseLabel: optional free text from the doctor
+- fields: object with all raw inputs from the app (history, PE, diagnostics, anesthesia details, etc.)
+- strictMode: true/false
+- refinementNote: optional extra details the doctor added in a later refine step.
+
+Task:
+1) Generate a complete, formatted SOAP following all rules above.
+2) Respect strictMode behavior.
+3) Use fields exactly as given. NEVER contradict explicit user-provided data.
+4) If something is not provided and you are in strictMode, leave it blank or explicitly say it was not provided.
+5) If in Help Me mode (strictMode = false), you may help by adding safe generic normals for PE and anesthesia narrative, but still be conservative.
+
+Now here is the JSON input from the app:
+
+soapType: ${soapType}
+caseLabel: ${caseLabel || '(none provided)'}
+strictMode: ${strictMode ? 'true' : 'false'}
+refinementNote: ${refinementNote || '(none)'}
+
+fields (raw user inputs):
+${JSON.stringify(fields, null, 2)}
+`;
+
+    } else if (mode === 'toolbox-bloodwork') {
+      const { text, detailLevel, includeDiffs, includeClientFriendly } = payload;
+
+      system = `
+You are "Bloodwork Helper Lite" for a veterinary clinic.
+
+Goal:
+- Turn the vet's raw bloodwork notes into a SHORT Assessment-style snippet that can be pasted into Avimark.
+
+Rules:
+- Output ONLY the text snippet (no headings, no "Assessment:" label).
+- Use simple, clinical language.
+- Write in complete sentences or short jot-note style.
+- Do not list actual numeric values unless they were provided in the input.
+- If "includeDiffs" is true, add 2–4 likely differentials based on the abnormalities, phrased briefly.
+- If "includeClientFriendly" is true, end with 1–2 short sentences in owner-friendly language.
+
+detailLevel:
+- "short": 1–2 concise sentences.
+- "standard": 3–6 sentences with a bit more explanation.
+`;
+
+      user = `
+detailLevel: ${detailLevel}
+includeDiffs: ${includeDiffs ? 'true' : 'false'}
+includeClientFriendly: ${includeClientFriendly ? 'true' : 'false'}
+
+Raw vet text:
+${text}
+`;
+
+    } else if (mode === 'toolbox-email') {
+      const { emailType, petName, ownerName, timeframe, notes } = payload;
+
+      system = `
+You are "Client Email Helper Lite" for a veterinary clinic.
+
+Goal:
+- Draft a clear, kind, professional email body the clinic can paste into their email client.
+
+Rules:
+- Do NOT include "Dear ..." or signatures; just the body content.
+- Use Canadian spelling when relevant.
+- Be reassuring but honest.
+- Avoid promising outcomes.
+- Refer to the pet by name when provided.
+- Keep paragraphs short for easy reading.
+- Do not mention specific prices unless the notes explicitly contain them.
+- Never include medical record numbers or microchip info.
+`;
+
+      user = `
+emailType: ${emailType}
+petName: ${petName || '(not provided)'}
+ownerName: ${ownerName || '(not provided)'}
+recheckTimeframe: ${timeframe || '(not provided)'}
+
+Extra notes from vet:
+${notes || '(none)'}
+`;
+
+    } else if (mode === 'consult') {
+      const { message } = payload;
+
+      system = `
+You are a friendly, efficient veterinary assistant for Dr. Lohit Busanelli.
+
+Use:
+- The doctor might ask you to draft SOAP snippets, discharge instructions, emails, letters, or talk through a plan.
+- Reply in a way that is easy to copy into Avimark (plain text, short paragraphs or jot notes).
+- Assume cases are in Ontario, Canada.
+- Do NOT give exact drug dosages unless explicitly asked.
+- Never include client phone numbers, emails, or microchip numbers.
+`;
+
+      user = message;
+    } else {
+      return res.status(400).json({ error: 'Unknown mode' });
     }
 
-    const safeSoap = {
-      subjective: soap.subjective || '',
-      objective: soap.objective || '',
-      assessment: soap.assessment || '',
-      plan: soap.plan || '',
-      medications_dispensed: soap.medications_dispensed || '',
-      aftercare: soap.aftercare || ''
-    };
-
-    res.json({ soap: safeSoap });
+    const content = await callOpenAI({ system, user });
+    res.json({ result: content });
   } catch (err) {
-    console.error('Error in /api/generate-soap:', err);
-    res.status(500).json({ error: 'Server error generating SOAP' });
+    console.error(err);
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
-// ---------- CATCH-ALL: SEND MAIN INDEX.HTML ----------
-
+// Fallback for SPA routing if needed
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ---------- START SERVER ----------
-
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Lohit SOAP App v1.4 listening on port ${PORT}`);
+  console.log(`Lohit SOAP App v1.6 listening on port ${PORT}`);
 });
