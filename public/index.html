@@ -1,91 +1,260 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lohit SOAP App (Beta v1.1)</title>
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lohit SOAP App (Beta)</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-
+  <div class="app-shell">
     <!-- HEADER -->
     <header class="top-header">
-        <h1>Lohit SOAP App <span class="beta-tag">Beta v1.1</span></h1>
-        <nav>
-            <button class="nav-btn" onclick="showTab('soap')">SOAP</button>
-            <button class="nav-btn" onclick="showTab('toolbox')">Toolbox</button>
-            <button class="nav-btn" onclick="showTab('feedback')">Feedback</button>
-        </nav>
+      <div class="title-block">
+        <h1>Lohit SOAP App</h1>
+        <span class="beta-tag">Beta</span>
+      </div>
+      <nav class="nav-tabs">
+        <button class="nav-btn" onclick="showTab('soap')">SOAP</button>
+        <button class="nav-btn" onclick="showTab('toolbox')">Toolbox</button>
+        <button class="nav-btn" onclick="showTab('feedback')">Feedback</button>
+      </nav>
     </header>
 
-    <!-- MAIN BODY -->
-    <main>
+    <!-- MAIN CONTENT -->
+    <main class="main-layout">
 
-        <!-- SOAP TAB -->
-        <section id="soap" class="tab-section">
-            <h2>SOAP Generator</h2>
+      <!-- SOAP TAB -->
+      <section id="soap" class="tab tab-active">
+        <div class="card">
+          <h2>SOAP Generator</h2>
+          <p class="subtitle">
+            Minimal inputs on top, Avimark-ready SOAP below.
+          </p>
 
-            <label>Case Label</label>
-            <input id="soap-case" class="text-input" placeholder="(Optional) e.g., Vomiting case, post-op check, etc." />
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="caseLabel">Case Label (optional)</label>
+              <input
+                id="caseLabel"
+                class="text-input"
+                placeholder="e.g., Bella spay, GI upset, post-op check"
+              />
+            </div>
 
-            <label>Type</label>
-            <select id="soap-type" class="dropdown">
-                <option>Appointment</option>
-                <option>Surgery</option>
-                <option>Dental</option>
-            </select>
+            <div class="form-group">
+              <label for="soapType">Type</label>
+              <select id="soapType" class="select-input">
+                <option value="appointment">Appointment</option>
+                <option value="surgery">Surgery</option>
+                <option value="dental">Dental</option>
+              </select>
+            </div>
 
-            <label>Reason for Visit</label>
-            <textarea id="soap-reason" class="textarea" placeholder="e.g., 8m MN dog vomiting 2 days, mild dehydration"></textarea>
+            <div class="form-group form-group-full">
+              <label for="soapTemplate">Template</label>
+              <select id="soapTemplate" class="select-input">
+                <option value="">General</option>
+                <option>GI Upset</option>
+                <option>Derm/Otitis</option>
+                <option>Respiratory / Cough</option>
+                <option>Lameness</option>
+                <option>Wellness</option>
+                <option>Canine Neuter</option>
+                <option>Canine Spay</option>
+                <option>Dental – COHAT</option>
+                <option>Dental – COHAT (no radiographs)</option>
+                <option>Pyometra</option>
+                <option>Exploratory</option>
+                <option>Enterotomy</option>
+                <option>Gastrotomy</option>
+                <option>Gastropexy</option>
+                <option>Feline Unblock</option>
+                <option>Cystotomy</option>
+              </select>
+            </div>
 
-            <label>Plan / Notes</label>
-            <textarea id="soap-plan" class="textarea" placeholder="e.g., Cerenia, SC fluids, bland diet"></textarea>
+            <div class="form-group form-group-full">
+              <label for="reason">Reason for Visit</label>
+              <textarea
+                id="reason"
+                class="textarea-input"
+                placeholder="Signalment + main complaint + duration..."
+              ></textarea>
+            </div>
 
-            <button class="action-btn" onclick="generateSOAP()">Generate SOAP</button>
+            <div class="form-group form-group-full">
+              <label for="planInput">Plan / Notes</label>
+              <textarea
+                id="planInput"
+                class="textarea-input"
+                placeholder="Key treatments, diagnostics done or planned, any extra context..."
+              ></textarea>
+            </div>
+          </div>
 
-            <div id="soap-output" class="output-box"></div>
-        </section>
+          <div class="button-row">
+            <button class="primary-btn" onclick="generateSOAP()">
+              Generate SOAP
+            </button>
+          </div>
+        </div>
 
-        <!-- TOOLBOX TAB -->
-        <section id="toolbox" class="tab-section" style="display:none;">
-            <h2>Toolbox</h2>
+        <div class="card card-output">
+          <h3>SOAP Output</h3>
+          <p class="subtitle">
+            Copy sections directly into Avimark. Formatting is single-spaced, text-only.
+          </p>
 
-            <label>Case Label</label>
-            <input id="toolbox-label" class="text-input" placeholder="(Optional) e.g., bloodwork interpretation" />
+          <div class="output-grid">
+            <div class="output-section">
+              <h4>Subjective</h4>
+              <pre id="oSubjective"></pre>
+            </div>
+            <div class="output-section">
+              <h4>Objective</h4>
+              <pre id="oObjective"></pre>
+            </div>
+            <div class="output-section">
+              <h4>Assessment</h4>
+              <pre id="oAssessment"></pre>
+            </div>
+            <div class="output-section">
+              <h4>Plan</h4>
+              <pre id="oPlan"></pre>
+            </div>
+            <div class="output-section">
+              <h4>Medications Dispensed</h4>
+              <pre id="oMeds"></pre>
+            </div>
+            <div class="output-section">
+              <h4>Aftercare</h4>
+              <pre id="oAftercare"></pre>
+            </div>
+          </div>
+        </div>
+      </section>
 
-            <label>Paste notes or screenshot text</label>
-            <textarea id="toolbox-input" class="textarea" placeholder="Paste text…"></textarea>
+      <!-- TOOLBOX TAB -->
+      <section id="toolbox" class="tab" style="display:none;">
+        <div class="card">
+          <h2>Toolbox</h2>
+          <p class="subtitle">
+            Quick helpers: bloodwork, differentials, call logs, client emails.
+          </p>
 
-            <button class="action-btn" onclick="runToolbox()">Process</button>
+          <div class="form-grid">
+            <div class="form-group form-group-full">
+              <label for="toolboxMode">Mode</label>
+              <select id="toolboxMode" class="select-input">
+                <option value="freeform">Free-form helper</option>
+                <option value="bloodwork">Bloodwork – Objective + Assessment</option>
+                <option value="bloodwork_diffs">
+                  Bloodwork – Assessment + Differentials
+                </option>
+                <option value="client_call">
+                  Client call log (for medical record)
+                </option>
+                <option value="client_email">
+                  Client email (owner-friendly)
+                </option>
+              </select>
+            </div>
 
-            <div id="toolbox-output" class="output-box"></div>
-        </section>
+            <div class="form-group">
+              <label for="toolboxDetail">Detail level</label>
+              <select id="toolboxDetail" class="select-input">
+                <option value="short">Short</option>
+                <option value="standard" selected>Standard</option>
+                <option value="expanded">Expanded</option>
+              </select>
+            </div>
 
-        <!-- FEEDBACK TAB -->
-        <section id="feedback" class="tab-section" style="display:none;">
-            <h2>Feedback</h2>
+            <div class="form-group">
+              <label>Case Label (optional)</label>
+              <input
+                id="toolboxLabel"
+                class="text-input"
+                placeholder="e.g., Lilo bloodwork, Max dental follow-up"
+              />
+            </div>
 
-            <label>Type of Feedback</label>
-            <select id="feedback-type" class="dropdown">
-                <option>Appointment Template</option>
-                <option>Surgery Template</option>
-                <option>Dental Template</option>
-                <option>UX / UI</option>
-                <option>Bug Report</option>
-                <option>Training Example</option>
-            </select>
+            <div class="form-group form-group-full">
+              <label for="toolboxInput">
+                Enter notes or paste screenshot text
+              </label>
+              <textarea
+                id="toolboxInput"
+                class="textarea-input"
+                placeholder="Paste bloodwork values, lab summary, or any notes here..."
+              ></textarea>
+            </div>
+          </div>
 
-            <label>Paste example, rant, or training data</label>
-            <textarea id="feedback-input" class="textarea"></textarea>
+          <div class="button-row">
+            <button class="primary-btn" onclick="processToolbox()">
+              Process
+            </button>
+          </div>
+        </div>
 
-            <button class="action-btn" onclick="sendFeedback()">Submit Feedback</button>
+        <div class="card card-output">
+          <h3>Toolbox Output</h3>
+          <p class="subtitle">
+            Designed to paste straight into Avimark (communication log, SOAP, or email client).
+          </p>
+          <pre id="toolboxOutput" class="toolbox-pre"></pre>
+        </div>
+      </section>
 
-            <div id="feedback-status" class="status-box"></div>
-        </section>
+      <!-- FEEDBACK TAB -->
+      <section id="feedback" class="tab" style="display:none;">
+        <div class="card">
+          <h2>Feedback & Training</h2>
+          <p class="subtitle">
+            Use this to feed me real cases, templates, and rants so I can tune the app around you.
+          </p>
 
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="feedbackType">Type</label>
+              <select id="feedbackType" class="select-input">
+                <option value="surgery">Surgery Template</option>
+                <option value="appointment">Appointment Template</option>
+                <option value="dental">Dental Template</option>
+                <option value="misc">Misc / Other</option>
+                <option value="ux">UI / UX</option>
+                <option value="bug">Bug / Glitch</option>
+              </select>
+            </div>
+
+            <div class="form-group form-group-full">
+              <label for="feedbackText">
+                Paste example, rant, or training data
+              </label>
+              <textarea
+                id="feedbackText"
+                class="textarea-input"
+                placeholder="e.g., 'Your cystotomy template needs 3-0 Monocryl for subcuticular layer.'"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button class="primary-btn" onclick="sendFeedback()">
+              Submit Feedback
+            </button>
+          </div>
+
+          <div class="status-row">
+            <pre id="feedbackStatus" class="status-pre"></pre>
+          </div>
+        </div>
+      </section>
     </main>
+  </div>
 
-    <script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
