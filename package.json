@@ -2,6 +2,7 @@
   "name": "vet-soap-beta",
   "version": "1.0.0",
   "description": "Lohit SOAP App Beta v1.0",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
