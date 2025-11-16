@@ -1,299 +1,375 @@
-// server.js (v1.3)
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-const OpenAI = require("openai");
+// server.js - Lohit SOAP App v1.4
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import OpenAI from "openai";
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID || ""; // reserved for future Assistant wiring
+
+if (!OPENAI_API_KEY) {
+  console.warn("WARNING: OPENAI_API_KEY is not set. /api/generate-soap will fail.");
+}
+
+const client = new OpenAI({ apiKey: OPENAI_API_KEY });
+
+// Minimal master rules – you can expand this and paste the same text into your Assistant instructions
+const MASTER_RULES = `
+You are the "Lohit SOAP Assistant" helping generate Avimark-compatible SOAP notes for a small animal veterinary clinic.
+
+GLOBAL RULES:
+- Always structure output into EXACT sections with labels:
+  Subjective:
+  Objective:
+  Assessment:
+  Plan:
+  Medications Dispensed:
+  Aftercare:
+- Do NOT invent specific vital values; only mention data explicitly given by the user or templates.
+- Objective must be data-only (PE findings, diagnostics). Do not interpret labwork in Objective.
+- Assessment must contain problem list and interpretations of data (including labwork).
+- Plan must be organized, single-spaced. No blank lines except between logical paragraphs.
+- Always use full generic drug names with concentration in brackets on first mention, e.g. "Dexmedetomidine [0.5 mg/mL] 0.003 mg/kg IM".
+- Do NOT use shorthand like "dexmed", "midaz", "torb" in the SOAP text.
+- For pre- and post-op analgesia, respect typical small animal doses and the clinic's patterns when the user provides summaries.
+
+SURGERY-SPECIFIC:
+- For spay/neuter and other surgeries, if "fluidsDeclined" is true, do NOT state that fluids were given.
+- If "fluidsDeclined" is true and "fluidsOwnerUnderstands" is true, include a clear line in Plan noting that IV fluids were declined and that the owner understands the associated risks.
+- If "fluidsUsed" is true, include a concise line in Plan describing IV fluids (e.g., "IV crystalloids at 5 mL/kg/hr intra-operatively"), but do not invent rate if not provided.
+- If "bwStatus" is "declined", include that pre-anesthetic bloodwork was declined and risks were discussed.
+- If "bwStatus" is "normal", you may mention that pre-anesthetic bloodwork was within normal limits.
+- If "bwStatus" is "abnormal", summarize abnormalities based on "bwDetails" and interpret them in Assessment.
+
+RESCUE LOGIC:
+- Rescue surgeries (profile = "rescue") usually have:
+  - Limited history (often from shelter/stray).
+  - Pre-op bloodwork declined or not performed as per rescue protocol.
+  - IV fluids often not used; fluidsDeclined is common.
+- Use concise, repeatable wording so techs and doctors can quickly review.
+
+CAT vs DOG:
+- For cat spay/neuter, Onsior (Robenacoxib) and/or Atipamezole for reversal are common; only include them if mentioned in the intake or summaries.
+- For dog spay/neuter, Meloxicam is commonly used; only include if specified.
+`;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 10000;
 
-// ---------- Middleware ----------
-app.use(cors());
 app.use(express.json({ limit: "10mb" }));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(__dirname));
 
-// ---------- OpenAI client ----------
-const apiKey = process.env.OPENAI_API_KEY;
-let client = null;
+// In-memory attachments store: { [caseId]: [ { id, name, dataUrl } ] }
+const attachmentsStore = Object.create(null);
+// Simple feedback log in memory for now
+const feedbackLog = [];
 
-if (apiKey) {
-  client = new OpenAI({ apiKey });
-  console.log("✅ OpenAI client initialized.");
-} else {
-  console.warn("⚠️ OPENAI_API_KEY not set. AI endpoints will run in STUB mode.");
-}
-
-// You can override with OPENAI_MODEL in Render if you want.
-const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
-
-// ---------- HELPERS ----------
-
-// Join SOAP sections into a single text block
-function joinSoapSections(sections = {}) {
-  const order = [
-    "Subjective",
-    "Objective",
-    "Assessment",
-    "Plan",
-    "Medications Dispensed",
-    "Aftercare"
-  ];
-
-  return order
-    .map((key) => {
-      const value = sections[key] || "";
-      return `${key}:\n${value || ""}`.trim();
-    })
-    .join("\n\n");
-}
-
-// MAIN SOAP GENERATOR
-async function generateSoapFromInput(intake) {
-  const pretty = JSON.stringify(intake || {}, null, 2);
-  const accuracyMode = intake.accuracyMode || "medium";
-  const type = intake.type || "appointment";
-  const template = intake.template || "general";
-
-  let accuracyText = "";
-  if (accuracyMode === "strict") {
-    accuracyText =
-      "- STRICT MODE: Do NOT invent any vitals, diagnostics, or drugs that are not clearly provided. If information is missing, write 'Details not provided.'\n";
-  } else if (accuracyMode === "liberal") {
-    accuracyText =
-      "- LIBERAL MODE: You may fill in reasonable templated normals and mild assumptions, but clearly mark them as 'assumed' or 'templated' and avoid specific vitals or drugs that were not mentioned.\n";
-  } else {
-    accuracyText =
-      "- MEDIUM MODE: Fill in reasonable, generic phrasing but do not invent specific vitals or specific drug names that were not implied.\n";
-  }
-
-  const prompt =
-    "You are a veterinary assistant generating SOAP notes for a small animal clinic.\n" +
-    `Case type: ${type}\nTemplate hint: ${template}\n\n` +
-    "Use EXACTLY these section headers once each, in this order:\n" +
-    "Subjective:\nObjective:\nAssessment:\nPlan:\nMedications Dispensed:\nAftercare:\n\n" +
-    "Clinic rules:\n" +
-    "- Output must be plain text, Avimark-compatible. No bullets, no numbering, no markdown.\n" +
-    "- Single spacing; one blank line between sections is OK but not required.\n" +
-    "- Bloodwork values appear as data-only in Objective; interpretations go in Assessment.\n" +
-    accuracyText +
-    "- Reasonable, concise language suitable for a busy general practice.\n\n" +
-    "Intake JSON from the Lohit SOAP app:\n" +
-    pretty +
-    "\n\nWrite the full SOAP note now with the exact section headers as specified.";
-
-  const response = await client.responses.create({
-    model: MODEL,
-    input: prompt,
-    temperature: 0.3
-  });
-
-  const soapText = (response.output_text || "").trim();
-  return soapText;
-}
-
-// REFINEMENT HELPER
-async function refineSoapWithFeedback(payload) {
-  const { sections, feedback, sectionsToRefine, accuracyMode, meta } = payload || {};
-
-  const currentSoap = joinSoapSections(sections || {});
-  const prettyMeta = JSON.stringify(meta || {}, null, 2);
-  const mode = accuracyMode || "medium";
-
-  let accuracyText = "";
-  if (mode === "strict") {
-    accuracyText =
-      "- STRICT MODE: Do not add any new diagnostics or drugs not already present unless clearly requested in the feedback.\n";
-  } else if (mode === "liberal") {
-    accuracyText =
-      "- LIBERAL MODE: You may use reasonable templated phrasing and assumptions, but avoid inventing specific new drugs.\n";
-  } else {
-    accuracyText =
-      "- MEDIUM MODE: You may clarify and clean up wording but do not add major new diagnostics or drugs.\n";
-  }
-
-  const prompt =
-    "You are refining a veterinary SOAP note for a small animal clinic.\n\n" +
-    "Here is the current SOAP (with section headers):\n\n" +
-    currentSoap +
-    "\n\nUser feedback:\n" +
-    (feedback || "No feedback") +
-    "\n\nThe sections the user is asking you to adjust are:\n" +
-    (sectionsToRefine || []).join(", ") +
-    "\n\nMeta JSON from the app:\n" +
-    prettyMeta +
-    "\n\nRules:\n" +
-    "- Preserve the original overall structure and clinic rules.\n" +
-    "- Only meaningfully change the sections listed above, unless a tiny change is required for consistency.\n" +
-    "- Keep exactly these section headers and order: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare.\n" +
-    accuracyText +
-    "- Return the FULL SOAP again as plain text with those headers, in order.\n";
-
-  const response = await client.responses.create({
-    model: MODEL,
-    input: prompt,
-    temperature: 0.3
-  });
-
-  const soapText = (response.output_text || "").trim();
-  return soapText;
-}
-
-// TOOLBOX HELPER
-async function generateToolboxFromInput(intake) {
-  const { mode, detailLevel, text, clinic, fromName } = intake || {};
-  const pretty = JSON.stringify(intake || {}, null, 2);
-
-  let systemInstructions =
-    "You are a veterinary assistant helping a small animal clinic. " +
-    "All output must be plain text, Avimark-compatible, no bullets, no markdown.\n";
-
-  let userPrompt = "";
-
-  switch (mode) {
-    case "bloodwork":
-      systemInstructions +=
-        "Task: summarize bloodwork for the medical record.\n" +
-        "- Only list abnormal values with their reference ranges in brackets.\n" +
-        "- Provide a one-line Objective entry: labs performed + abnormal values only.\n" +
-        "- Provide a one-line Assessment summarizing key problems.\n" +
-        "- Do NOT give a client explanation here.\n";
-      break;
-    case "bloodwork_diffs":
-      systemInstructions +=
-        "Task: interpret bloodwork and suggest differentials.\n" +
-        "- First line: Assessment-style summary listing each problem and key value(s).\n" +
-        "- Then list 3–5 likely differentials total, considering all problems together.\n";
-      break;
-    case "client_call":
-      systemInstructions +=
-        "Task: create a brief call log for the medical record.\n" +
-        "- Start with 'Client called and discussed: ' then list key abnormal findings.\n" +
-        "- Then add a short note about recommendations and follow-up.\n";
-      break;
-    case "client_email":
-      systemInstructions +=
-        "Task: draft an email to the pet owner explaining the case or bloodwork in plain language.\n" +
-        `Clinic: ${clinic || "unspecified"}.\n` +
-        `Sign as: ${fromName || "Doctor"}.\n` +
-        "- Friendly but professional tone.\n" +
-        "- Short intro, then explain main findings and what they mean, then next steps and a warm closing.\n";
-      break;
-    default:
-      systemInstructions +=
-        "Task: free-form helper. You may be asked to format text, summarize notes, or draft SOAP snippets.\n";
-      break;
-  }
-
-  const detail =
-    detailLevel === "short"
-      ? "Keep it very short (1–2 lines)."
-      : detailLevel === "expanded"
-      ? "Provide a more detailed explanation, but still suitable to paste into Avimark."
-      : "Use a standard level of detail.";
-
-  userPrompt =
-    systemInstructions +
-    "\nLevel of detail: " +
-    detail +
-    "\n\nOriginal notes / text from the clinic app:\n" +
-    (text || "") +
-    "\n\nNow produce the final output text.";
-
-  const response = await client.responses.create({
-    model: MODEL,
-    input: userPrompt,
-    temperature: 0.3
-  });
-
-  const outText = (response.output_text || "").trim();
-  return outText;
-}
-
-// ---------- ROUTES ----------
-
-// SOAP endpoint
-app.post("/api/soap", async (req, res) => {
-  if (!client) {
-    const body = JSON.stringify(req.body || {}, null, 2);
-    const stub =
-      "SOAP generation is in STUB mode (no API key configured).\n\nInput received:\n" +
-      body;
-    return res.json({ mode: "stub", soap: stub, soapText: stub });
-  }
-
-  try {
-    const soapText = await generateSoapFromInput(req.body);
-    res.json({ mode: "ai", soap: soapText, soapText });
-  } catch (err) {
-    console.error("❌ Error in /api/soap:", err);
-    const body = JSON.stringify(req.body || {}, null, 2);
-    const fallback =
-      "SOAP generation temporarily unavailable due to an error.\n\n" +
-      "Here is your raw input so nothing is lost:\n" +
-      body;
-    res.json({ mode: "error", soap: fallback, soapText: fallback });
-  }
+// Serve index.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// SOAP refinement endpoint
-app.post("/api/refine-soap", async (req, res) => {
-  if (!client) {
-    const body = JSON.stringify(req.body || {}, null, 2);
-    const stub =
-      "Refinement is in STUB mode (no API key configured).\n\nInput received:\n" +
-      body;
-    return res.json({ mode: "stub", soap: stub, soapText: stub });
-  }
+// Capture page for phone (very minimal)
+app.get("/capture", (req, res) => {
+  const caseId = req.query.case || "";
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lohit SOAP Capture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      padding: 12px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+    }
+    .card {
+      border-radius: 16px;
+      border: 1px solid #1e293b;
+      background: #020617;
+      padding: 16px;
+      max-width: 480px;
+      margin: 12px auto;
+    }
+    h1 {
+      font-size: 1.1rem;
+      margin: 0 0 4px;
+    }
+    p {
+      font-size: 0.85rem;
+      margin: 4px 0;
+    }
+    input[type="file"] {
+      margin-top: 8px;
+    }
+    button {
+      margin-top: 10px;
+      border-radius: 999px;
+      border: none;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      background: linear-gradient(135deg,#0ea5e9,#0369a1);
+      color:#f9fafb;
+    }
+    .status {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Phone capture</h1>
+    <p>Case: <strong>${caseId || "unknown"}</strong></p>
+    <p>Take a photo or select from your library. It will be attached to this case in the desktop app.</p>
+    <input id="captureInput" type="file" accept="image/*" capture="environment" multiple />
+    <button id="uploadBtn" type="button">Upload</button>
+    <div id="status" class="status"></div>
+  </div>
+  <script>
+    const caseId = ${JSON.stringify(caseId)};
+    const input = document.getElementById("captureInput");
+    const statusEl = document.getElementById("status");
+    document.getElementById("uploadBtn").addEventListener("click", async () => {
+      const files = Array.from(input.files || []);
+      if (!caseId) {
+        statusEl.textContent = "No case id found. Please re-open QR from desktop app.";
+        return;
+      }
+      if (!files.length) {
+        statusEl.textContent = "No photos selected.";
+        return;
+      }
+      statusEl.textContent = "Uploading...";
+      for (const file of files) {
+        const dataUrl = await fileToDataUrl(file);
+        await fetch("/api/upload-attachment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            caseId,
+            name: file.name,
+            dataUrl
+          })
+        });
+      }
+      statusEl.textContent = "Uploaded. You can take more or close this page.";
+      input.value = "";
+    });
 
-  try {
-    const soapText = await refineSoapWithFeedback(req.body);
-    res.json({ mode: "ai", soap: soapText, soapText });
-  } catch (err) {
-    console.error("❌ Error in /api/refine-soap:", err);
-    const body = JSON.stringify(req.body || {}, null, 2);
-    const fallback =
-      "Refinement temporarily unavailable due to an error.\n\n" +
-      "Here is your raw input so nothing is lost:\n" +
-      body;
-    res.json({ mode: "error", soap: fallback, soapText: fallback });
-  }
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+</html>
+  `;
+  res.send(html);
 });
 
-// Toolbox endpoint – AI
-app.post("/api/toolbox", async (req, res) => {
-  if (!client) {
-    const pretty = JSON.stringify(req.body || {}, null, 2);
-    const txt =
-      "Toolbox is in STUB mode (no API key configured).\n\nInput:\n" + pretty;
-    return res.json({ mode: "stub", output: txt });
+// Upload attachment (desktop or phone) - expects { caseId, name, dataUrl }
+app.post("/api/upload-attachment", (req, res) => {
+  const { caseId, name, dataUrl } = req.body || {};
+  if (!caseId || !name || !dataUrl) {
+    return res.status(400).json({ error: "Missing caseId, name or dataUrl" });
   }
-
-  try {
-    const text = await generateToolboxFromInput(req.body);
-    res.json({ mode: "ai", output: text });
-  } catch (err) {
-    console.error("❌ Error in /api/toolbox:", err);
-    const pretty = JSON.stringify(req.body || {}, null, 2);
-    const txt =
-      "Toolbox temporarily unavailable due to an error.\n\nRaw input:\n" +
-      pretty;
-    res.json({ mode: "error", output: txt });
-  }
+  if (!attachmentsStore[caseId]) attachmentsStore[caseId] = [];
+  const id = "att_" + Math.random().toString(36).substring(2, 10);
+  attachmentsStore[caseId].push({ id, name, dataUrl });
+  res.json({ ok: true, id });
 });
 
-// Toolbox feedback – logs only for now
-app.post("/api/toolbox-feedback", (req, res) => {
-  console.log("🧰 Toolbox feedback:", req.body);
-  res.json({ status: "ok", message: "Toolbox feedback received (stub)" });
+// Update attachment after blur (replace dataUrl)
+app.post("/api/update-attachment", (req, res) => {
+  const { caseId, id, dataUrl } = req.body || {};
+  if (!caseId || !id || !dataUrl) {
+    return res.status(400).json({ error: "Missing caseId, id or dataUrl" });
+  }
+  const list = attachmentsStore[caseId];
+  if (!list) return res.status(404).json({ error: "Case not found" });
+  const att = list.find(a => a.id === id);
+  if (!att) return res.status(404).json({ error: "Attachment not found" });
+  att.dataUrl = dataUrl;
+  res.json({ ok: true });
 });
 
-// Global feedback – logs only for now
+// List attachments for a case
+app.get("/api/attachments/:caseId", (req, res) => {
+  const caseId = req.params.caseId;
+  res.json(attachmentsStore[caseId] || []);
+});
+
+// Feedback intake
 app.post("/api/feedback", (req, res) => {
-  console.log("📥 Feedback received:", req.body);
-  res.json({ status: "ok", message: "Feedback received (stub)" });
+  const { text } = req.body || {};
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: "No feedback text" });
+  }
+  feedbackLog.push({
+    text,
+    ts: new Date().toISOString()
+  });
+  console.log("FEEDBACK:", text.slice(0, 200));
+  res.json({ ok: true });
 });
 
-// ---------- START SERVER ----------
+// Generate SOAP
+app.post("/api/generate-soap", async (req, res) => {
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ error: "OPENAI_API_KEY not set" });
+  }
+
+  try {
+    const body = req.body || {};
+    const { caseId, caseLabel, type } = body;
+
+    // Build a structured intake summary string
+    let intake = `Case label: ${caseLabel || "N/A"}\n`;
+    intake += `Case id: ${caseId || "N/A"}\n`;
+    intake += `Type: ${type}\n\n`;
+
+    if (type === "appointment") {
+      const a = body.appointment || {};
+      intake += "APPOINTMENT INTAKE\n";
+      intake += `Reason: ${a.reason || ""}\n`;
+      intake += `History / Subjective: ${a.history || ""}\n`;
+      intake += `Objective (PE data): ${a.objective || ""}\n`;
+      intake += `Diagnostics (data-only): ${a.diagnostics || ""}\n`;
+      intake += `Assessment (user notes): ${a.assessment || ""}\n`;
+      intake += `Plan (user notes): ${a.plan || ""}\n`;
+    } else if (type === "surgery") {
+      const s = body.surgery || {};
+      intake += "SURGERY INTAKE\n";
+      intake += `Species: ${s.species || ""}\n`;
+      intake += `Profile: ${s.profile || ""}\n`;
+      intake += `Template: ${s.template || ""}\n`;
+      intake += `Age: ${s.age || ""}\n`;
+      intake += `Weight kg: ${s.weightKg || ""}\n\n`;
+
+      // Bloodwork
+      intake += `Bloodwork status: ${s.bwStatus || ""}\n`;
+      intake += `Bloodwork details (data): ${s.bwDetails || ""}\n\n`;
+
+      // Catheter & fluids
+      intake += `IV catheter placed: ${s.ivCatheterPlaced ? "yes" : "no"} (Gauge: ${s.catheterGauge || ""}, Site: ${s.catheterSite || ""}, Side: ${s.catheterSide || ""})\n`;
+      intake += `Fluids used: ${s.fluidsUsed ? "yes" : "no"}\n`;
+      intake += `Fluids declined: ${s.fluidsDeclined ? "yes" : "no"}\n`;
+      intake += `Owner understands fluid risks: ${s.fluidsOwnerUnderstands ? "yes" : "no"}\n`;
+      intake += `Fluids rate (mL/kg/hr, if given): ${s.fluidsRate || ""}\n\n`;
+
+      // Anesthesia summaries
+      intake += `Premed summary: ${s.premedSummary || ""}\n`;
+      intake += `Induction / maintenance summary: ${s.inductionSummary || ""}\n`;
+      intake += `Intra-op meds / blocks summary: ${s.intraopSummary || ""}\n`;
+      intake += `Post-op injectables summary: ${s.postopInjectableSummary || ""}\n`;
+      intake += `Take-home meds summary: ${s.takehomeMedsSummary || ""}\n\n`;
+
+      // Surgery notes
+      intake += `Surgery subjective/history: ${s.surgerySubjective || ""}\n`;
+      intake += `PE variations / abnormalities: ${s.surgeryPE || ""}\n`;
+      intake += `Procedure details / intra-op findings: ${s.surgeryProcedure || ""}\n`;
+      intake += `Extra aftercare notes: ${s.surgeryAftercareNotes || ""}\n`;
+    }
+
+    // We could also mention attachments (names only) to the model if you want:
+    const att = attachmentsStore[caseId] || [];
+    if (att.length) {
+      intake += `\nATTACHMENTS PRESENT (names only): ${att.map(a => a.name).join(", ")}\n`;
+    }
+
+    const prompt = `
+You will generate a single, clean SOAP note for a veterinary case based on the intake below.
+
+Follow ALL of these instructions:
+
+- Start each major section with the label exactly: "Subjective:", "Objective:", "Assessment:", "Plan:", "Medications Dispensed:", "Aftercare:".
+- No bullets. Use short paragraphs or concise sentences.
+- Objective must describe exam findings and diagnostic data only, without interpretation or speculation.
+- Assessment must interpret the problems and data, including any bloodwork interpretations.
+- Plan must cover IV catheter/fluids, anesthesia/analgesia, surgical procedure, recovery, and discharge instructions when applicable.
+- Medications Dispensed must list only meds going home.
+- Aftercare must summarize home-care instructions.
+- Use full generic drug names with concentration in brackets on first mention, e.g. "Dexmedetomidine [0.5 mg/mL]".
+- Do not invent specific numbers (e.g. NSAID dose, ET tube size, fluid rate) unless clearly provided in the intake summaries.
+- If bloodwork was declined, record that in Assessment and Plan, and state that risks were discussed with the owner.
+- If fluidsDeclined is true, do not imply fluids were given. If fluidsOwnerUnderstands is also true, explicitly state that IV fluids were declined and that the owner is aware of the associated risks.
+
+INTAKE:
+${intake}
+`;
+
+    const response = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: prompt
+    });
+
+    const outputText = response.output_text || "";
+
+    // naive split of sections
+    const sections = {
+      subjective: "",
+      objective: "",
+      assessment: "",
+      plan: "",
+      meds: "",
+      aftercare: ""
+    };
+
+    let currentKey = null;
+    outputText.split(/\r?\n/).forEach(line => {
+      const trimmed = line.trim();
+      if (/^subjective:/i.test(trimmed)) {
+        currentKey = "subjective";
+        return;
+      }
+      if (/^objective:/i.test(trimmed)) {
+        currentKey = "objective";
+        return;
+      }
+      if (/^assessment:/i.test(trimmed)) {
+        currentKey = "assessment";
+        return;
+      }
+      if (/^plan:/i.test(trimmed)) {
+        currentKey = "plan";
+        return;
+      }
+      if (/^medications dispensed:/i.test(trimmed)) {
+        currentKey = "meds";
+        return;
+      }
+      if (/^aftercare:/i.test(trimmed)) {
+        currentKey = "aftercare";
+        return;
+      }
+      if (currentKey) {
+        sections[currentKey] += (sections[currentKey] ? "\n" : "") + line;
+      }
+    });
+
+    res.json(sections);
+  } catch (err) {
+    console.error("Error generating SOAP:", err);
+    res.status(500).json({ error: "Failed to generate SOAP" });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Lohit SOAP App v1.4 listening on port ${PORT}`);
+  if (OPENAI_ASSISTANT_ID) {
+    console.log(`Assistant ID configured: ${OPENAI_ASSISTANT_ID} (not yet used directly, but keep rules in sync).`);
+  }
 });
