@@ -34,7 +34,7 @@ body {
 .top-header {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
   justify-content: space-between;
   align-items: center;
 }
@@ -58,6 +58,11 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.22);
   color: #c8f3ff;
   background: rgba(16, 109, 163, 0.25);
+}
+
+.mode-label {
+  font-size: 0.8rem;
+  color: #a7b4d6;
 }
 
 /* Nav tabs */
@@ -229,9 +234,51 @@ label {
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
 }
 
+/* Copy buttons */
+.copy-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.copy-btn,
+.copy-mini-btn {
+  border: 1px solid rgba(133, 160, 215, 0.7);
+  background: rgba(10, 20, 40, 0.9);
+  color: #dbe5ff;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  transition:
+    background 0.16s ease,
+    transform 0.1s ease,
+    box-shadow 0.16s ease;
+}
+
+.copy-btn:hover,
+.copy-mini-btn:hover {
+  background: rgba(54, 82, 140, 0.95);
+  box-shadow: 0 0 0 1px rgba(138, 177, 241, 0.7);
+  transform: translateY(-0.5px);
+}
+
+.copy-btn:active,
+.copy-mini-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
 /* Output sections */
 .card-output {
   margin-top: 4px;
+}
+
+.output-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .output-grid {
@@ -241,10 +288,21 @@ label {
   margin-top: 10px;
 }
 
+.output-section {
+  position: relative;
+}
+
 .output-section h4 {
   margin: 0 0 4px;
   font-size: 0.9rem;
   color: #d1ddff;
+}
+
+.output-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
 }
 
 .output-section pre,
@@ -263,6 +321,12 @@ label {
   overflow-y: auto;
 }
 
+/* Updated highlight */
+.updated {
+  box-shadow: 0 0 0 1px rgba(119, 207, 255, 0.9),
+    0 0 12px rgba(119, 207, 255, 0.7) inset;
+}
+
 /* Toolbox output */
 .toolbox-pre {
   min-height: 90px;
@@ -271,6 +335,13 @@ label {
 /* Feedback status */
 .status-row {
   margin-top: 10px;
+}
+
+/* Email fields in toolbox */
+.email-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
 }
 
 /* Scrollbars (subtle) */
@@ -287,6 +358,25 @@ label {
 .textarea-input::-webkit-scrollbar-thumb {
   background: rgba(124, 149, 199, 0.7);
   border-radius: 999px;
+}
+
+/* Refine card */
+.refine-card {
+  margin-top: 4px;
+}
+
+.refine-checkboxes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.refine-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
 }
 
 /* Animations */
@@ -322,5 +412,9 @@ label {
 
   .nav-btn {
     flex: 0 0 auto;
+  }
+
+  .output-grid {
+    grid-template-columns: 1fr;
   }
 }
