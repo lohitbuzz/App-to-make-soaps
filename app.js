@@ -1,424 +1,729 @@
-// Lohit SOAP App – front-end logic (Option B)
+// Lohit SOAP App v1.5 frontend
+// - SOAP-first layout
+// - Minimal intake
+// - Camera-only phone capture (?capture=1&caseId=...)
+// - Manual redaction tool posting data URLs to /api/cases/:caseId/attachments
 
-let currentCaseId = null;
-let currentCaseType = 'appointment'; // 'appointment' | 'surgery'
-let captureMode = false;
+(function () {
+  const qs = (sel) => document.querySelector(sel);
+  const qsa = (sel) => Array.from(document.querySelectorAll(sel));
 
-const qs = (sel) => document.querySelector(sel);
-const qsa = (sel) => Array.from(document.querySelectorAll(sel));
+  const urlParams = new URLSearchParams(window.location.search);
+  const isCaptureMode = urlParams.get("capture") === "1";
+  const caseIdFromUrl = urlParams.get("caseId") || "";
+  let currentCaseId = caseIdFromUrl || generateCaseId();
 
-function makeCaseId() {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let s = 'CS';
-  for (let i = 0; i < 5; i++) {
-    s += alphabet[Math.floor(Math.random() * alphabet.length)];
-  }
-  return s;
-}
+  // Elements shared
+  const appMain = qs("#app-main");
+  const captureRoot = qs("#capture-mode");
 
-function initCase() {
-  const params = new URLSearchParams(window.location.search);
-  const urlCase = params.get('caseId');
-  const capture = params.get('capture');
+  // Redaction modal elements
+  const redactModal = qs("#redactModal");
+  const redactCanvas = qs("#redactCanvas");
+  const closeRedactBtn = qs("#closeRedactBtn");
+  const clearRedactBtn = qs("#clearRedactBtn");
+  const saveRedactBtn = qs("#saveRedactBtn");
 
-  currentCaseId = urlCase || makeCaseId();
-  captureMode = capture === '1';
+  let canvasCtx = null;
+  let imageObj = null;
+  let drawing = false;
+  let startX = 0;
+  let startY = 0;
+  let rectangles = [];
+  let pendingImageSource = null; // "desktop" | "capture"
 
-  qs('#caseBadge').textContent = `Case: ${currentCaseId}`;
-  if (captureMode) {
-    qs('#modeBadge').textContent = 'Mode: Capture from phone';
-    document.title = `Capture – ${currentCaseId}`;
-  }
+  // Desktop/main elements
+  const caseIdLabel = qs("#caseIdLabel");
+  const captureCaseIdLabel = qs("#captureCaseIdLabel");
 
-  refreshAttachments();
-  renderQr();
-}
+  const modeToggle = qs("#modeToggle");
+  const profileToggle = qs("#profileToggle");
+  const accuracyToggle = qs("#accuracyToggle");
+  const speciesSelect = qs("#speciesSelect");
 
-// ---- UI wiring ----
+  const bloodworkChips = qs("#bloodworkChips");
+  const fluidChips = qs("#fluidChips");
+  const extraFlags = qs("#extraFlags");
 
-function setCaseType(type) {
-  currentCaseType = type;
-  qsa('#caseTypeToggle .pill').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.type === type);
-  });
-  qs('#modeBadge').textContent =
-    type === 'surgery' ? 'Mode: Surgery' : 'Mode: Appointment';
-  qs('#surgeryBlock').classList.toggle('hidden', type !== 'surgery');
-}
+  const caseLabelInput = qs("#caseLabelInput");
+  const clinicalNotesInput = qs("#clinicalNotesInput");
+  const surgeryExtrasInput = qs("#surgeryExtrasInput");
+  const surgeryExtrasRow = qs("#surgeryExtrasRow");
 
-function renderQr() {
-  const img = qs('#qrImage');
-  if (!img) return;
-  const base = window.location.origin;
-  const url = `${base}/?caseId=${encodeURIComponent(
-    currentCaseId
-  )}&capture=1`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-    url
-  )}`;
-  img.src = qrUrl;
-}
+  const advancedToggle = qs("#advancedToggle");
+  const advancedSection = qs("#advancedSection");
 
-// ---- Attachments + blur editor ----
+  const generateBtn = qs("#generateBtn");
+  const copyFullBtn = qs("#copyFullBtn");
+  const copyPlanBtn = qs("#copyPlanBtn");
 
-let blurState = {
-  image: null,
-  rects: [],
-  drawing: false,
-  startX: 0,
-  startY: 0
-};
+  const subjectiveOutput = qs("#subjectiveOutput");
+  const objectiveOutput = qs("#objectiveOutput");
+  const assessmentOutput = qs("#assessmentOutput");
+  const planOutput = qs("#planOutput");
 
-const blurModal = qs('#blurModal');
-const blurCanvas = qs('#blurCanvas');
-let blurCtx = null;
+  const fileInput = qs("#fileInput");
+  const openRedactFromFileBtn = qs("#openRedactFromFileBtn");
+  const attachmentsList = qs("#attachmentsList");
+  const refreshAttachmentsBtn = qs("#refreshAttachmentsBtn");
+  const qrContainer = qs("#qrContainer");
+  const toggleQrBtn = qs("#toggleQrBtn");
 
-function openBlurModal(dataUrl) {
-  blurState.image = new Image();
-  blurState.image.onload = () => {
-    blurCanvas.width = blurState.image.width;
-    blurCanvas.height = blurState.image.height;
-    blurCtx = blurCanvas.getContext('2d');
-    resetBlurCanvas();
-    blurModal.classList.remove('hidden');
-  };
-  blurState.rects = [];
-  blurState.image.src = dataUrl;
-}
+  // Capture-only elements (phone)
+  const captureFileInput = qs("#captureFileInput");
+  const openRedactFromCaptureBtn = qs("#openRedactFromCaptureBtn");
 
-function resetBlurCanvas() {
-  if (!blurCtx || !blurState.image) return;
-  blurCtx.drawImage(blurState.image, 0, 0, blurCanvas.width, blurCanvas.height);
-  blurCtx.fillStyle = 'rgba(0,0,0,0.75)';
-  blurState.rects.forEach((r) => {
-    blurCtx.fillRect(r.x, r.y, r.w, r.h);
-  });
-}
-
-function closeBlurModal() {
-  blurModal.classList.add('hidden');
-  blurState = { image: null, rects: [], drawing: false, startX: 0, startY: 0 };
-}
-
-function handleBlurPointerDown(e) {
-  if (!blurCtx) return;
-  e.preventDefault();
-  const rect = blurCanvas.getBoundingClientRect();
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  blurState.drawing = true;
-  blurState.startX = ((clientX - rect.left) * blurCanvas.width) / rect.width;
-  blurState.startY = ((clientY - rect.top) * blurCanvas.height) / rect.height;
-}
-
-function handleBlurPointerMove(e) {
-  if (!blurCtx || !blurState.drawing) return;
-  e.preventDefault();
-  resetBlurCanvas();
-  const rect = blurCanvas.getBoundingClientRect();
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  const x = ((clientX - rect.left) * blurCanvas.width) / rect.width;
-  const y = ((clientY - rect.top) * blurCanvas.height) / rect.height;
-  const w = x - blurState.startX;
-  const h = y - blurState.startY;
-  blurCtx.fillStyle = 'rgba(0,0,0,0.8)';
-  blurCtx.fillRect(blurState.startX, blurState.startY, w, h);
-  blurState.rects.forEach((r) => {
-    blurCtx.fillRect(r.x, r.y, r.w, r.h);
-  });
-}
-
-function handleBlurPointerUp(e) {
-  if (!blurCtx || !blurState.drawing) return;
-  e.preventDefault();
-  blurState.drawing = false;
-  const rect = blurCanvas.getBoundingClientRect();
-  const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-  const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-  const x = ((clientX - rect.left) * blurCanvas.width) / rect.width;
-  const y = ((clientY - rect.top) * blurCanvas.height) / rect.height;
-  const w = x - blurState.startX;
-  const h = y - blurState.startY;
-  blurState.rects.push({ x: blurState.startX, y: blurState.startY, w, h });
-  resetBlurCanvas();
-}
-
-function wireBlurCanvas() {
-  ['mousedown', 'touchstart'].forEach((evt) =>
-    blurCanvas.addEventListener(evt, handleBlurPointerDown, { passive: false })
-  );
-  ['mousemove', 'touchmove'].forEach((evt) =>
-    blurCanvas.addEventListener(evt, handleBlurPointerMove, { passive: false })
-  );
-  ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach((evt) =>
-    blurCanvas.addEventListener(evt, handleBlurPointerUp, { passive: false })
-  );
-
-  qs('#resetBlur').addEventListener('click', () => {
-    blurState.rects = [];
-    resetBlurCanvas();
-  });
-  qs('#cancelBlur').addEventListener('click', () => {
-    closeBlurModal();
-  });
-  qs('#closeModal').addEventListener('click', () => {
-    closeBlurModal();
-  });
-
-  qs('#saveBlur').addEventListener('click', async () => {
-    if (!blurCanvas) return;
-    const dataUrl = blurCanvas.toDataURL('image/jpeg', 0.9);
-    try {
-      const res = await fetch(`/api/cases/${currentCaseId}/attachments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataUrl })
-      });
-      if (!res.ok) throw new Error('Upload failed');
-      closeBlurModal();
-      refreshAttachments();
-    } catch (err) {
-      console.error(err);
-      alert('Error saving redacted image.');
+  // Init
+  document.addEventListener("DOMContentLoaded", () => {
+    if (isCaptureMode) {
+      initCaptureMode();
+    } else {
+      initMainMode();
     }
   });
-}
 
-function refreshAttachments() {
-  fetch(`/api/cases/${currentCaseId}/attachments`)
-    .then((r) => r.json())
-    .then((data) => {
-      const list = qs('#attachmentsList');
-      const empty = qs('#attachmentsEmpty');
-      list.innerHTML = '';
-      const attachments = data.attachments || [];
-      if (!attachments.length) {
-        empty.style.display = 'block';
-        list.appendChild(empty);
+  function generateCaseId() {
+    const ts = Date.now().toString(36).toUpperCase();
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `C-${ts}-${rand}`;
+  }
+
+  /* ---------------- MAIN APP MODE ---------------- */
+
+  function initMainMode() {
+    appMain.classList.remove("hidden");
+    captureRoot.classList.add("hidden");
+
+    if (!caseIdFromUrl) {
+      const newUrl = `${window.location.origin}${window.location.pathname}?caseId=${encodeURIComponent(
+        currentCaseId
+      )}`;
+      window.history.replaceState({}, "", newUrl);
+    }
+
+    if (caseIdLabel) caseIdLabel.textContent = currentCaseId;
+
+    setupToggles();
+    setupAdvancedSection();
+    setupSOAPButtons();
+    setupCopyMiniButtons();
+    setupAttachments();
+  }
+
+  function setupToggles() {
+    // Mode toggle (appointment vs surgery)
+    if (modeToggle) {
+      modeToggle.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-mode]");
+        if (!btn) return;
+        qsa("#modeToggle .pill-option").forEach((b) =>
+          b.classList.remove("active")
+        );
+        btn.classList.add("active");
+        updateSurgeryVisibility();
+      });
+      updateSurgeryVisibility();
+    }
+
+    // Profile
+    if (profileToggle) {
+      profileToggle.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-profile]");
+        if (!btn) return;
+        qsa("#profileToggle .pill-option").forEach((b) =>
+          b.classList.remove("active")
+        );
+        btn.classList.add("active");
+      });
+    }
+
+    // Accuracy
+    if (accuracyToggle) {
+      accuracyToggle.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-accuracy]");
+        if (!btn) return;
+        qsa("#accuracyToggle .pill-option").forEach((b) =>
+          b.classList.remove("active")
+        );
+        btn.classList.add("active");
+      });
+    }
+
+    // Bloodwork chips
+    if (bloodworkChips) {
+      bloodworkChips.addEventListener("click", (e) => {
+        const chip = e.target.closest(".chip");
+        if (!chip) return;
+        qsa("#bloodworkChips .chip").forEach((c) =>
+          c.classList.remove("active")
+        );
+        chip.classList.add("active");
+      });
+    }
+
+    // Fluids chips
+    if (fluidChips) {
+      fluidChips.addEventListener("click", (e) => {
+        const chip = e.target.closest(".chip");
+        if (!chip) return;
+        qsa("#fluidChips .chip").forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+      });
+    }
+
+    // Extra flags
+    if (extraFlags) {
+      extraFlags.addEventListener("click", (e) => {
+        const chip = e.target.closest(".chip");
+        if (!chip) return;
+        chip.classList.toggle("active");
+      });
+    }
+  }
+
+  function updateSurgeryVisibility() {
+    const activeModeBtn = qs("#modeToggle .pill-option.active");
+    const mode = activeModeBtn?.dataset.mode || "appointment";
+    if (mode === "surgery") {
+      surgeryExtrasRow?.classList.remove("hidden");
+    } else {
+      surgeryExtrasRow?.classList.add("hidden");
+    }
+  }
+
+  function setupAdvancedSection() {
+    if (!advancedToggle || !advancedSection) return;
+    advancedToggle.addEventListener("click", () => {
+      const isHidden = advancedSection.classList.contains("hidden");
+      advancedSection.classList.toggle("hidden", !isHidden);
+      advancedToggle.textContent = isHidden
+        ? "▴ Less options"
+        : "▾ More options";
+    });
+  }
+
+  function setupSOAPButtons() {
+    if (generateBtn) {
+      generateBtn.addEventListener("click", () => {
+        generateSOAP();
+      });
+    }
+
+    if (copyFullBtn) {
+      copyFullBtn.addEventListener("click", () => {
+        const fullText = buildFullSOAPString();
+        copyToClipboard(fullText);
+      });
+    }
+
+    if (copyPlanBtn) {
+      copyPlanBtn.addEventListener("click", () => {
+        copyToClipboard(planOutput.value || "");
+      });
+    }
+  }
+
+  function setupCopyMiniButtons() {
+    qsa(".mini-copy-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.dataset.target;
+        const el = qs(`#${targetId}`);
+        if (!el) return;
+        copyToClipboard(el.value || "");
+      });
+    });
+  }
+
+  function buildFullSOAPString() {
+    const subj = subjectiveOutput.value || "";
+    const obj = objectiveOutput.value || "";
+    const assess = assessmentOutput.value || "";
+    const plan = planOutput.value || "";
+
+    return [
+      "Subjective:",
+      subj,
+      "",
+      "Objective:",
+      obj,
+      "",
+      "Assessment:",
+      assess,
+      "",
+      "Plan (including medications dispensed and aftercare):",
+      plan,
+    ].join("\n");
+  }
+
+  function getActiveToggleValue(containerSel, dataAttr, fallback) {
+    const active = qs(`${containerSel} .pill-option.active`);
+    return active ? active.dataset[dataAttr] || fallback : fallback;
+  }
+
+  function getActiveChipValue(containerSel, dataAttr, fallback) {
+    const active = qs(`${containerSel} .chip.active`);
+    return active ? active.dataset[dataAttr] || fallback : fallback;
+  }
+
+  function getFlagsArray() {
+    if (!extraFlags) return [];
+    return qsa("#extraFlags .chip.active").map((chip) => chip.dataset.flag);
+  }
+
+  async function generateSOAP() {
+    const mode = getActiveToggleValue("#modeToggle", "mode", "appointment");
+    const profile = getActiveToggleValue(
+      "#profileToggle",
+      "profile",
+      "client"
+    );
+    const accuracy = getActiveToggleValue(
+      "#accuracyToggle",
+      "accuracy",
+      "medium"
+    );
+    const species = speciesSelect?.value || "dog";
+
+    const bloodworkStatus = getActiveChipValue(
+      "#bloodworkChips",
+      "bw",
+      "none"
+    );
+    const fluidsStatus = getActiveChipValue(
+      "#fluidChips",
+      "fluids",
+      "unspecified"
+    );
+
+    const flags = getFlagsArray();
+
+    const payload = {
+      caseId: currentCaseId,
+      caseLabel: caseLabelInput.value || "",
+      mode,
+      profile,
+      accuracy,
+      species,
+      bloodworkStatus,
+      fluidsStatus,
+      flags,
+      clinicalNotes: clinicalNotesInput.value || "",
+      surgeryExtras:
+        mode === "surgery" ? surgeryExtrasInput.value || "" : "",
+    };
+
+    generateBtn.disabled = true;
+    generateBtn.textContent = "Generating…";
+
+    try {
+      const res = await fetch("/api/generate-soap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("SOAP generation error:", errData);
+        alert(
+          "Error generating SOAP. Check server logs or OpenAI key if this keeps happening."
+        );
         return;
       }
-      empty.style.display = 'none';
-      attachments.forEach((att) => {
-        const div = document.createElement('div');
-        div.className = 'attachment-thumb';
-        const img = document.createElement('img');
-        img.src = att.dataUrl;
-        div.appendChild(img);
-        list.appendChild(div);
-      });
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-}
 
-// When user chooses a file (desktop/iPad/phone), open blur modal
-function wireFileInput() {
-  const input = qs('#desktopFiles');
-  input.addEventListener('change', () => {
-    const file = input.files && input.files[0];
-    if (!file) return;
+      const data = await res.json();
+      const soap = data.soap || {};
+
+      subjectiveOutput.value = soap.subjective || "";
+      objectiveOutput.value = soap.objective || "";
+      assessmentOutput.value = soap.assessment || "";
+
+      // Combine plan + meds + aftercare into one big PLAN box
+      const basePlan = (soap.plan || "").trim();
+      const meds = (soap.medications_dispensed || "").trim();
+      const aftercare = (soap.aftercare || "").trim();
+
+      let combinedPlan = basePlan;
+      if (meds) {
+        combinedPlan +=
+          (combinedPlan ? "\n\n" : "") +
+          "Medications Dispensed:\n" +
+          meds;
+      }
+      if (aftercare) {
+        combinedPlan +=
+          (combinedPlan ? "\n\n" : "") +
+          "Aftercare:\n" +
+          aftercare;
+      }
+      planOutput.value = combinedPlan;
+    } catch (err) {
+      console.error("Error calling /api/generate-soap:", err);
+      alert("Network or server error while generating SOAP.");
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.textContent = "Generate SOAP";
+    }
+  }
+
+  function copyToClipboard(text) {
+    if (!navigator.clipboard) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      return;
+    }
+    navigator.clipboard.writeText(text).catch((err) => {
+      console.warn("Clipboard error:", err);
+    });
+  }
+
+  /* ---------------- ATTACHMENTS & QR ---------------- */
+
+  function setupAttachments() {
+    // Show caseId
+    if (caseIdLabel) caseIdLabel.textContent = currentCaseId;
+
+    // Initial fetch
+    loadAttachments();
+
+    // Refresh
+    if (refreshAttachmentsBtn) {
+      refreshAttachmentsBtn.addEventListener("click", loadAttachments);
+    }
+
+    // QR
+    if (toggleQrBtn) {
+      toggleQrBtn.addEventListener("click", () => {
+        const isHidden = qrContainer.classList.contains("hidden");
+        if (isHidden) {
+          buildQrCode();
+        }
+        qrContainer.classList.toggle("hidden", !isHidden);
+        toggleQrBtn.textContent = isHidden ? "Hide QR" : "Show QR";
+      });
+    }
+
+    // Redaction from desktop file
+    if (openRedactFromFileBtn && fileInput) {
+      openRedactFromFileBtn.addEventListener("click", () => {
+        if (!fileInput.files || !fileInput.files[0]) {
+          alert("Please choose an image file first.");
+          return;
+        }
+        const file = fileInput.files[0];
+        pendingImageSource = "desktop";
+        openRedactionForFile(file);
+      });
+    }
+
+    // Redaction modal controls
+    if (closeRedactBtn) {
+      closeRedactBtn.addEventListener("click", closeRedactModal);
+    }
+    if (clearRedactBtn) {
+      clearRedactBtn.addEventListener("click", clearRectangles);
+    }
+    if (saveRedactBtn) {
+      saveRedactBtn.addEventListener("click", saveRedactedImage);
+    }
+  }
+
+  async function loadAttachments() {
+    try {
+      const res = await fetch(`/api/cases/${encodeURIComponent(currentCaseId)}/attachments`);
+      if (!res.ok) {
+        console.error("Failed to load attachments");
+        return;
+      }
+      const data = await res.json();
+      const attachments = data.attachments || [];
+      attachmentsList.innerHTML = "";
+      attachments.forEach((att) => {
+        const img = document.createElement("img");
+        img.src = att.dataUrl;
+        img.alt = "Attachment";
+        attachmentsList.appendChild(img);
+      });
+    } catch (err) {
+      console.error("Error loading attachments:", err);
+    }
+  }
+
+  function buildQrCode() {
+    if (!qrContainer) return;
+    qrContainer.innerHTML = "";
+    // Same index route, but capture mode
+    const captureUrl = `${window.location.origin}${window.location.pathname}?capture=1&caseId=${encodeURIComponent(
+      currentCaseId
+    )}`;
+    new QRCode(qrContainer, {
+      text: captureUrl,
+      width: 120,
+      height: 120,
+      correctLevel: QRCode.CorrectLevel.L,
+    });
+  }
+
+  /* ---------------- CAPTURE MODE (PHONE) ---------------- */
+
+  function initCaptureMode() {
+    captureRoot.classList.remove("hidden");
+    appMain.classList.add("hidden");
+
+    if (!caseIdFromUrl) {
+      const newUrl = `${window.location.origin}${window.location.pathname}?capture=1&caseId=${encodeURIComponent(
+        currentCaseId
+      )}`;
+      window.history.replaceState({}, "", newUrl);
+    }
+
+    if (captureCaseIdLabel) captureCaseIdLabel.textContent = currentCaseId;
+
+    // Capture redaction
+    if (openRedactFromCaptureBtn && captureFileInput) {
+      openRedactFromCaptureBtn.addEventListener("click", () => {
+        if (!captureFileInput.files || !captureFileInput.files[0]) {
+          alert("Take or choose a photo first.");
+          return;
+        }
+        const file = captureFileInput.files[0];
+        pendingImageSource = "capture";
+        openRedactionForFile(file);
+      });
+    }
+
+    // Redaction modal controls shared
+    if (closeRedactBtn) {
+      closeRedactBtn.addEventListener("click", closeRedactModal);
+    }
+    if (clearRedactBtn) {
+      clearRedactBtn.addEventListener("click", clearRectangles);
+    }
+    if (saveRedactBtn) {
+      saveRedactBtn.addEventListener("click", saveRedactedImage);
+    }
+  }
+
+  /* ---------------- REDACTION CANVAS ---------------- */
+
+  function openRedactionForFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      openBlurModal(e.target.result);
+      const imgSrc = e.target.result;
+      imageObj = new Image();
+      imageObj.onload = () => {
+        showRedactModal();
+        initCanvasWithImage(imageObj);
+      };
+      imageObj.src = imgSrc;
     };
     reader.readAsDataURL(file);
-    // reset input so they can pick same file again if needed
-    input.value = '';
-  });
-}
-
-// ---- SOAP generation ----
-
-async function generateSoap() {
-  qs('#generatorStatus').textContent = 'Generating SOAP…';
-  qs('#generatorStatus').style.color = '#e5e7eb';
-
-  const bwRadio = document.querySelector('input[name="bw"]:checked');
-  const payload = {
-    caseId: currentCaseId,
-    mode: currentCaseType,
-    species: qs('#species').value,
-    profile: qs('#profile').value,
-    accuracyMode: qs('#accuracyMode').value,
-    caseLabel: qs('#caseLabel').value,
-    reason: qs('#reason').value,
-    history: qs('#history').value,
-    objective: qs('#objective').value,
-    diagnostics: qs('#diagnostics').value,
-    assessmentNote: qs('#assessmentNote').value,
-    planSummary: qs('#planSummary').value,
-    surgery: currentCaseType === 'surgery'
-      ? {
-          template: qs('#surgeryTemplate').value,
-          age: qs('#age').value,
-          weightKg: qs('#weight').value,
-          bloodworkStatus: bwRadio ? bwRadio.value : 'declined',
-          bloodworkDetails: qs('#bwDetails').value,
-          ivCatheterPlaced: qs('#ivPlaced').checked,
-          ivGauge: qs('#ivGauge').value,
-          ivSite: qs('#ivSite').value,
-          ivSide: qs('#ivSide').value,
-          fluidsUsed: qs('#fluidsUsed').checked,
-          fluidsDeclined: qs('#fluidsDeclined').checked,
-          ownerUnderstandsFluids: qs('#ownerUnderstandsFluids').checked,
-          fluidRate: qs('#fluidRate').value,
-          premedSummary: qs('#premedSummary').value,
-          inductionSummary: qs('#inductionSummary').value,
-          intraOpSummary: qs('#intraOpSummary').value,
-          postOpInjectables: qs('#postOpInjectables').value,
-          takeHomeMeds: qs('#takeHomeMeds').value,
-          surgSubjective: qs('#surgSubjective').value,
-          surgObjective: qs('#surgObjective').value,
-          surgIntraOp: qs('#surgIntraOp').value,
-          surgAftercare: qs('#surgAftercare').value
-        }
-      : null
-  };
-
-  try {
-    const res = await fetch('/api/generate-soap', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error generating SOAP');
-
-    const soap = data.soap || {};
-    qs('#subjectiveOut').value = soap.subjective || '';
-    qs('#objectiveOut').value = soap.objective || '';
-    qs('#assessmentOut').value = soap.assessment || '';
-    qs('#planOut').value = soap.plan || '';
-    qs('#medsOut').value = soap.medications_dispensed || '';
-    qs('#aftercareOut').value = soap.aftercare || '';
-
-    qs('#generatorStatus').textContent =
-      'SOAP generated. Review before pasting into Avimark.';
-    qs('#generatorStatus').style.color = '#6ee7b7';
-  } catch (err) {
-    console.error(err);
-    qs('#generatorStatus').textContent =
-      'Error generating SOAP. Check console/logs.';
-    qs('#generatorStatus').style.color = '#fca5a5';
   }
-}
 
-// ---- Copy helpers ----
+  function showRedactModal() {
+    if (!redactModal) return;
+    redactModal.classList.remove("hidden");
+    if (!canvasCtx) {
+      canvasCtx = redactCanvas.getContext("2d");
+      setupCanvasEvents();
+    }
+    rectangles = [];
+  }
 
-function copyFromId(id) {
-  const el = qs('#' + id);
-  if (!el) return;
-  el.select();
-  el.setSelectionRange(0, 99999);
-  document.execCommand('copy');
-}
+  function closeRedactModal() {
+    if (!redactModal) return;
+    redactModal.classList.add("hidden");
+    rectangles = [];
+    imageObj = null;
 
-function wireCopyButtons() {
-  qsa('.copy-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.copy;
-      copyFromId(id);
+    if (pendingImageSource === "desktop" && fileInput) {
+      fileInput.value = "";
+    }
+    if (pendingImageSource === "capture" && captureFileInput) {
+      captureFileInput.value = "";
+    }
+    pendingImageSource = null;
+  }
+
+  function initCanvasWithImage(img) {
+    if (!redactCanvas || !canvasCtx) return;
+    // Fit image into canvas while preserving aspect ratio
+    const maxWidth = redactModal
+      ? redactModal.querySelector(".modal-body").clientWidth - 16
+      : window.innerWidth - 40;
+    const maxHeight = window.innerHeight * 0.6;
+
+    let drawWidth = img.width;
+    let drawHeight = img.height;
+    const widthRatio = maxWidth / img.width;
+    const heightRatio = maxHeight / img.height;
+    const scale = Math.min(widthRatio, heightRatio, 1);
+
+    drawWidth = img.width * scale;
+    drawHeight = img.height * scale;
+
+    redactCanvas.width = drawWidth;
+    redactCanvas.height = drawHeight;
+
+    canvasCtx.clearRect(0, 0, drawWidth, drawHeight);
+    canvasCtx.drawImage(img, 0, 0, drawWidth, drawHeight);
+  }
+
+  function setupCanvasEvents() {
+    const startDraw = (clientX, clientY) => {
+      const rect = redactCanvas.getBoundingClientRect();
+      startX = clientX - rect.left;
+      startY = clientY - rect.top;
+      drawing = true;
+    };
+
+    const moveDraw = (clientX, clientY) => {
+      if (!drawing || !imageObj) return;
+      const rect = redactCanvas.getBoundingClientRect();
+      const currentX = clientX - rect.left;
+      const currentY = clientY - rect.top;
+      redrawCanvasWithRect(currentX, currentY);
+    };
+
+    const endDraw = (clientX, clientY) => {
+      if (!drawing || !imageObj) return;
+      drawing = false;
+      const rect = redactCanvas.getBoundingClientRect();
+      const endX = clientX - rect.left;
+      const endY = clientY - rect.top;
+      const x = Math.min(startX, endX);
+      const y = Math.min(startY, endY);
+      const w = Math.abs(endX - startX);
+      const h = Math.abs(endY - startY);
+      if (w > 4 && h > 4) {
+        rectangles.push({ x, y, w, h });
+        redrawCanvasBase();
+        drawAllRectangles();
+      }
+    };
+
+    redactCanvas.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      startDraw(e.clientX, e.clientY);
     });
-  });
-
-  qs('#copyFullSoap').addEventListener('click', () => {
-    const full =
-      'Subjective:\n' +
-      qs('#subjectiveOut').value +
-      '\n\nObjective:\n' +
-      qs('#objectiveOut').value +
-      '\n\nAssessment:\n' +
-      qs('#assessmentOut').value +
-      '\n\nPlan:\n' +
-      qs('#planOut').value +
-      '\n\nMedications Dispensed:\n' +
-      qs('#medsOut').value +
-      '\n\nAftercare:\n' +
-      qs('#aftercareOut').value;
-    navigator.clipboard.writeText(full).catch(() => {
-      // fallback
-      const tmp = document.createElement('textarea');
-      tmp.value = full;
-      document.body.appendChild(tmp);
-      tmp.select();
-      document.execCommand('copy');
-      document.body.removeChild(tmp);
+    redactCanvas.addEventListener("mousemove", (e) => {
+      e.preventDefault();
+      moveDraw(e.clientX, e.clientY);
     });
-  });
-
-  qs('#copyPlanBundle').addEventListener('click', () => {
-    const bundle =
-      'Plan:\n' +
-      qs('#planOut').value +
-      '\n\nMedications Dispensed:\n' +
-      qs('#medsOut').value +
-      '\n\nAftercare:\n' +
-      qs('#aftercareOut').value;
-    navigator.clipboard.writeText(bundle).catch(() => {
-      const tmp = document.createElement('textarea');
-      tmp.value = bundle;
-      document.body.appendChild(tmp);
-      tmp.select();
-      document.execCommand('copy');
-      document.body.removeChild(tmp);
+    redactCanvas.addEventListener("mouseup", (e) => {
+      e.preventDefault();
+      endDraw(e.clientX, e.clientY);
     });
-  });
-}
+    redactCanvas.addEventListener("mouseleave", (e) => {
+      if (drawing) {
+        e.preventDefault();
+        drawing = false;
+        redrawCanvasBase();
+        drawAllRectangles();
+      }
+    });
 
-// ---- Feedback (local only) ----
-
-function wireFeedback() {
-  qs('#saveFeedback').addEventListener('click', () => {
-    const txt = qs('#feedbackText').value.trim();
-    if (!txt) return;
-    const prev =
-      JSON.parse(localStorage.getItem('lohitSoapFeedback') || '[]') || [];
-    prev.push({ at: new Date().toISOString(), text: txt });
-    localStorage.setItem('lohitSoapFeedback', JSON.stringify(prev));
-    qs('#feedbackText').value = '';
-    alert('Feedback saved locally on this device.');
-  });
-}
-
-// ---- Init ----
-
-function initEvents() {
-  // case type toggle
-  qsa('#caseTypeToggle .pill').forEach((btn) => {
-    btn.addEventListener('click', () => setCaseType(btn.dataset.type));
-  });
-
-  // show QR
-  qs('#showQrBtn').addEventListener('click', (e) => {
-    e.preventDefault();
-    renderQr();
-  });
-
-  qs('#refreshAttachments').addEventListener('click', () => {
-    refreshAttachments();
-  });
-
-  // privacy badge – for now just a visual nudge
-  qs('#privacyBadge').addEventListener('click', () => {
-    alert(
-      'Reminder: Always blur microchips, owner names, phone numbers, addresses, Lab IDs, and any IDs before saving.'
+    // Touch support
+    redactCanvas.addEventListener(
+      "touchstart",
+      (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        startDraw(touch.clientX, touch.clientY);
+      },
+      { passive: false }
     );
-  });
+    redactCanvas.addEventListener(
+      "touchmove",
+      (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        moveDraw(touch.clientX, touch.clientY);
+      },
+      { passive: false }
+    );
+    redactCanvas.addEventListener(
+      "touchend",
+      (e) => {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        endDraw(touch.clientX, touch.clientY);
+      },
+      { passive: false }
+    );
+  }
 
-  qs('#generateSoap').addEventListener('click', () => {
-    generateSoap();
-  });
+  function redrawCanvasBase() {
+    if (!canvasCtx || !imageObj) return;
+    canvasCtx.clearRect(0, 0, redactCanvas.width, redactCanvas.height);
+    canvasCtx.drawImage(
+      imageObj,
+      0,
+      0,
+      redactCanvas.width,
+      redactCanvas.height
+    );
+  }
 
-  wireFileInput();
-  wireBlurCanvas();
-  wireCopyButtons();
-  wireFeedback();
-}
+  function drawAllRectangles() {
+    if (!canvasCtx) return;
+    canvasCtx.fillStyle = "#000000";
+    rectangles.forEach((r) => {
+      canvasCtx.fillRect(r.x, r.y, r.w, r.h);
+    });
+  }
 
-document.addEventListener('DOMContentLoaded', () => {
-  initCase();
-  initEvents();
-  setCaseType('appointment');
-});
+  function redrawCanvasWithRect(currentX, currentY) {
+    redrawCanvasBase();
+    drawAllRectangles();
+
+    const x = Math.min(startX, currentX);
+    const y = Math.min(startY, currentY);
+    const w = Math.abs(currentX - startX);
+    const h = Math.abs(currentY - startY);
+
+    canvasCtx.fillStyle = "rgba(15, 23, 42, 0.4)";
+    canvasCtx.fillRect(x, y, w, h);
+  }
+
+  function clearRectangles() {
+    rectangles = [];
+    if (imageObj) {
+      redrawCanvasBase();
+    }
+  }
+
+  async function saveRedactedImage() {
+    if (!canvasCtx) return;
+    const dataUrl = redactCanvas.toDataURL("image/png");
+
+    try {
+      const res = await fetch(
+        `/api/cases/${encodeURIComponent(currentCaseId)}/attachments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dataUrl }),
+        }
+      );
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("Error saving redacted image:", errData);
+        alert("Error saving redacted image.");
+        return;
+      }
+      if (!isCaptureMode) {
+        await loadAttachments();
+      }
+      closeRedactModal();
+    } catch (err) {
+      console.error("Error saving redacted image:", err);
+      alert("Network or server error while saving image.");
+    }
+  }
+})();
