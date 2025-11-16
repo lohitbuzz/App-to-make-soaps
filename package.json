@@ -1,7 +1,7 @@
 {
   "name": "lohit-soap-app",
-  "version": "1.4.0",
-  "description": "Lohit SOAP App v1.4 - Appointment & Surgery SOAPs + QR phone capture",
+  "version": "1.4.1",
+  "description": "Lohit SOAP App - Appointment & Surgery SOAPs with attachments and capture",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
