@@ -1,241 +1,195 @@
-// src/server.js
-import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import dotenv from "dotenv";
-import OpenAI from "openai";
+// Lohit SOAP App v1.4 server
+// CommonJS, no dotenv, designed for Render
 
-// Load environment variables from .env
-dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require('express');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// OpenAI client
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
-const ASSISTANT_ID = process.env.ASSISTANT_ID || null;
-const MASTER_RULES = process.env.MASTER_RULES || "";
-
-// Log assistant info (for sanity check in Render logs)
-console.log(`Lohit SOAP App v1.4 starting on port ${PORT}`);
-if (ASSISTANT_ID) {
-  console.log(`Assistant ID configured: ${ASSISTANT_ID}`);
-} else {
-  console.log("Assistant ID not set yet (ASSISTANT_ID env var empty).");
-}
+// In-memory case store for attachments (resets when server restarts)
+const cases = {};
 
 // Middleware
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-// Serve static assets from /public
-app.use(express.static(path.join(__dirname, "public")));
+// Static – serve index.html & assets from root
+app.use(express.static(__dirname));
 
-// Root route → send /public/index.html
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+// ---- ROUTES ----
+
+// Root – always send index.html (handles both main + capture modes via query)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-/* ------------------------------------------------------------------ */
-/*  API: SOAP GENERATOR                                               */
-/* ------------------------------------------------------------------ */
+// Get attachments for a case
+app.get('/api/cases/:caseId/attachments', (req, res) => {
+  const { caseId } = req.params;
+  if (!caseId) {
+    return res.status(400).json({ error: 'Missing caseId' });
+  }
+  const record = cases[caseId] || { attachments: [] };
+  res.json({ attachments: record.attachments });
+});
 
-app.post("/api/soap", async (req, res) => {
+// Add a redacted attachment (data URL) for a case
+app.post('/api/cases/:caseId/attachments', (req, res) => {
+  const { caseId } = req.params;
+  const { dataUrl } = req.body;
+
+  if (!caseId || !dataUrl) {
+    return res.status(400).json({ error: 'caseId and dataUrl are required' });
+  }
+
+  if (!cases[caseId]) {
+    cases[caseId] = { attachments: [] };
+  }
+
+  // Basic safety: only allow data URLs
+  if (!dataUrl.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'Invalid image format' });
+  }
+
+  cases[caseId].attachments.push({
+    id: Date.now().toString(),
+    dataUrl
+  });
+
+  res.json({ ok: true });
+});
+
+// SOAP generator – calls OpenAI and returns structured SOAP sections
+app.post('/api/generate-soap', async (req, res) => {
   try {
-    const {
-      caseLabel,
-      type,
-      template,
-      reason,
-      notes,
-      accuracy,
-      species
-    } = req.body || {};
+    const apiKey =
+      process.env.OPENAI_API_KEY ||
+      process.env.OPENAI_APIKEY ||
+      process.env.OPENAI_KEY;
 
-    const accuracyLabel = accuracy || "Medium";
+    if (!apiKey) {
+      return res.status(500).json({
+        error:
+          'OPENAI_API_KEY is not set in Render environment variables. Add it and redeploy.'
+      });
+    }
+
+    const assistantId = process.env.OPENAI_ASSISTANT_ID || null;
+    if (assistantId) {
+      console.log('Assistant ID configured (not used directly yet).');
+    } else {
+      console.log('Assistant ID not set (OPENAI_ASSISTANT_ID env var empty).');
+    }
+
+    const payload = req.body || {};
 
     const systemPrompt = `
-You are the Lohit SOAP App, generating Avimark-compatible SOAP notes for a small-animal veterinary clinic.
+You are the backend brain for "Lohit SOAP App", a veterinary SOAP generator.
+You receive structured intake JSON from the web app and MUST output a single JSON object.
 
-Follow these MASTER RULES exactly (if present):
+ALWAYS follow these clinic rules:
 
-${MASTER_RULES}
+- Format for surgeries: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare.
+- Subjective: concise, owner concerns + presenting problem only.
+- Objective: full PE body systems paragraph style (General, Vitals if provided, Eyes/Ears/Oral/Nose/Resp/CV/Abdomen/Urogenital/MSK/Neuro/Integ/Lymphatic). 
+  Use ONLY data given; if not provided, write "Not specifically documented, within normal limits unless otherwise noted."
+- Assessment: problem list and overall assessment (e.g. "Healthy for spay"). Interpret diagnostics here, NOT in Objective.
+- Plan (for surgeries) MUST be ordered exactly:
+  1) IV Catheter / Fluids
+  2) Pre-medications
+  3) Induction / Maintenance
+  4) Surgical Prep
+  5) Surgical Procedure
+  6) Intra-op Medications
+  7) Recovery
+  8) Medications Dispensed
+  9) Aftercare
+  Within Plan, you can combine 8) + 9) with brief phrases but keep headings clear.
+- Medications Dispensed: list only take-home meds with name, concentration in [brackets], dose, route, and duration (no exact clock times).
+- Aftercare: activity restriction, incision monitoring, e-collar, recheck, and any special notes.
+- For bloodwork/diagnostics: raw values/summaries live in Objective; the meaning lives in Assessment.
+- Do NOT invent vitals, drug names, doses, or diagnostics that were not hinted at. If something is missing, leave it generic (e.g. "See anesthesia sheet for full details") rather than hallucinating.
+- Output MUST be valid JSON with these exact top-level keys:
+  {
+    "subjective": "...",
+    "objective": "...",
+    "assessment": "...",
+    "plan": "...",
+    "medications_dispensed": "...",
+    "aftercare": "..."
+  }
+No markdown, no extra commentary, JSON only.
+    `.trim();
 
-Hard rules:
-- Output MUST be pure JSON, no backticks, no extra text.
-- JSON keys: "subjective", "objective", "assessment", "plan", "medications", "aftercare".
-- Values must be single strings suitable for pasting into Avimark.
-- Single spacing only, no blank lines inside sections.
-- Do NOT include medication administration times.
-- When in doubt, be conservative and mention missing information rather than inventing details.
-`;
+    const userContent = JSON.stringify(payload, null, 2);
 
-    const userPrompt = `
-Case label: ${caseLabel || "Not provided"}
-Type: ${type || "Appointment"}
-Species: ${species || "Not provided"}
-Template: ${template || "Not provided"}
-Reason for visit: ${reason || "Not provided"}
-Plan / Notes: ${notes || "Not provided"}
-Accuracy mode: ${accuracyLabel}
-
-Using the MASTER RULES and clinic preferences, generate a complete SOAP in JSON with keys:
-"subjective", "objective", "assessment", "plan", "medications", "aftercare".
-
-If specific information (e.g. bloodwork values, drug doses) is not given, you may:
-- Mention that details were not provided, but
-- Still produce a clinically sensible, conservative template following the clinic's style.
-`;
-
-    const completion = await client.chat.completions.create({
-      model: OPENAI_MODEL,
-      temperature: 0.3,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ]
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-mini',
+        temperature: 0.2,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content:
+              'Here is the structured intake from the SOAP app. Use it to generate the SOAP JSON object:\n\n' +
+              userContent
+          }
+        ]
+      })
     });
 
-    const raw = completion.choices[0]?.message?.content?.trim() || "";
+    const data = await response.json();
 
-    let data;
+    if (!response.ok) {
+      console.error('OpenAI error:', data);
+      return res.status(500).json({
+        error: data.error?.message || 'OpenAI API error'
+      });
+    }
+
+    let content = (data.choices?.[0]?.message?.content || '').trim();
+    let soap;
+
     try {
-      data = JSON.parse(raw);
+      soap = JSON.parse(content);
     } catch (e) {
-      // Fallback: wrap the whole thing in Plan if JSON parsing fails
-      console.error("Failed to parse SOAP JSON, returning fallback:", e);
-      data = {
-        subjective: "Details not provided.",
-        objective: "Details not provided.",
-        assessment: "Details not provided.",
-        plan: raw || "Unable to parse structured response.",
-        medications: "Details not provided.",
-        aftercare: "Details not provided."
+      // Fallback: wrap raw content into objective and leave others mostly empty
+      console.warn('Failed to parse JSON from model, returning fallback.', e);
+      soap = {
+        subjective: '',
+        objective: content,
+        assessment: '',
+        plan: '',
+        medications_dispensed: '',
+        aftercare: ''
       };
     }
 
-    // Ensure all keys exist so the front-end never crashes
-    const safe = {
-      subjective: data.subjective || "Details not provided.",
-      objective: data.objective || "Details not provided.",
-      assessment: data.assessment || "Details not provided.",
-      plan: data.plan || "Details not provided.",
-      medications: data.medications || "Details not provided.",
-      aftercare: data.aftercare || "Details not provided."
+    // Final safety: ensure all keys exist
+    const safeSoap = {
+      subjective: soap.subjective || '',
+      objective: soap.objective || '',
+      assessment: soap.assessment || '',
+      plan: soap.plan || '',
+      medications_dispensed: soap.medications_dispensed || '',
+      aftercare: soap.aftercare || ''
     };
 
-    res.json(safe);
+    res.json({ soap: safeSoap });
   } catch (err) {
-    console.error("Error in /api/soap:", err);
-    res.status(500).json({
-      error: "SOAP generation failed.",
-      details: err.message || String(err)
-    });
+    console.error('Error in /api/generate-soap:', err);
+    res.status(500).json({ error: 'Server error generating SOAP' });
   }
 });
 
-/* ------------------------------------------------------------------ */
-/*  API: TOOLBOX (Bloodwork, Emails, etc.)                            */
-/* ------------------------------------------------------------------ */
-
-app.post("/api/toolbox", async (req, res) => {
-  try {
-    const { mode, clinic, fromName, text } = req.body || {};
-
-    // Stub behaviour with light AI support
-    const baseSystemPrompt = `
-You are the "Toolbox" helper for the Lohit SOAP App.
-
-MASTER RULES (if any):
-
-${MASTER_RULES}
-
-You may be asked to:
-- Summarize or interpret bloodwork.
-- Draft client emails in a professional, friendly tone.
-- Rephrase or clean up clinical notes.
-
-Always:
-- Keep content Avimark-pastable (plain text, no bullet symbols that break Avimark).
-- Avoid including client phone numbers or addresses unless they are already in the prompt.
-`;
-
-    const userPrompt = `
-Mode: ${mode || "Not specified"}
-Clinic: ${clinic || "Not specified"}
-From: ${fromName || "Not specified"}
-
-Input text:
-${text || "None provided"}
-
-Respond with plain text only, no JSON, no markdown.
-`;
-
-    const completion = await client.chat.completions.create({
-      model: OPENAI_MODEL,
-      temperature: 0.4,
-      messages: [
-        { role: "system", content: baseSystemPrompt },
-        { role: "user", content: userPrompt }
-      ]
-    });
-
-    const output = completion.choices[0]?.message?.content?.trim() || "";
-
-    res.json({
-      mode: mode || "unknown",
-      clinic: clinic || "",
-      fromName: fromName || "",
-      output
-    });
-  } catch (err) {
-    console.error("Error in /api/toolbox:", err);
-    res.status(500).json({
-      error: "Toolbox processing failed.",
-      details: err.message || String(err)
-    });
-  }
-});
-
-/* ------------------------------------------------------------------ */
-/*  API: FEEDBACK (simple echo / log)                                 */
-/* ------------------------------------------------------------------ */
-
-app.post("/api/feedback", async (req, res) => {
-  try {
-    const { text, tab, context } = req.body || {};
-    console.log("Feedback received:", { tab, text });
-
-    // For now we just acknowledge. Later we can push to Miro / HQ.
-    res.json({
-      status: "ok",
-      message: "Feedback received. Thank you!",
-      echo: {
-        tab: tab || "unknown",
-        context: context || "",
-        text: text || ""
-      }
-    });
-  } catch (err) {
-    console.error("Error in /api/feedback:", err);
-    res.status(500).json({
-      error: "Feedback endpoint failed.",
-      details: err.message || String(err)
-    });
-  }
-});
-
-/* ------------------------------------------------------------------ */
-/*  START SERVER                                                      */
-/* ------------------------------------------------------------------ */
-
+// ---- START SERVER ----
 app.listen(PORT, () => {
   console.log(`Lohit SOAP App v1.4 listening on port ${PORT}`);
 });
