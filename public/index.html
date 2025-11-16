@@ -2,477 +2,991 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
-  <title>Lohit SOAP App (v1.3)</title>
+  <title>Lohit SOAP App v1.4</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <div class="app-shell">
-    <!-- HEADER -->
-    <header class="top-header">
-      <div class="title-block">
-        <h1>Lohit SOAP App</h1>
-        <span class="beta-tag">v1.3</span>
-      </div>
-      <div class="mode-label" id="modeLabel">Mode: SOAP Generator</div>
-      <nav class="nav-tabs">
-        <button class="nav-btn" onclick="showTab('soap')">SOAP</button>
-        <button class="nav-btn" onclick="showTab('toolbox')">Toolbox</button>
-        <button class="nav-btn" onclick="showTab('feedback')">Feedback</button>
-      </nav>
-    </header>
+  <header class="app-header">
+    <h1>Lohit SOAP App <span class="badge">v1.4</span></h1>
+    <div class="header-subtitle">Appointment &amp; Surgery SOAPs • Attachments • QR Phone Capture</div>
+  </header>
 
-    <!-- MAIN CONTENT -->
-    <main class="main-layout">
-      <!-- SOAP TAB -->
-      <section id="soap" class="tab tab-active">
-        <div class="card">
-          <h2>SOAP Generator</h2>
-          <p class="subtitle">
-            Minimal inputs on top, Avimark-ready SOAP below.
-          </p>
+  <main class="main">
+    <nav class="tabs">
+      <button class="tab-button active" data-tab="soap-tab">SOAP Generator</button>
+      <button class="tab-button" data-tab="toolbox-tab">Toolbox</button>
+      <button class="tab-button" data-tab="feedback-tab">Feedback</button>
+    </nav>
 
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="caseLabel">Case Label (optional)</label>
-              <input
-                id="caseLabel"
-                class="text-input"
-                placeholder="e.g., Bella spay, GI upset, post-op check"
-              />
+    <!-- SOAP TAB -->
+    <section id="soap-tab" class="tab-panel active">
+      <div class="panel-grid">
+        <!-- LEFT: INPUT -->
+        <section class="card">
+          <h2>Case Intake</h2>
+
+          <!-- Type toggle -->
+          <div class="field-row">
+            <label>Case type</label>
+            <div class="pill-toggle">
+              <button type="button" class="pill active" data-type="appointment">Appointment</button>
+              <button type="button" class="pill" data-type="surgery">Surgery</button>
+            </div>
+          </div>
+
+          <!-- Shared basics -->
+          <div class="field-row">
+            <label for="caseLabel">Case label / Patient name (optional)</label>
+            <input id="caseLabel" type="text" placeholder="e.g. Luna – rescue cat spay" />
+          </div>
+
+          <!-- Appointment fields -->
+          <div id="appointment-fields">
+            <div class="field-row">
+              <label for="apptReason">Reason for visit</label>
+              <input id="apptReason" type="text" placeholder="e.g. vomiting, wellness exam" />
             </div>
 
-            <div class="form-group">
-              <label for="soapType">Type</label>
-              <select id="soapType" class="select-input">
-                <option value="appointment">Appointment</option>
-                <option value="surgery">Surgery</option>
-                <option value="dental">Dental</option>
+            <div class="field-row">
+              <label for="apptHistory">History / Subjective</label>
+              <textarea id="apptHistory" rows="3"
+                placeholder="Owner-reported history, duration, appetite, CSVD, meds..."></textarea>
+            </div>
+
+            <div class="field-row">
+              <label for="apptObjective">Objective / PE (data only)</label>
+              <textarea id="apptObjective" rows="3"
+                placeholder="PE findings (TPR, BCS, body systems). Data only; no interpretation."></textarea>
+            </div>
+
+            <div class="field-row">
+              <label for="apptDiagnostics">Diagnostics (data only)</label>
+              <textarea id="apptDiagnostics" rows="3"
+                placeholder="Bloodwork, UA, imaging results as data only (no interpretation)."></textarea>
+            </div>
+
+            <div class="field-row">
+              <label for="apptAssessment">Assessment</label>
+              <textarea id="apptAssessment" rows="3"
+                placeholder="Problem list, differentials, interpretations of diagnostics."></textarea>
+            </div>
+
+            <div class="field-row">
+              <label for="apptPlan">Plan</label>
+              <textarea id="apptPlan" rows="4"
+                placeholder="Plan, treatments, rechecks, meds, client comm."></textarea>
+            </div>
+          </div>
+
+          <!-- Surgery fields -->
+          <div id="surgery-fields" class="hidden">
+            <div class="field-row split">
+              <div>
+                <label for="species">Species</label>
+                <select id="species">
+                  <option value="dog">Dog</option>
+                  <option value="cat">Cat</option>
+                </select>
+              </div>
+              <div>
+                <label for="profile">Profile</label>
+                <select id="profile">
+                  <option value="client">Client</option>
+                  <option value="rescue">Rescue</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <label for="surgeryTemplate">Surgery template</label>
+              <select id="surgeryTemplate">
+                <option value="dog_spay_client">Dog spay – client</option>
+                <option value="dog_neuter_client">Dog neuter – client</option>
+                <option value="cat_spay_client">Cat spay – client</option>
+                <option value="cat_neuter_client">Cat neuter – client</option>
+                <option value="dog_spay_rescue">Dog spay – rescue</option>
+                <option value="dog_neuter_rescue">Dog neuter – rescue</option>
+                <option value="cat_spay_rescue">Cat spay – rescue</option>
+                <option value="cat_neuter_rescue">Cat neuter – rescue</option>
+                <!-- room for pyometra, cystotomy, etc later -->
               </select>
             </div>
 
-            <div class="form-group">
-              <label for="accuracyMode">Accuracy mode</label>
-              <select id="accuracyMode" class="select-input">
-                <option value="strict">Strict (no invention)</option>
-                <option value="medium" selected>Medium</option>
-                <option value="liberal">Liberal (templated normals ok)</option>
-              </select>
-            </div>
-
-            <div class="form-group form-group-full">
-              <label for="soapTemplate">Template (hint only)</label>
-              <select id="soapTemplate" class="select-input">
-                <option value="">General</option>
-                <option>GI Upset</option>
-                <option>Derm/Otitis</option>
-                <option>Respiratory / Cough</option>
-                <option>Lameness</option>
-                <option>Wellness</option>
-                <option>Canine Neuter</option>
-                <option>Canine Spay</option>
-                <option>Dental – COHAT</option>
-                <option>Dental – COHAT (no radiographs)</option>
-                <option>Pyometra</option>
-                <option>Exploratory</option>
-                <option>Enterotomy</option>
-                <option>Gastrotomy</option>
-                <option>Gastropexy</option>
-                <option>Feline Unblock</option>
-                <option>Cystotomy</option>
-              </select>
-            </div>
-
-            <div class="form-group form-group-full">
-              <label for="reason">Reason for Visit</label>
-              <textarea
-                id="reason"
-                class="textarea-input"
-                placeholder="Signalment + main complaint + duration..."
-              ></textarea>
-            </div>
-
-            <div class="form-group form-group-full">
-              <label for="planInput">Plan / Notes</label>
-              <textarea
-                id="planInput"
-                class="textarea-input"
-                placeholder="Key treatments, diagnostics done or planned, any extra context..."
-              ></textarea>
-            </div>
-          </div>
-
-          <div class="button-row">
-            <button
-              id="btnGenerateSoap"
-              class="primary-btn"
-              onclick="generateSOAP()"
-            >
-              Generate SOAP
-            </button>
-          </div>
-        </div>
-
-        <div class="card card-output">
-          <div class="output-header-row">
-            <div>
-              <h3>SOAP Output</h3>
-              <p class="subtitle">
-                Copy sections directly into Avimark. Text-only, single-spaced.
-              </p>
-            </div>
-            <div class="copy-row">
-              <button class="copy-btn" onclick="copyFullSOAP()">
-                Copy Full SOAP
-              </button>
-              <button
-                class="copy-btn"
-                onclick="copyPlanMedsAftercare()"
-              >
-                Copy Plan + Meds + Aftercare
-              </button>
-            </div>
-          </div>
-
-          <div class="output-grid">
-            <div class="output-section">
-              <div class="output-title-row">
-                <h4>Subjective</h4>
-                <button
-                  class="copy-mini-btn"
-                  onclick="copySection('Subjective')"
-                >
-                  Copy
-                </button>
+            <div class="field-row split">
+              <div>
+                <label for="surgeryAge">Age</label>
+                <input id="surgeryAge" type="text" placeholder="e.g. 5m, 2y" />
               </div>
-              <pre id="oSubjective"></pre>
-            </div>
-
-            <div class="output-section">
-              <div class="output-title-row">
-                <h4>Objective</h4>
-                <button
-                  class="copy-mini-btn"
-                  onclick="copySection('Objective')"
-                >
-                  Copy
-                </button>
+              <div>
+                <label for="surgeryWeight">Weight (kg)</label>
+                <input id="surgeryWeight" type="number" step="0.1" />
               </div>
-              <pre id="oObjective"></pre>
             </div>
 
-            <div class="output-section">
-              <div class="output-title-row">
-                <h4>Assessment</h4>
-                <button
-                  class="copy-mini-btn"
-                  onclick="copySection('Assessment')"
-                >
-                  Copy
-                </button>
+            <!-- Bloodwork -->
+            <fieldset class="subcard">
+              <legend>Pre-op bloodwork</legend>
+              <div class="bw-options">
+                <label>
+                  <input type="radio" name="bwStatus" value="declined" />
+                  Declined (owner aware of risks)
+                </label>
+                <label>
+                  <input type="radio" name="bwStatus" value="normal" />
+                  Done – normal
+                </label>
+                <label>
+                  <input type="radio" name="bwStatus" value="abnormal" />
+                  Done – abnormal
+                </label>
               </div>
-              <pre id="oAssessment"></pre>
-            </div>
+              <textarea id="bwDetails" rows="2"
+                placeholder="If abnormal, list key changes as data only (e.g. mild ↑ALT, borderline low PCV)."></textarea>
+            </fieldset>
 
-            <div class="output-section">
-              <div class="output-title-row">
-                <h4>Plan</h4>
-                <button
-                  class="copy-mini-btn"
-                  onclick="copySection('Plan')"
-                >
-                  Copy
-                </button>
+            <!-- Fluids & catheter -->
+            <fieldset class="subcard">
+              <legend>Catheter &amp; fluids</legend>
+              <div class="field-row">
+                <label>
+                  <input type="checkbox" id="ivCatheterPlaced" />
+                  IV catheter placed
+                </label>
               </div>
-              <pre id="oPlan"></pre>
-            </div>
-
-            <div class="output-section">
-              <div class="output-title-row">
-                <h4>Medications Dispensed</h4>
-                <button
-                  class="copy-mini-btn"
-                  onclick="copySection('Medications Dispensed')"
-                >
-                  Copy
-                </button>
-              </div>
-              <pre id="oMeds"></pre>
-            </div>
-
-            <div class="output-section">
-              <div class="output-title-row">
-                <h4>Aftercare</h4>
-                <button
-                  class="copy-mini-btn"
-                  onclick="copySection('Aftercare')"
-                >
-                  Copy
-                </button>
-              </div>
-              <pre id="oAftercare"></pre>
-            </div>
-          </div>
-        </div>
-
-        <div class="card refine-card">
-          <h3>Refine this SOAP</h3>
-          <p class="subtitle">
-            Tell the app what to change, and which sections to update.
-          </p>
-
-          <label for="refineFeedback">Feedback</label>
-          <textarea
-            id="refineFeedback"
-            class="textarea-input"
-            placeholder="e.g., Make Plan less wordy, add recheck in 10 days, Aftercare should mention incision monitoring."
-          ></textarea>
-
-          <div class="refine-checkboxes">
-            <label>
-              <input
-                type="checkbox"
-                id="refineSubjective"
-              />
-              Subjective
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                id="refineObjective"
-              />
-              Objective
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                id="refineAssessment"
-                checked
-              />
-              Assessment
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                id="refinePlan"
-                checked
-              />
-              Plan
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                id="refineMeds"
-                checked
-              />
-              Medications
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                id="refineAftercare"
-                checked
-              />
-              Aftercare
-            </label>
-          </div>
-
-          <div class="button-row">
-            <button
-              id="btnRefineSoap"
-              class="primary-btn"
-              onclick="refineSOAP()"
-            >
-              Refine Selected Sections
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- TOOLBOX TAB -->
-      <section id="toolbox" class="tab" style="display:none;">
-        <div class="card">
-          <h2>Toolbox</h2>
-          <p class="subtitle">
-            Quick helpers: bloodwork, differentials, call logs, client emails.
-          </p>
-
-          <div class="form-grid">
-            <div class="form-group form-group-full">
-              <label for="toolboxMode">Mode</label>
-              <select id="toolboxMode" class="select-input">
-                <option value="freeform">Free-form helper</option>
-                <option value="bloodwork">Bloodwork – Objective + Assessment</option>
-                <option value="bloodwork_diffs">
-                  Bloodwork – Assessment + Differentials
-                </option>
-                <option value="client_call">
-                  Client call log (for medical record)
-                </option>
-                <option value="client_email">
-                  Client email (owner-friendly)
-                </option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="toolboxDetail">Detail level</label>
-              <select id="toolboxDetail" class="select-input">
-                <option value="short">Short</option>
-                <option value="standard" selected>Standard</option>
-                <option value="expanded">Expanded</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Case Label (optional)</label>
-              <input
-                id="toolboxLabel"
-                class="text-input"
-                placeholder="e.g., Lilo bloodwork, Max dental follow-up"
-              />
-            </div>
-
-            <div
-              id="toolboxEmailFields"
-              class="form-group form-group-full"
-              style="display:none;"
-            >
-              <div class="email-fields">
-                <div class="form-group">
-                  <label for="toolboxClinic">Clinic</label>
-                  <select id="toolboxClinic" class="select-input">
-                    <option value="">Choose clinic</option>
-                    <option>Simcoe Rossland Animal Hospital</option>
-                    <option>Main Street Markham Animal Clinic</option>
+              <div id="catheterDetails" class="field-row split small">
+                <div>
+                  <label for="catheterGauge">Gauge</label>
+                  <select id="catheterGauge">
+                    <option value="">–</option>
+                    <option value="24G">24G</option>
+                    <option value="22G">22G</option>
+                    <option value="20G">20G</option>
+                    <option value="18G">18G</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label for="toolboxFrom">From (name)</label>
-                  <input
-                    id="toolboxFrom"
-                    class="text-input"
-                    placeholder="e.g., Dr. Lohit Busanelli"
-                  />
+                <div>
+                  <label for="catheterSite">Site</label>
+                  <select id="catheterSite">
+                    <option value="">–</option>
+                    <option value="cephalic">Cephalic</option>
+                    <option value="saphenous">Saphenous</option>
+                    <option value="jugular">Jugular</option>
+                  </select>
                 </div>
+                <div>
+                  <label for="catheterSide">Side</label>
+                  <select id="catheterSide">
+                    <option value="">–</option>
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field-row">
+                <label>
+                  <input type="checkbox" id="fluidsUsed" />
+                  IV fluids used
+                </label>
+                <label>
+                  <input type="checkbox" id="fluidsDeclined" />
+                  IV fluids declined
+                </label>
+              </div>
+              <div class="field-row">
+                <label>
+                  <input type="checkbox" id="fluidsOwnerUnderstands" />
+                  Owner understands risks (when fluids declined)
+                </label>
+              </div>
+              <div id="fluidsRateRow" class="field-row split small">
+                <div>
+                  <label for="fluidsRate">Rate (mL/kg/hr)</label>
+                  <input id="fluidsRate" type="number" step="0.1" placeholder="e.g. 5" />
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- Anesthesia & meds (simplified for now) -->
+            <fieldset class="subcard">
+              <legend>Anesthesia &amp; analgesia (summary)</legend>
+              <div class="field-row">
+                <label for="premedSummary">Premed summary</label>
+                <textarea id="premedSummary" rows="2"
+                  placeholder="e.g. Methadone [10 mg/mL] 0.2 mg/kg IM, Midazolam [5 mg/mL] 0.2 mg/kg IM, Dexmedetomidine [0.5 mg/mL] 0.003 mg/kg IM."></textarea>
+              </div>
+              <div class="field-row">
+                <label for="inductionSummary">Induction &amp; maintenance</label>
+                <textarea id="inductionSummary" rows="2"
+                  placeholder="e.g. Propofol [10 mg/mL] 2–5 mg/kg IV to effect; intubated with size 3.0 ET tube; maintained on isoflurane in oxygen."></textarea>
+              </div>
+              <div class="field-row">
+                <label for="intraopSummary">Intra-op meds / blocks</label>
+                <textarea id="intraopSummary" rows="2"
+                  placeholder="e.g. Lidocaine [20 mg/mL] splash block along subcutaneous layer prior to closure."></textarea>
+              </div>
+              <div class="field-row">
+                <label for="postopInjectableSummary">Post-op injectables</label>
+                <textarea id="postopInjectableSummary" rows="2"
+                  placeholder="e.g. Meloxicam [5 mg/mL] 0.2 mg/kg SQ, Buprenorphine SR [3 mg/mL] 0.24 mL SQ, Atipamezole [5 mg/mL] 0.3 mL IM."></textarea>
+              </div>
+              <div class="field-row">
+                <label for="takehomeMedsSummary">Take-home meds</label>
+                <textarea id="takehomeMedsSummary" rows="2"
+                  placeholder="e.g. Meloxicam [1.3 mg/mL] pre-loaded syringes 0.1 mg/kg PO q24h for 3 days; Gabapentin 100 mg capsules 1 cap PO q8h for 5 days."></textarea>
+              </div>
+            </fieldset>
+
+            <!-- Surgery notes -->
+            <fieldset class="subcard">
+              <legend>Surgery notes</legend>
+              <div class="field-row">
+                <label for="surgerySubjective">Subjective / history</label>
+                <textarea id="surgerySubjective" rows="2"
+                  placeholder="Brief presenting complaint & history (e.g. rescue cat presenting for OVH, limited history, no CSVD)."></textarea>
+              </div>
+              <div class="field-row">
+                <label for="surgeryPE">PE / Objective variations</label>
+                <textarea id="surgeryPE" rows="2"
+                  placeholder="Any PE abnormalities (e.g. deciduous 104 present, small umbilical hernia). Leave blank for normal template PE."></textarea>
+              </div>
+              <div class="field-row">
+                <label for="surgeryProcedure">Procedure details / intra-op findings</label>
+                <textarea id="surgeryProcedure" rows="3"
+                  placeholder="Extra details beyond standard spay/neuter script (e.g. hernia repair, deciduous tooth extraction, friable pedicle...)."></textarea>
+              </div>
+              <div class="field-row">
+                <label for="surgeryAftercareNotes">Extra aftercare notes</label>
+                <textarea id="surgeryAftercareNotes" rows="2"
+                  placeholder="Any extra restrictions or monitoring beyond the standard discharge."></textarea>
+              </div>
+            </fieldset>
+          </div>
+
+          <!-- Attachments -->
+          <section class="subcard">
+            <div class="attachments-header">
+              <h3>Attachments (anesthesia sheets, labs, etc.)</h3>
+              <div class="attachments-actions">
+                <label class="btn-secondary">
+                  + Add from desktop
+                  <input id="desktopAttachmentInput" type="file" multiple accept="image/*,.pdf" hidden />
+                </label>
+                <button type="button" class="btn-secondary" id="openQrBtn">📷 Open phone capture (QR)</button>
               </div>
             </div>
 
-            <div class="form-group form-group-full">
-              <label for="toolboxInput">
-                Enter notes or paste screenshot text
-              </label>
-              <textarea
-                id="toolboxInput"
-                class="textarea-input"
-                placeholder="Paste bloodwork values, lab summary, or any notes here..."
-              ></textarea>
+            <div id="qrContainer" class="qr-container hidden">
+              <canvas id="qrCanvas"></canvas>
+              <p class="qr-hint">Scan this QR code with your phone camera to open the capture page for this case.</p>
             </div>
+
+            <ul id="attachmentsList" class="attachments-list"></ul>
+          </section>
+
+          <button type="button" class="btn-primary" id="generateBtn">Generate SOAP</button>
+          <p id="statusMsg" class="status-msg"></p>
+        </section>
+
+        <!-- RIGHT: OUTPUT -->
+        <section class="card">
+          <h2>SOAP Output</h2>
+
+          <div class="copy-buttons-row">
+            <button type="button" class="btn-secondary" data-copy="full">Copy full SOAP</button>
+            <button type="button" class="btn-secondary" data-copy="plan-meds-aftercare">Copy Plan + Meds + Aftercare</button>
           </div>
 
-          <div class="button-row">
-            <button
-              id="btnToolbox"
-              class="primary-btn"
-              onclick="processToolbox()"
-            >
-              Process
-            </button>
+          <div class="soap-section">
+            <div class="soap-header">
+              <h3>Subjective</h3>
+              <button type="button" class="mini-copy" data-copy="subjective">Copy</button>
+            </div>
+            <textarea id="soapSubjective" rows="3"></textarea>
           </div>
-        </div>
 
-        <div class="card card-output">
-          <h3>Toolbox Output</h3>
-          <p class="subtitle">
-            Designed to paste straight into Avimark (communication log, SOAP, or email client).
-          </p>
-          <pre id="toolboxOutput" class="toolbox-pre"></pre>
-        </div>
+          <div class="soap-section">
+            <div class="soap-header">
+              <h3>Objective</h3>
+              <button type="button" class="mini-copy" data-copy="objective">Copy</button>
+            </div>
+            <textarea id="soapObjective" rows="4"></textarea>
+          </div>
 
-        <div class="card refine-card">
-          <h3>Toolbox Feedback (for this output)</h3>
-          <p class="subtitle">
-            Optional: tell the app what was good/bad about this output so we can tune prompts later.
-          </p>
-          <label for="toolboxFeedbackText">Feedback</label>
-          <textarea
-            id="toolboxFeedbackText"
-            class="textarea-input"
-            placeholder="e.g., Email tone too formal, please be more reassuring. Or: call log should list ALT and ALP explicitly."
-          ></textarea>
-          <div class="button-row">
-            <button
-              id="btnToolboxFeedback"
-              class="primary-btn"
-              onclick="sendToolboxFeedback()"
-            >
-              Send toolbox feedback
-            </button>
+          <div class="soap-section">
+            <div class="soap-header">
+              <h3>Assessment</h3>
+              <button type="button" class="mini-copy" data-copy="assessment">Copy</button>
+            </div>
+            <textarea id="soapAssessment" rows="3"></textarea>
           </div>
-          <div class="status-row">
-            <pre
-              id="toolboxFeedbackStatus"
-              class="status-pre"
-            ></pre>
+
+          <div class="soap-section">
+            <div class="soap-header">
+              <h3>Plan</h3>
+              <button type="button" class="mini-copy" data-copy="plan">Copy</button>
+            </div>
+            <textarea id="soapPlan" rows="6"></textarea>
           </div>
-        </div>
+
+          <div class="soap-section">
+            <div class="soap-header">
+              <h3>Medications Dispensed</h3>
+              <button type="button" class="mini-copy" data-copy="meds">Copy</button>
+            </div>
+            <textarea id="soapMeds" rows="3"></textarea>
+          </div>
+
+          <div class="soap-section">
+            <div class="soap-header">
+              <h3>Aftercare</h3>
+              <button type="button" class="mini-copy" data-copy="aftercare">Copy</button>
+            </div>
+            <textarea id="soapAftercare" rows="3"></textarea>
+          </div>
+
+          <div class="soap-section">
+            <div class="soap-header">
+              <h3>Feedback on this SOAP (training)</h3>
+            </div>
+            <textarea id="soapFeedback" rows="2"
+              placeholder="e.g. 'Please always note fluids declined; owner aware of risks' or 'Meloxicam concentration was wrong here'"></textarea>
+          </div>
+
+        </section>
+      </div>
+    </section>
+
+    <!-- TOOLBOX TAB -->
+    <section id="toolbox-tab" class="tab-panel">
+      <section class="card">
+        <h2>Toolbox (v1 skeleton)</h2>
+        <p>For now this is a placeholder. Future: bloodwork helper, email helper, free-form mode. Use SOAP Feedback tab to
+          train templates.</p>
       </section>
+    </section>
 
-      <!-- FEEDBACK TAB -->
-      <section id="feedback" class="tab" style="display:none;">
-        <div class="card">
-          <h2>Feedback & Training</h2>
-          <p class="subtitle">
-            Use this to feed real cases, templates, and rants so the app can be tuned around your clinic.
-          </p>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="feedbackType">Type</label>
-              <select id="feedbackType" class="select-input">
-                <option value="appointment">Appointment Template</option>
-                <option value="surgery">Surgery Template</option>
-                <option value="dental">Dental Template</option>
-                <option value="misc">Misc / Other</option>
-                <option value="ux">UI / UX</option>
-                <option value="bug">Bug / Glitch</option>
-              </select>
-            </div>
-
-            <div class="form-group form-group-full">
-              <label for="feedbackText">
-                Paste example, rant, or training data
-              </label>
-              <textarea
-                id="feedbackText"
-                class="textarea-input"
-                placeholder="e.g., 'Your cystotomy template needs 3-0 Monocryl for subcuticular layer.' Or paste a full SOAP you like."
-              ></textarea>
-            </div>
-          </div>
-
-          <div class="button-row">
-            <button
-              id="btnFeedback"
-              class="primary-btn"
-              onclick="sendFeedback()"
-            >
-              Submit Feedback
-            </button>
-          </div>
-
-          <div class="status-row">
-            <pre id="feedbackStatus" class="status-pre"></pre>
-          </div>
-        </div>
+    <!-- FEEDBACK TAB -->
+    <section id="feedback-tab" class="tab-panel">
+      <section class="card">
+        <h2>Feedback & Training Intake</h2>
+        <p>Paste example SOAPs, rescue templates, or notes for future versions here. They won’t affect the live SOAP
+          instantly, but you and I will use them to train the Assistant + master rules.</p>
+        <textarea id="feedbackText" rows="10"
+          placeholder="e.g. Rescue dog spay example, or 'Cat neuter template is missing Onsior line'"></textarea>
+        <button type="button" class="btn-primary" id="submitFeedbackBtn">Save feedback</button>
+        <p id="feedbackStatus" class="status-msg"></p>
       </section>
-    </main>
+    </section>
+  </main>
+
+  <!-- Blur modal -->
+  <div id="blurModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Blur sensitive info</h3>
+      <p>Draw boxes over microchips, client names, phone numbers, addresses, Lab IDs, etc.</p>
+      <canvas id="blurCanvas"></canvas>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="blurResetBtn">Reset</button>
+        <button type="button" class="btn-secondary" id="blurCancelBtn">Cancel</button>
+        <button type="button" class="btn-primary" id="blurSaveBtn">Save redacted</button>
+      </div>
+    </div>
   </div>
 
-  <script src="app.js"></script>
+  <script>
+    // ---------- STATE ----------
+    let currentCaseId = null;
+    let currentType = "appointment";
+    let blurContext = {
+      mode: "new-upload", // or "update-existing"
+      caseId: null,
+      fileName: null,
+      attachmentId: null,
+      image: null,
+      rectangles: []
+    };
+
+    // Simple random token for case id
+    function generateCaseId() {
+      return Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+
+    function ensureCaseId() {
+      if (!currentCaseId) {
+        currentCaseId = generateCaseId();
+      }
+      return currentCaseId;
+    }
+
+    // ---------- TAB SWITCHING ----------
+    document.querySelectorAll(".tab-button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const tabId = btn.dataset.tab;
+        document.querySelectorAll(".tab-panel").forEach(p => {
+          p.classList.toggle("active", p.id === tabId);
+        });
+      });
+    });
+
+    // ---------- TYPE TOGGLE ----------
+    document.querySelectorAll(".pill-toggle .pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        document.querySelectorAll(".pill-toggle .pill").forEach(p => p.classList.remove("active"));
+        pill.classList.add("active");
+        const type = pill.dataset.type;
+        currentType = type;
+        document.getElementById("appointment-fields").classList.toggle("hidden", type !== "appointment");
+        document.getElementById("surgery-fields").classList.toggle("hidden", type !== "surgery");
+      });
+    });
+
+    // ---------- SURGERY TEMPLATE DEFAULTS ----------
+    const speciesEl = document.getElementById("species");
+    const profileEl = document.getElementById("profile");
+    const templateEl = document.getElementById("surgeryTemplate");
+
+    function applySurgeryDefaults() {
+      const species = speciesEl.value;
+      const profile = profileEl.value;
+      const template = templateEl.value;
+
+      // Reset some toggles
+      document.getElementById("ivCatheterPlaced").checked = false;
+      document.getElementById("fluidsUsed").checked = false;
+      document.getElementById("fluidsDeclined").checked = false;
+      document.getElementById("fluidsOwnerUnderstands").checked = false;
+      document.getElementById("fluidsRate").value = "";
+
+      // Pre-op BW defaults
+      const bwRadios = document.querySelectorAll("input[name='bwStatus']");
+      bwRadios.forEach(r => r.checked = false);
+      document.getElementById("bwDetails").value = "";
+
+      // Rescue vs client defaults
+      if (profile === "rescue") {
+        // Rescue surgeries: fluids declined by default, owner aware
+        document.getElementById("fluidsDeclined").checked = true;
+        document.getElementById("fluidsOwnerUnderstands").checked = true;
+        document.getElementById("fluidsUsed").checked = false;
+        document.getElementById("fluidsRateRow").classList.add("hidden");
+        // Rescue: BW declined default
+        const bwDeclined = Array.from(bwRadios).find(r => r.value === "declined");
+        if (bwDeclined) bwDeclined.checked = true;
+      } else {
+        // Client surgeries: fluids used default, catheter likely placed
+        document.getElementById("ivCatheterPlaced").checked = true;
+        document.getElementById("fluidsUsed").checked = true;
+        document.getElementById("fluidsDeclined").checked = false;
+        document.getElementById("fluidsOwnerUnderstands").checked = false;
+        document.getElementById("fluidsRateRow").classList.remove("hidden");
+        // Client: assume BW done normal unless changed
+        const bwNormal = Array.from(bwRadios).find(r => r.value === "normal");
+        if (bwNormal) bwNormal.checked = true;
+      }
+
+      // Catheter details defaults
+      if (species === "dog") {
+        document.getElementById("catheterGauge").value = "22G";
+        document.getElementById("catheterSite").value = "cephalic";
+        document.getElementById("catheterSide").value = "left";
+      } else {
+        document.getElementById("catheterGauge").value = "24G";
+        document.getElementById("catheterSite").value = "cephalic";
+        document.getElementById("catheterSide").value = "left";
+      }
+
+      // Onsior / Meloxicam logic will be handled by the model using age, species, template; we just pass the summaries.
+
+      // For now, we leave the anesthesia summary boxes empty for you to fill quickly.
+    }
+
+    speciesEl.addEventListener("change", applySurgeryDefaults);
+    profileEl.addEventListener("change", applySurgeryDefaults);
+    templateEl.addEventListener("change", () => {
+      // adjust species/profile if needed
+      const value = templateEl.value;
+      if (value.includes("dog_")) speciesEl.value = "dog";
+      if (value.includes("cat_")) speciesEl.value = "cat";
+      if (value.includes("_rescue")) profileEl.value = "rescue";
+      if (value.includes("_client")) profileEl.value = "client";
+      applySurgeryDefaults();
+    });
+
+    // ---------- BLOODWORK & FLUIDS LOGIC ----------
+    document.querySelectorAll("input[name='bwStatus']").forEach(radio => {
+      radio.addEventListener("change", () => {
+        // Only one checked at a time; browser enforces via name
+        // If abnormal selected, focus on bwDetails
+        if (radio.value === "abnormal" && radio.checked) {
+          document.getElementById("bwDetails").focus();
+        }
+      });
+    });
+
+    const fluidsUsedEl = document.getElementById("fluidsUsed");
+    const fluidsDeclinedEl = document.getElementById("fluidsDeclined");
+    const fluidsOwnerEl = document.getElementById("fluidsOwnerUnderstands");
+    const fluidsRateRow = document.getElementById("fluidsRateRow");
+
+    fluidsUsedEl.addEventListener("change", () => {
+      if (fluidsUsedEl.checked) {
+        fluidsDeclinedEl.checked = false;
+        fluidsOwnerEl.checked = false;
+        fluidsRateRow.classList.remove("hidden");
+      } else {
+        fluidsRateRow.classList.add("hidden");
+      }
+    });
+
+    fluidsDeclinedEl.addEventListener("change", () => {
+      if (fluidsDeclinedEl.checked) {
+        fluidsUsedEl.checked = false;
+        fluidsRateRow.classList.add("hidden");
+        fluidsOwnerEl.checked = true;
+      } else {
+        fluidsOwnerEl.checked = false;
+      }
+    });
+
+    // ---------- ATTACHMENTS & QR ----------
+    const attachmentsListEl = document.getElementById("attachmentsList");
+    const desktopAttachmentInput = document.getElementById("desktopAttachmentInput");
+    const openQrBtn = document.getElementById("openQrBtn");
+    const qrContainer = document.getElementById("qrContainer");
+    const qrCanvas = document.getElementById("qrCanvas");
+
+    async function refreshAttachments() {
+      const caseId = ensureCaseId();
+      const res = await fetch(`/api/attachments/${caseId}`);
+      if (!res.ok) return;
+      const attachments = await res.json();
+      attachmentsListEl.innerHTML = "";
+      attachments.forEach(att => {
+        const li = document.createElement("li");
+        li.className = "attachment-item";
+        li.innerHTML = `
+          <span>${att.name}</span>
+          <div class="attachment-actions">
+            <button type="button" data-id="${att.id}" class="mini-btn view-btn">View</button>
+            <button type="button" data-id="${att.id}" class="mini-btn blur-btn">Blur &amp; replace</button>
+          </div>
+        `;
+        attachmentsListEl.appendChild(li);
+      });
+    }
+
+    desktopAttachmentInput.addEventListener("change", (e) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      const caseId = ensureCaseId();
+
+      // For each file: for images, offer blur; for others (e.g. pdf), just upload directly
+      files.forEach(file => {
+        if (file.type.startsWith("image/")) {
+          // open blur modal first
+          const reader = new FileReader();
+          reader.onload = () => {
+            openBlurModal("new-upload", caseId, file.name, null, reader.result);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // upload as-is (no blur)
+          uploadAttachment(caseId, file.name, null, file);
+        }
+      });
+
+      // reset input
+      e.target.value = "";
+    });
+
+    async function uploadAttachment(caseId, name, dataUrl, fileObj) {
+      let payload;
+      if (dataUrl) {
+        payload = { caseId, name, dataUrl };
+      } else if (fileObj) {
+        // convert to dataURL first for simplicity (small volumes in v1.4)
+        const dataUrl = await fileToDataUrl(fileObj);
+        payload = { caseId, name, dataUrl };
+      } else {
+        return;
+      }
+
+      await fetch("/api/upload-attachment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      refreshAttachments();
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // QR generator - simple: we call /capture with case query; QR is just that URL encoded.
+    openQrBtn.addEventListener("click", () => {
+      const caseId = ensureCaseId();
+      const url = `${window.location.origin}/capture?case=${encodeURIComponent(caseId)}`;
+      qrContainer.classList.remove("hidden");
+      drawSimpleQr(url);
+    });
+
+    // Tiny QR via external endpoint? To keep it self-contained, do a super simple placeholder:
+    // We'll just write the URL text; later we can swap in a real QR lib if needed.
+    function drawSimpleQr(text) {
+      const ctx = qrCanvas.getContext("2d");
+      const size = 220;
+      qrCanvas.width = size;
+      qrCanvas.height = size;
+      ctx.fillStyle = "#f1f5f9";
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "12px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Scan this URL:", size / 2, size / 2 - 30);
+      wrapText(ctx, text, size / 2, size / 2, size - 20, 14);
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(" ");
+      let line = "";
+      const lines = [];
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + " ";
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+          lines.push(line);
+          line = words[n] + " ";
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+      const totalHeight = lines.length * lineHeight;
+      let startY = y - totalHeight / 2;
+      lines.forEach(l => {
+        ctx.fillText(l.trim(), x, startY);
+        startY += lineHeight;
+      });
+    }
+
+    // ---------- BLUR MODAL ----------
+    const blurModal = document.getElementById("blurModal");
+    const blurCanvas = document.getElementById("blurCanvas");
+    const blurResetBtn = document.getElementById("blurResetBtn");
+    const blurCancelBtn = document.getElementById("blurCancelBtn");
+    const blurSaveBtn = document.getElementById("blurSaveBtn");
+
+    let blurCtx, isDrawing = false, startX = 0, startY = 0;
+
+    function openBlurModal(mode, caseId, fileName, attachmentId, dataUrl) {
+      blurContext.mode = mode;
+      blurContext.caseId = caseId;
+      blurContext.fileName = fileName;
+      blurContext.attachmentId = attachmentId;
+      blurContext.rectangles = [];
+
+      blurModal.classList.remove("hidden");
+
+      const img = new Image();
+      img.onload = () => {
+        blurContext.image = img;
+        const maxWidth = 700;
+        const scale = Math.min(maxWidth / img.width, 1);
+        blurCanvas.width = img.width * scale;
+        blurCanvas.height = img.height * scale;
+        blurCtx = blurCanvas.getContext("2d");
+        drawBlurCanvas();
+      };
+      img.src = dataUrl;
+    }
+
+    function drawBlurCanvas() {
+      if (!blurCtx || !blurContext.image) return;
+      blurCtx.clearRect(0, 0, blurCanvas.width, blurCanvas.height);
+      blurCtx.drawImage(blurContext.image, 0, 0, blurCanvas.width, blurCanvas.height);
+      blurCtx.fillStyle = "rgba(15,23,42,0.9)";
+      blurContext.rectangles.forEach(rect => {
+        blurCtx.fillRect(rect.x, rect.y, rect.w, rect.h);
+      });
+    }
+
+    blurCanvas.addEventListener("mousedown", (e) => {
+      isDrawing = true;
+      const rect = blurCanvas.getBoundingClientRect();
+      startX = e.clientX - rect.left;
+      startY = e.clientY - rect.top;
+    });
+
+    blurCanvas.addEventListener("mousemove", (e) => {
+      if (!isDrawing) return;
+      const rect = blurCanvas.getBoundingClientRect();
+      const currentX = e.clientX - rect.left;
+      const currentY = e.clientY - rect.top;
+      const w = currentX - startX;
+      const h = currentY - startY;
+      drawBlurCanvas();
+      blurCtx.fillStyle = "rgba(15,23,42,0.6)";
+      blurCtx.fillRect(startX, startY, w, h);
+    });
+
+    blurCanvas.addEventListener("mouseup", (e) => {
+      if (!isDrawing) return;
+      isDrawing = false;
+      const rect = blurCanvas.getBoundingClientRect();
+      const endX = e.clientX - rect.left;
+      const endY = e.clientY - rect.top;
+      blurContext.rectangles.push({
+        x: Math.min(startX, endX),
+        y: Math.min(startY, endY),
+        w: Math.abs(endX - startX),
+        h: Math.abs(endY - startY)
+      });
+      drawBlurCanvas();
+    });
+
+    blurCanvas.addEventListener("mouseleave", () => {
+      if (isDrawing) {
+        isDrawing = false;
+        drawBlurCanvas();
+      }
+    });
+
+    blurResetBtn.addEventListener("click", () => {
+      blurContext.rectangles = [];
+      drawBlurCanvas();
+    });
+
+    blurCancelBtn.addEventListener("click", () => {
+      blurModal.classList.add("hidden");
+    });
+
+    blurSaveBtn.addEventListener("click", async () => {
+      const dataUrl = blurCanvas.toDataURL("image/jpeg", 0.9);
+      if (blurContext.mode === "new-upload") {
+        await uploadAttachment(blurContext.caseId, blurContext.fileName, dataUrl, null);
+      } else if (blurContext.mode === "update-existing" && blurContext.attachmentId) {
+        await fetch("/api/update-attachment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            caseId: blurContext.caseId,
+            id: blurContext.attachmentId,
+            dataUrl
+          })
+        });
+        refreshAttachments();
+      }
+      blurModal.classList.add("hidden");
+    });
+
+    // Handle blur from attachments list
+    attachmentsListEl.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const caseId = ensureCaseId();
+      const res = await fetch(`/api/attachments/${caseId}`);
+      if (!res.ok) return;
+      const attachments = await res.json();
+      const att = attachments.find(a => a.id === id);
+      if (!att) return;
+
+      if (btn.classList.contains("view-btn")) {
+        const win = window.open();
+        win.document.write(`<img src="${att.dataUrl}" style="max-width:100%;height:auto;" />`);
+      } else if (btn.classList.contains("blur-btn")) {
+        openBlurModal("update-existing", caseId, att.name, att.id, att.dataUrl);
+      }
+    });
+
+    // Initial attachments refresh
+    refreshAttachments();
+
+    // ---------- GENERATE SOAP ----------
+    const generateBtn = document.getElementById("generateBtn");
+    const statusMsg = document.getElementById("statusMsg");
+
+    generateBtn.addEventListener("click", async () => {
+      statusMsg.textContent = "Generating SOAP...";
+      statusMsg.classList.remove("error");
+
+      const payload = buildPayload();
+      try {
+        const res = await fetch("/api/generate-soap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error("Server error");
+        const data = await res.json();
+        fillSoapOutputs(data);
+        statusMsg.textContent = "SOAP generated.";
+      } catch (err) {
+        console.error(err);
+        statusMsg.textContent = "Error generating SOAP.";
+        statusMsg.classList.add("error");
+      }
+    });
+
+    function buildPayload() {
+      const caseId = ensureCaseId();
+      const caseLabel = document.getElementById("caseLabel").value;
+
+      const base = {
+        caseId,
+        caseLabel,
+        type: currentType
+      };
+
+      if (currentType === "appointment") {
+        return {
+          ...base,
+          appointment: {
+            reason: document.getElementById("apptReason").value,
+            history: document.getElementById("apptHistory").value,
+            objective: document.getElementById("apptObjective").value,
+            diagnostics: document.getElementById("apptDiagnostics").value,
+            assessment: document.getElementById("apptAssessment").value,
+            plan: document.getElementById("apptPlan").value
+          }
+        };
+      } else {
+        const bwStatus = document.querySelector("input[name='bwStatus']:checked");
+        return {
+          ...base,
+          surgery: {
+            species: document.getElementById("species").value,
+            profile: document.getElementById("profile").value,
+            template: document.getElementById("surgeryTemplate").value,
+            age: document.getElementById("surgeryAge").value,
+            weightKg: document.getElementById("surgeryWeight").value,
+            bwStatus: bwStatus ? bwStatus.value : "",
+            bwDetails: document.getElementById("bwDetails").value,
+            ivCatheterPlaced: document.getElementById("ivCatheterPlaced").checked,
+            catheterGauge: document.getElementById("catheterGauge").value,
+            catheterSite: document.getElementById("catheterSite").value,
+            catheterSide: document.getElementById("catheterSide").value,
+            fluidsUsed: document.getElementById("fluidsUsed").checked,
+            fluidsDeclined: document.getElementById("fluidsDeclined").checked,
+            fluidsOwnerUnderstands: document.getElementById("fluidsOwnerUnderstands").checked,
+            fluidsRate: document.getElementById("fluidsRate").value,
+            premedSummary: document.getElementById("premedSummary").value,
+            inductionSummary: document.getElementById("inductionSummary").value,
+            intraopSummary: document.getElementById("intraopSummary").value,
+            postopInjectableSummary: document.getElementById("postopInjectableSummary").value,
+            takehomeMedsSummary: document.getElementById("takehomeMedsSummary").value,
+            surgerySubjective: document.getElementById("surgerySubjective").value,
+            surgeryPE: document.getElementById("surgeryPE").value,
+            surgeryProcedure: document.getElementById("surgeryProcedure").value,
+            surgeryAftercareNotes: document.getElementById("surgeryAftercareNotes").value
+          }
+        };
+      }
+    }
+
+    function fillSoapOutputs(data) {
+      document.getElementById("soapSubjective").value = data.subjective || "";
+      document.getElementById("soapObjective").value = data.objective || "";
+      document.getElementById("soapAssessment").value = data.assessment || "";
+      document.getElementById("soapPlan").value = data.plan || "";
+      document.getElementById("soapMeds").value = data.meds || "";
+      document.getElementById("soapAftercare").value = data.aftercare || "";
+    }
+
+    // ---------- COPY BUTTONS ----------
+    function copyText(text) {
+      if (!text) return;
+      navigator.clipboard.writeText(text);
+    }
+
+    document.querySelectorAll(".mini-copy").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const section = btn.dataset.copy;
+        let text = "";
+        if (section === "subjective") text = document.getElementById("soapSubjective").value;
+        if (section === "objective") text = document.getElementById("soapObjective").value;
+        if (section === "assessment") text = document.getElementById("soapAssessment").value;
+        if (section === "plan") text = document.getElementById("soapPlan").value;
+        if (section === "meds") text = document.getElementById("soapMeds").value;
+        if (section === "aftercare") text = document.getElementById("soapAftercare").value;
+        copyText(text);
+      });
+    });
+
+    document.querySelectorAll(".copy-buttons-row .btn-secondary").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const mode = btn.dataset.copy;
+        if (mode === "full") {
+          const full = [
+            "Subjective:",
+            document.getElementById("soapSubjective").value,
+            "",
+            "Objective:",
+            document.getElementById("soapObjective").value,
+            "",
+            "Assessment:",
+            document.getElementById("soapAssessment").value,
+            "",
+            "Plan:",
+            document.getElementById("soapPlan").value,
+            "",
+            "Medications Dispensed:",
+            document.getElementById("soapMeds").value,
+            "",
+            "Aftercare:",
+            document.getElementById("soapAftercare").value
+          ].join("\n");
+          copyText(full);
+        } else if (mode === "plan-meds-aftercare") {
+          const combined = [
+            "Plan:",
+            document.getElementById("soapPlan").value,
+            "",
+            "Medications Dispensed:",
+            document.getElementById("soapMeds").value,
+            "",
+            "Aftercare:",
+            document.getElementById("soapAftercare").value
+          ].join("\n");
+          copyText(combined);
+        }
+      });
+    });
+
+    // ---------- FEEDBACK ----------
+    document.getElementById("submitFeedbackBtn").addEventListener("click", async () => {
+      const text = document.getElementById("feedbackText").value;
+      const status = document.getElementById("feedbackStatus");
+      status.textContent = "";
+      if (!text.trim()) {
+        status.textContent = "Nothing to submit.";
+        return;
+      }
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        status.textContent = "Feedback saved (for your training log).";
+        document.getElementById("feedbackText").value = "";
+      } else {
+        status.textContent = "Error saving feedback.";
+        status.classList.add("error");
+      }
+    });
+  </script>
 </body>
 </html>
