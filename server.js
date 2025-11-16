@@ -1,5 +1,5 @@
-// Lohit SOAP App server - public/index.html version
-// CommonJS, no dotenv, designed for Render
+// Lohit SOAP App v1.4 – Option B
+// CommonJS, no dotenv. Designed for Render with /public folder.
 
 const express = require('express');
 const path = require('path');
@@ -7,30 +7,17 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// In-memory case store for attachments (resets when server restarts)
+// Simple in-memory store for attachments (resets on restart)
 const cases = {};
-
-// Absolute path to the public folder (where index.html lives)
-const publicPath = path.join(__dirname, '..', 'public');
 
 // Middleware
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-// Serve static files (index.html, JS, CSS, etc.) from /public
-app.use(express.static(publicPath));
+// Serve static files from /public
+app.use(express.static(path.join(__dirname, 'public')));
 
-// ---- ROUTES ----
-
-// Root – send index.html (main app + capture modes handled by frontend via query)
-app.get('/', (req, res) => {
-  res.sendFile(path.join(publicPath, 'index.html'));
-});
-
-// (Optional) catch-all route so deep links still serve the SPA
-app.get('*', (req, res) => {
-  res.sendFile(path.join(publicPath, 'index.html'));
-});
+// ---- ATTACHMENT ROUTES ----
 
 // Get attachments for a case
 app.get('/api/cases/:caseId/attachments', (req, res) => {
@@ -55,20 +42,22 @@ app.post('/api/cases/:caseId/attachments', (req, res) => {
     cases[caseId] = { attachments: [] };
   }
 
-  // Basic safety: only allow data URLs
+  // Only allow data URLs for images
   if (!dataUrl.startsWith('data:image/')) {
     return res.status(400).json({ error: 'Invalid image format' });
   }
 
-  cases[caseId].attachments.push({
+  const attachment = {
     id: Date.now().toString(),
     dataUrl
-  });
+  };
 
-  res.json({ ok: true });
+  cases[caseId].attachments.push(attachment);
+  res.json({ ok: true, attachment });
 });
 
-// SOAP generator – calls OpenAI and returns structured SOAP sections
+// ---- SOAP GENERATOR ----
+
 app.post('/api/generate-soap', async (req, res) => {
   try {
     const apiKey =
@@ -92,19 +81,28 @@ app.post('/api/generate-soap', async (req, res) => {
 
     const payload = req.body || {};
 
-    // Simple v1 prompt – will later be replaced with full Master Rules brain
     const systemPrompt = `
 You are the backend brain for "Lohit SOAP App", a veterinary SOAP generator.
-You receive structured intake JSON from the web app and MUST output a single JSON object.
 
-ALWAYS follow these clinic rules:
+You receive structured intake JSON from the web app and MUST output a single JSON object:
 
-- Format for surgeries: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare.
-- Subjective: concise, owner concerns + presenting problem only.
-- Objective: full PE body systems paragraph style (General, Vitals if provided, Eyes/Ears/Oral/Nose/Resp/CV/Abdomen/Urogenital/MSK/Neuro/Integ/Lymphatic).
-  Use ONLY data given; if not provided, write "Not specifically documented, within normal limits unless otherwise noted."
-- Assessment: problem list and overall assessment (e.g. "Healthy for spay"). Interpret diagnostics here, NOT in Objective.
-- Plan (for surgeries) MUST be ordered exactly:
+{
+  "subjective": "...",
+  "objective": "...",
+  "assessment": "...",
+  "plan": "...",
+  "medications_dispensed": "...",
+  "aftercare": "..."
+}
+
+RULES:
+
+- For surgeries use sections: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare.
+- Subjective: concise, owner concerns + presenting problem.
+- Objective: full PE body systems paragraph-style. Order: General, Vitals (only if provided), Eyes/Ears/Oral/Nose, Respiratory, Cardiovascular, Abdomen, Urogenital, Musculoskeletal, Neurological, Integument (include surgical site), Lymphatic.
+  *If a system is not mentioned in input, write: "Not specifically documented, within normal limits unless otherwise noted."*
+- Assessment: problem list + overall assessment (e.g. "Healthy for spay"). Interpret diagnostics here only.
+- Plan (surgery) MUST be ordered:
   1) IV Catheter / Fluids
   2) Pre-medications
   3) Induction / Maintenance
@@ -114,24 +112,17 @@ ALWAYS follow these clinic rules:
   7) Recovery
   8) Medications Dispensed
   9) Aftercare
-- Medications Dispensed: list only take-home meds with name, concentration in [brackets], dose, route, and duration (no exact clock times).
-- Aftercare: activity restriction, incision monitoring, e-collar, recheck, and any special notes.
-- For bloodwork/diagnostics: raw values/summaries live in Objective; the meaning lives in Assessment.
-- Do NOT invent vitals, drug names, doses, or diagnostics that were not hinted at. If something is missing, leave it generic (e.g. "See anesthesia sheet for full details") rather than hallucinating.
-- Output MUST be valid JSON with these exact top-level keys:
-  {
-    "subjective": "...",
-    "objective": "...",
-    "assessment": "...",
-    "plan": "...",
-    "medications_dispensed": "...",
-    "aftercare": "..."
-  }
-No markdown, no extra commentary, JSON only.
+- Mention that detailed drug doses and vitals are on the anesthesia sheet if not fully provided.
+- Medications Dispensed: take-home meds only, with name, concentration in [brackets], dose, route, frequency, and duration (no exact times).
+- Aftercare: activity restriction, incision monitoring, e-collar, recheck, and any extra notes.
+- Diagnostics: raw values/summaries belong in Objective; meaning belongs in Assessment.
+- Do NOT invent vitals, drugs, doses, or diagnostics. If unknown, keep generic (e.g. "See anesthesia sheet for details").
+- Output MUST be valid JSON only. No markdown, no explanations.
     `.trim();
 
     const userContent = JSON.stringify(payload, null, 2);
 
+    // Node 22+ has global fetch
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -146,7 +137,7 @@ No markdown, no extra commentary, JSON only.
           {
             role: 'user',
             content:
-              'Here is the structured intake from the SOAP app. Use it to generate the SOAP JSON object:\n\n' +
+              'Here is the structured intake JSON from the SOAP app. Generate the SOAP JSON object:\n\n' +
               userContent
           }
         ]
@@ -157,9 +148,9 @@ No markdown, no extra commentary, JSON only.
 
     if (!response.ok) {
       console.error('OpenAI error:', data);
-      return res.status(500).json({
-        error: data.error?.message || 'OpenAI API error'
-      });
+      return res
+        .status(500)
+        .json({ error: data.error?.message || 'OpenAI API error' });
     }
 
     let content = (data.choices?.[0]?.message?.content || '').trim();
@@ -168,7 +159,6 @@ No markdown, no extra commentary, JSON only.
     try {
       soap = JSON.parse(content);
     } catch (e) {
-      // Fallback: wrap raw content into objective and leave others mostly empty
       console.warn('Failed to parse JSON from model, returning fallback.', e);
       soap = {
         subjective: '',
@@ -180,7 +170,6 @@ No markdown, no extra commentary, JSON only.
       };
     }
 
-    // Final safety: ensure all keys exist
     const safeSoap = {
       subjective: soap.subjective || '',
       objective: soap.objective || '',
@@ -197,7 +186,12 @@ No markdown, no extra commentary, JSON only.
   }
 });
 
+// ---- CATCH-ALL: SEND INDEX.HTML FROM /public ----
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // ---- START SERVER ----
 app.listen(PORT, () => {
-  console.log(`Lohit SOAP App listening on port ${PORT}`);
+  console.log(`Lohit SOAP App v1.4 listening on port ${PORT}`);
 });
