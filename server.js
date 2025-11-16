@@ -1,5 +1,5 @@
-// Lohit SOAP App v1.4 – Option B
-// CommonJS, no dotenv. Designed for Render with /public folder.
+// Lohit SOAP App v1.4 – flat layout (no /public folder)
+// CommonJS, no dotenv. Designed for Render with files in repo root.
 
 const express = require('express');
 const path = require('path');
@@ -10,14 +10,15 @@ const PORT = process.env.PORT || 10000;
 // Simple in-memory store for attachments (resets on restart)
 const cases = {};
 
-// Middleware
+// ---------- MIDDLEWARE ----------
+
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-// Serve static files from /public
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from repo root (index.html, app.js, style.css, etc.)
+app.use(express.static(__dirname));
 
-// ---- ATTACHMENT ROUTES ----
+// ---------- ATTACHMENT ROUTES ----------
 
 // Get attachments for a case
 app.get('/api/cases/:caseId/attachments', (req, res) => {
@@ -29,7 +30,7 @@ app.get('/api/cases/:caseId/attachments', (req, res) => {
   res.json({ attachments: record.attachments });
 });
 
-// Add a redacted attachment (data URL) for a case
+// Add a redacted attachment (image data URL) for a case
 app.post('/api/cases/:caseId/attachments', (req, res) => {
   const { caseId } = req.params;
   const { dataUrl } = req.body;
@@ -38,13 +39,13 @@ app.post('/api/cases/:caseId/attachments', (req, res) => {
     return res.status(400).json({ error: 'caseId and dataUrl are required' });
   }
 
-  if (!cases[caseId]) {
-    cases[caseId] = { attachments: [] };
+  // Only allow image data URLs
+  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'Invalid image format' });
   }
 
-  // Only allow data URLs for images
-  if (!dataUrl.startsWith('data:image/')) {
-    return res.status(400).json({ error: 'Invalid image format' });
+  if (!cases[caseId]) {
+    cases[caseId] = { attachments: [] };
   }
 
   const attachment = {
@@ -56,7 +57,7 @@ app.post('/api/cases/:caseId/attachments', (req, res) => {
   res.json({ ok: true, attachment });
 });
 
-// ---- SOAP GENERATOR ----
+// ---------- SOAP GENERATOR ----------
 
 app.post('/api/generate-soap', async (req, res) => {
   try {
@@ -99,9 +100,14 @@ RULES:
 
 - For surgeries use sections: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare.
 - Subjective: concise, owner concerns + presenting problem.
-- Objective: full PE body systems paragraph-style. Order: General, Vitals (only if provided), Eyes/Ears/Oral/Nose, Respiratory, Cardiovascular, Abdomen, Urogenital, Musculoskeletal, Neurological, Integument (include surgical site), Lymphatic.
-  *If a system is not mentioned in input, write: "Not specifically documented, within normal limits unless otherwise noted."*
-- Assessment: problem list + overall assessment (e.g. "Healthy for spay"). Interpret diagnostics here only.
+- Objective: full PE body systems paragraph-style. Order:
+  General, Vitals (only if provided), Eyes/Ears/Oral/Nose, Respiratory,
+  Cardiovascular, Abdomen, Urogenital, Musculoskeletal, Neurological,
+  Integument (include surgical site), Lymphatic.
+  If a system is not mentioned in input, write:
+  "Not specifically documented, within normal limits unless otherwise noted."
+- Assessment: problem list + overall assessment (e.g. "Healthy for spay").
+  Interpret diagnostics here only.
 - Plan (surgery) MUST be ordered:
   1) IV Catheter / Fluids
   2) Pre-medications
@@ -113,16 +119,18 @@ RULES:
   8) Medications Dispensed
   9) Aftercare
 - Mention that detailed drug doses and vitals are on the anesthesia sheet if not fully provided.
-- Medications Dispensed: take-home meds only, with name, concentration in [brackets], dose, route, frequency, and duration (no exact times).
+- Medications Dispensed: take-home meds only, with name, concentration in [brackets],
+  dose, route, frequency, and duration (no exact times).
 - Aftercare: activity restriction, incision monitoring, e-collar, recheck, and any extra notes.
 - Diagnostics: raw values/summaries belong in Objective; meaning belongs in Assessment.
-- Do NOT invent vitals, drugs, doses, or diagnostics. If unknown, keep generic (e.g. "See anesthesia sheet for details").
+- Do NOT invent vitals, drugs, doses, or diagnostics. If unknown, keep generic
+  (e.g. "See anesthesia sheet for details").
 - Output MUST be valid JSON only. No markdown, no explanations.
     `.trim();
 
     const userContent = JSON.stringify(payload, null, 2);
 
-    // Node 22+ has global fetch
+    // Node 22+ on Render has global fetch
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -186,12 +194,14 @@ RULES:
   }
 });
 
-// ---- CATCH-ALL: SEND INDEX.HTML FROM /public ----
+// ---------- CATCH-ALL: SEND MAIN INDEX.HTML ----------
+
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// ---- START SERVER ----
+// ---------- START SERVER ----------
+
 app.listen(PORT, () => {
   console.log(`Lohit SOAP App v1.4 listening on port ${PORT}`);
 });
