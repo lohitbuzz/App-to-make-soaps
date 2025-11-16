@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lohit SOAP App (Beta)</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>Lohit SOAP App (v1.3)</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -13,8 +16,9 @@
     <header class="top-header">
       <div class="title-block">
         <h1>Lohit SOAP App</h1>
-        <span class="beta-tag">Beta</span>
+        <span class="beta-tag">v1.3</span>
       </div>
+      <div class="mode-label" id="modeLabel">Mode: SOAP Generator</div>
       <nav class="nav-tabs">
         <button class="nav-btn" onclick="showTab('soap')">SOAP</button>
         <button class="nav-btn" onclick="showTab('toolbox')">Toolbox</button>
@@ -24,7 +28,6 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-layout">
-
       <!-- SOAP TAB -->
       <section id="soap" class="tab tab-active">
         <div class="card">
@@ -52,8 +55,17 @@
               </select>
             </div>
 
+            <div class="form-group">
+              <label for="accuracyMode">Accuracy mode</label>
+              <select id="accuracyMode" class="select-input">
+                <option value="strict">Strict (no invention)</option>
+                <option value="medium" selected>Medium</option>
+                <option value="liberal">Liberal (templated normals ok)</option>
+              </select>
+            </div>
+
             <div class="form-group form-group-full">
-              <label for="soapTemplate">Template</label>
+              <label for="soapTemplate">Template (hint only)</label>
               <select id="soapTemplate" class="select-input">
                 <option value="">General</option>
                 <option>GI Upset</option>
@@ -95,43 +107,188 @@
           </div>
 
           <div class="button-row">
-            <button class="primary-btn" onclick="generateSOAP()">
+            <button
+              id="btnGenerateSoap"
+              class="primary-btn"
+              onclick="generateSOAP()"
+            >
               Generate SOAP
             </button>
           </div>
         </div>
 
         <div class="card card-output">
-          <h3>SOAP Output</h3>
-          <p class="subtitle">
-            Copy sections directly into Avimark. Formatting is single-spaced, text-only.
-          </p>
+          <div class="output-header-row">
+            <div>
+              <h3>SOAP Output</h3>
+              <p class="subtitle">
+                Copy sections directly into Avimark. Text-only, single-spaced.
+              </p>
+            </div>
+            <div class="copy-row">
+              <button class="copy-btn" onclick="copyFullSOAP()">
+                Copy Full SOAP
+              </button>
+              <button
+                class="copy-btn"
+                onclick="copyPlanMedsAftercare()"
+              >
+                Copy Plan + Meds + Aftercare
+              </button>
+            </div>
+          </div>
 
           <div class="output-grid">
             <div class="output-section">
-              <h4>Subjective</h4>
+              <div class="output-title-row">
+                <h4>Subjective</h4>
+                <button
+                  class="copy-mini-btn"
+                  onclick="copySection('Subjective')"
+                >
+                  Copy
+                </button>
+              </div>
               <pre id="oSubjective"></pre>
             </div>
+
             <div class="output-section">
-              <h4>Objective</h4>
+              <div class="output-title-row">
+                <h4>Objective</h4>
+                <button
+                  class="copy-mini-btn"
+                  onclick="copySection('Objective')"
+                >
+                  Copy
+                </button>
+              </div>
               <pre id="oObjective"></pre>
             </div>
+
             <div class="output-section">
-              <h4>Assessment</h4>
+              <div class="output-title-row">
+                <h4>Assessment</h4>
+                <button
+                  class="copy-mini-btn"
+                  onclick="copySection('Assessment')"
+                >
+                  Copy
+                </button>
+              </div>
               <pre id="oAssessment"></pre>
             </div>
+
             <div class="output-section">
-              <h4>Plan</h4>
+              <div class="output-title-row">
+                <h4>Plan</h4>
+                <button
+                  class="copy-mini-btn"
+                  onclick="copySection('Plan')"
+                >
+                  Copy
+                </button>
+              </div>
               <pre id="oPlan"></pre>
             </div>
+
             <div class="output-section">
-              <h4>Medications Dispensed</h4>
+              <div class="output-title-row">
+                <h4>Medications Dispensed</h4>
+                <button
+                  class="copy-mini-btn"
+                  onclick="copySection('Medications Dispensed')"
+                >
+                  Copy
+                </button>
+              </div>
               <pre id="oMeds"></pre>
             </div>
+
             <div class="output-section">
-              <h4>Aftercare</h4>
+              <div class="output-title-row">
+                <h4>Aftercare</h4>
+                <button
+                  class="copy-mini-btn"
+                  onclick="copySection('Aftercare')"
+                >
+                  Copy
+                </button>
+              </div>
               <pre id="oAftercare"></pre>
             </div>
+          </div>
+        </div>
+
+        <div class="card refine-card">
+          <h3>Refine this SOAP</h3>
+          <p class="subtitle">
+            Tell the app what to change, and which sections to update.
+          </p>
+
+          <label for="refineFeedback">Feedback</label>
+          <textarea
+            id="refineFeedback"
+            class="textarea-input"
+            placeholder="e.g., Make Plan less wordy, add recheck in 10 days, Aftercare should mention incision monitoring."
+          ></textarea>
+
+          <div class="refine-checkboxes">
+            <label>
+              <input
+                type="checkbox"
+                id="refineSubjective"
+              />
+              Subjective
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                id="refineObjective"
+              />
+              Objective
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                id="refineAssessment"
+                checked
+              />
+              Assessment
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                id="refinePlan"
+                checked
+              />
+              Plan
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                id="refineMeds"
+                checked
+              />
+              Medications
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                id="refineAftercare"
+                checked
+              />
+              Aftercare
+            </label>
+          </div>
+
+          <div class="button-row">
+            <button
+              id="btnRefineSoap"
+              class="primary-btn"
+              onclick="refineSOAP()"
+            >
+              Refine Selected Sections
+            </button>
           </div>
         </div>
       </section>
@@ -180,6 +337,31 @@
               />
             </div>
 
+            <div
+              id="toolboxEmailFields"
+              class="form-group form-group-full"
+              style="display:none;"
+            >
+              <div class="email-fields">
+                <div class="form-group">
+                  <label for="toolboxClinic">Clinic</label>
+                  <select id="toolboxClinic" class="select-input">
+                    <option value="">Choose clinic</option>
+                    <option>Simcoe Rossland Animal Hospital</option>
+                    <option>Main Street Markham Animal Clinic</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="toolboxFrom">From (name)</label>
+                  <input
+                    id="toolboxFrom"
+                    class="text-input"
+                    placeholder="e.g., Dr. Lohit Busanelli"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div class="form-group form-group-full">
               <label for="toolboxInput">
                 Enter notes or paste screenshot text
@@ -193,7 +375,11 @@
           </div>
 
           <div class="button-row">
-            <button class="primary-btn" onclick="processToolbox()">
+            <button
+              id="btnToolbox"
+              class="primary-btn"
+              onclick="processToolbox()"
+            >
               Process
             </button>
           </div>
@@ -206,6 +392,34 @@
           </p>
           <pre id="toolboxOutput" class="toolbox-pre"></pre>
         </div>
+
+        <div class="card refine-card">
+          <h3>Toolbox Feedback (for this output)</h3>
+          <p class="subtitle">
+            Optional: tell the app what was good/bad about this output so we can tune prompts later.
+          </p>
+          <label for="toolboxFeedbackText">Feedback</label>
+          <textarea
+            id="toolboxFeedbackText"
+            class="textarea-input"
+            placeholder="e.g., Email tone too formal, please be more reassuring. Or: call log should list ALT and ALP explicitly."
+          ></textarea>
+          <div class="button-row">
+            <button
+              id="btnToolboxFeedback"
+              class="primary-btn"
+              onclick="sendToolboxFeedback()"
+            >
+              Send toolbox feedback
+            </button>
+          </div>
+          <div class="status-row">
+            <pre
+              id="toolboxFeedbackStatus"
+              class="status-pre"
+            ></pre>
+          </div>
+        </div>
       </section>
 
       <!-- FEEDBACK TAB -->
@@ -213,15 +427,15 @@
         <div class="card">
           <h2>Feedback & Training</h2>
           <p class="subtitle">
-            Use this to feed me real cases, templates, and rants so I can tune the app around you.
+            Use this to feed real cases, templates, and rants so the app can be tuned around your clinic.
           </p>
 
           <div class="form-grid">
             <div class="form-group">
               <label for="feedbackType">Type</label>
               <select id="feedbackType" class="select-input">
-                <option value="surgery">Surgery Template</option>
                 <option value="appointment">Appointment Template</option>
+                <option value="surgery">Surgery Template</option>
                 <option value="dental">Dental Template</option>
                 <option value="misc">Misc / Other</option>
                 <option value="ux">UI / UX</option>
@@ -236,13 +450,17 @@
               <textarea
                 id="feedbackText"
                 class="textarea-input"
-                placeholder="e.g., 'Your cystotomy template needs 3-0 Monocryl for subcuticular layer.'"
+                placeholder="e.g., 'Your cystotomy template needs 3-0 Monocryl for subcuticular layer.' Or paste a full SOAP you like."
               ></textarea>
             </div>
           </div>
 
           <div class="button-row">
-            <button class="primary-btn" onclick="sendFeedback()">
+            <button
+              id="btnFeedback"
+              class="primary-btn"
+              onclick="sendFeedback()"
+            >
               Submit Feedback
             </button>
           </div>
