@@ -7,6 +7,9 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+// Point to the "public" folder where index.html lives
+const publicDir = path.join(__dirname, 'public');
+
 // In-memory case store for attachments (resets when server restarts)
 const cases = {};
 
@@ -14,14 +17,14 @@ const cases = {};
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-// Static – serve index.html & assets from root
-app.use(express.static(__dirname));
+// Serve static files out of /public (including index.html, JS, CSS)
+app.use(express.static(publicDir));
 
 // ---- ROUTES ----
 
-// Root – always send index.html (handles both main + capture modes via query)
+// Root – always send public/index.html (handles both main + capture via query)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 // Get attachments for a case
