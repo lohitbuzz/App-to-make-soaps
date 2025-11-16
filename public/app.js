@@ -1,9 +1,12 @@
+// public/app.js
+
+// ---------- TAB SWITCHING ----------
 function showTab(tab) {
   document.querySelectorAll(".tab").forEach(t => (t.style.display = "none"));
   document.getElementById(tab).style.display = "block";
 }
 
-// --- SOAP ---
+// ---------- SOAP ----------
 
 async function generateSOAP() {
   const payload = {
@@ -24,7 +27,6 @@ async function generateSOAP() {
     const data = await res.json();
     const text = data.soapText || data.soap || "";
 
-    // Try to split into sections
     const sections = {
       Subjective: "",
       Objective: "",
@@ -53,8 +55,13 @@ async function generateSOAP() {
       }
     });
 
-    // Fallback: if we couldn't parse, just dump everything into Subjective
-    if (!sections.Subjective && !sections.Objective && !sections.Assessment) {
+    // fallback if parsing fails
+    if (
+      !sections.Subjective &&
+      !sections.Objective &&
+      !sections.Assessment &&
+      !sections.Plan
+    ) {
       sections.Subjective = text;
     }
 
@@ -76,16 +83,21 @@ async function generateSOAP() {
   }
 }
 
-// --- TOOLBOX ---
+// ---------- TOOLBOX (AI) ----------
 
 async function processToolbox() {
-  const input = document.getElementById("toolboxInput")?.value || "";
+  const mode = document.getElementById("toolboxMode")?.value || "freeform";
+  const detailLevel =
+    document.getElementById("toolboxDetail")?.value || "standard";
+  const text = document.getElementById("toolboxInput")?.value || "";
+
+  const payload = { mode, detailLevel, text };
 
   try {
     const res = await fetch("/api/toolbox", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: input })
+      body: JSON.stringify(payload)
     });
 
     const data = await res.json();
@@ -98,7 +110,7 @@ async function processToolbox() {
   }
 }
 
-// --- FEEDBACK ---
+// ---------- FEEDBACK ----------
 
 async function sendFeedback() {
   const type = document.getElementById("feedbackType")?.value || "";
