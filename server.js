@@ -1,4 +1,4 @@
-// Lohit SOAP App server - root index.html version
+// Lohit SOAP App server - public/index.html version
 // CommonJS, no dotenv, designed for Render
 
 const express = require('express');
@@ -10,18 +10,26 @@ const PORT = process.env.PORT || 10000;
 // In-memory case store for attachments (resets when server restarts)
 const cases = {};
 
+// Absolute path to the public folder (where index.html lives)
+const publicPath = path.join(__dirname, '..', 'public');
+
 // Middleware
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-// Serve static files (index.html, JS, CSS, etc.) from root
-app.use(express.static(__dirname));
+// Serve static files (index.html, JS, CSS, etc.) from /public
+app.use(express.static(publicPath));
 
 // ---- ROUTES ----
 
-// Root – always send index.html (handles both main + capture modes via query)
+// Root – send index.html (main app + capture modes handled by frontend via query)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(publicPath, 'index.html'));
+});
+
+// (Optional) catch-all route so deep links still serve the SPA
+app.get('*', (req, res) => {
+  res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 // Get attachments for a case
@@ -84,7 +92,7 @@ app.post('/api/generate-soap', async (req, res) => {
 
     const payload = req.body || {};
 
-    // NOTE: This is a simple v1 prompt – we can later replace with your full Master Rules brain.
+    // Simple v1 prompt – will later be replaced with full Master Rules brain
     const systemPrompt = `
 You are the backend brain for "Lohit SOAP App", a veterinary SOAP generator.
 You receive structured intake JSON from the web app and MUST output a single JSON object.
