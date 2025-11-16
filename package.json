@@ -1,12 +1,12 @@
 {
-  "name": "lohit-soap-app",
-  "version": "1.6.0",
-  "description": "Lohit SOAP App v1.6 – appointment & surgery SOAP generator with phone capture",
-  "main": "server.js",
+  "name": "lohit-soap-app-v16",
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.19.2",
+    "openai": "^4.0.0"
   }
 }
