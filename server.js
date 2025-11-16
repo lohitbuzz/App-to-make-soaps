@@ -1,63 +1,44 @@
-// server.js - backend for Lohit SOAP App v1.6 (flat layout, no /public folder)
-
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import OpenAI from 'openai';
+const path = require("path");
+const express = require("express");
+const bodyParser = require("body-parser");
+const OpenAI = require("openai");
 
 const app = express();
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // set in Render
+
+// ---------- OPENAI CLIENT ----------
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-app.use(express.json({ limit: '10mb' }));
-
-// serve index.html, style.css, app.js from the same folder
+// ---------- MIDDLEWARE ----------
+app.use(bodyParser.json());
+// serve static files (index.html, app.js, style.css) from this folder
 app.use(express.static(__dirname));
 
-// ------- OpenAI helper -------
-async function callOpenAI({ system, user }) {
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4.1-mini',
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user }
-    ],
-    temperature: 0.4
-  });
-  return response.choices[0].message.content;
-}
+// ---------- HELPERS ----------
 
-// ------- Main API -------
-app.post('/api/run', async (req, res) => {
-  try {
-    const { mode, payload } = req.body;
-    if (!mode || !payload) {
-      return res.status(400).json({ error: 'Missing mode or payload' });
-    }
+// Build a big text prompt the model can work from
+function buildPrompt(mode, payload) {
+  if (mode === "soap") {
+    const { soapType, strictMode, caseLabel, fields, refinementNote } = payload || {};
+    const safeCaseLabel = caseLabel || "(no case label)";
 
-    let system = '';
-    let user = '';
+    const strictText = strictMode
+      ? "STRICT MODE: Do NOT invent missing data. Leave obvious blanks and say 'Not recorded' instead of guessing."
+      : "HELP ME MODE: You may use safe templated normals and clinic defaults, but clearly mark anything assumed or templated. Do NOT invent lab values, radiology findings, cytology you were not given, or client decisions.";
 
-    if (mode === 'soap') {
-      const { soapType, strictMode, caseLabel, fields, refinementNote } = payload;
+    const baseRules = `
+You are the Lohit SOAP App v1.6 assistant for a small animal veterinary clinic.
+Make an Avimark-compatible SOAP note following these strict rules:
 
-      system = `
-You are a veterinary SOAP generator for Dr. Lohit Busanelli.
-
-Global rules:
-- Output MUST be Avimark-compatible plain text (no bullets, emojis, or special symbols).
-- Always output these headings, each on its own line, in this order:
-  Subjective:
-  Objective:
-  Assessment:
-  Plan:
-  Medications Dispensed:
-  Aftercare:
-- Within Plan, include numbered subsections in this exact order, with ONE blank line between categories, and no extra blank lines inside a category:
+- Sections in this order: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare.
+- One blank line BETWEEN sections, but NO extra blank lines inside a section.
+- Appointment and surgery follow clinic's default templates.
+- Objective physical exam: use full system-based PE (General, Vitals, Eyes, Ears, Oral, Nose, Resp, CV, Abd, UG, MSK, Neuro, Integ, Lymph).
+- Oral default: calculus/gingivitis absent; if clearly older (>4–8y) and indicated by context you may mention mild/moderate tartar, but never heavy disease unless described.
+- Bloodwork summaries belong ONLY in Objective as data-only; interpretation goes in Assessment.
+- Assessment: problem list + differentials + anesthesia grade if surgical.
+- PLAN ORDER for any surgical/anesthetic case:
   1. IV Catheter / Fluids
   2. Pre-medications
   3. Induction / Maintenance
@@ -67,140 +48,164 @@ Global rules:
   7. Recovery
   8. Medications Dispensed
   9. Aftercare
-- Drug formatting: every drug name must be followed by its concentration in brackets, e.g. "Hydromorphone (2 mg/ml)". Midazolam must always appear as "Midazolam (5 mg/ml)".
-- Objective: physical exam is DATA ONLY (no interpretation). Bloodwork also DATA ONLY; interpretations go in Assessment.
-- Use a full PE list in Objective: General, Vitals, Eyes, Ears, Oral, Nose, Respiratory, Cardiovascular, Abdomen, Urogenital, Musculoskeletal, Neurological, Integument, Lymphatic.
-- Oral findings rule: under 4y = normal; 4–8y = mild generalized tartar; over 8y = moderate tartar, unless user provides different oral data.
-- For surgical/dental cases, include ASA status in Assessment.
-- For dental extractions, mention that AAHA/AVDC standards were followed; closure with tension-free flap, no denuded bone, suture line not over defect, 4-0 Monocryl simple interrupted when appropriate.
-- Single spacing inside sections. Only add blank lines between Plan subsections 1–9.
+- Always include drug concentrations in [brackets] whenever mentioned.
+- Midazolam concentration is always written as [5 mg/ml].
+- No exact administration times, only drugs, doses, routes.
+- Use single spacing and simple bullet/numbering that will paste cleanly into Avimark.
+- Close with a concise Aftercare section (restrictions, monitoring, recheck, warning signs).
 
-STRICT vs HELP ME:
-- If strictMode = true: do NOT invent any missing data. Explicitly state when information was not provided.
-- If strictMode = false (Help Me): you may fill in safe generic normals for PE and anesthesia narrative, but never contradict explicit user data. Add a short "Missing/Assumed" summary at the END of Assessment listing what you assumed.
+For dental or extraction content (when present in the case):
+- Mention monitoring: SpO2, ETCO2, blood pressure, ECG, and fluids.
+- Assume local oral nerve blocks (lidocaine up to 4 mg/kg in dogs, 2 mg/kg in cats) when clearly appropriate.
+- For extractions, mention AAHA/AVDC standard approach and closure phrase:
+  "tension-free flap, no denuded bone, suture line not over defect" with 4-0 Monocryl in a simple interrupted pattern.
 
-Formatting:
-- Keep sentences short, clinical, and easy to paste into Avimark.
+For surgery templates (spay/neuter/mass/dental/etc.):
+- Include ASA status in Assessment for anesthetic cases.
+- Respect suture defaults: Monocryl for closure, with the clinic's usual pattern (SC + intradermal, no external sutures) unless told otherwise.
+
+${strictText}
+
+Now create a SOAP for this case.
+SOAP TYPE: ${soapType}
+CASE LABEL: ${safeCaseLabel}
+REFINEMENT NOTE (can be 'null' if first pass): ${refinementNote || "(none provided)"}
+
+Raw fields from the UI (use what you need, do not repeat labels literally):
+
+Reason for visit: ${fields?.reason || fields?.template || "(not provided)"}
+TPR: ${fields?.tpr || "(not provided)"}
+History / Subjective: ${fields?.history || "(not provided)"}
+Physical exam (data-only): ${fields?.physicalExam || "(not provided)"}
+Diagnostics (data-only): ${fields?.diagnostics || "(not provided)"}
+Assessment notes: ${fields?.assessment || "(not provided)"}
+Plan notes: ${fields?.plan || "(not provided)"}
+Medications dispensed (raw list): ${fields?.meds || "(not provided)"}
+
+Surgery-only extra fields (ignore if not a surgery case):
+- ASA: ${fields?.asa || "(n/a)"}
+- ET tube size: ${fields?.ett || "(n/a)"}
+- IV catheter details: ${fields?.catheter || "(n/a)"}
+- Fluids rate (ml/kg/hr): ${fields?.fluidsRate || "(n/a)"}
+- Fluids declined? ${fields?.fluidsDeclined ? "Yes" : "No / not specified"}
+- Premeds: ${fields?.premeds || "(n/a)"}
+- Induction / Maintenance: ${fields?.induction || "(n/a)"}
+- Intra-op medications: ${fields?.intraOpMeds || "(n/a)"}
+- Procedure notes: ${fields?.procedureNotes || "(n/a)"}
+- Monocryl override checkboxes:
+   - 0: ${fields?.monocryl0 ? "checked" : "no"}
+   - 2-0: ${fields?.monocryl2_0 ? "checked" : "no"}
+   - 3-0: ${fields?.monocryl3_0 ? "checked" : "no"}
+- TPR (surgical): ${fields?.tpr || "(n/a)"}
+- Duration notes: ${fields?.durations || "(n/a)"}
+
+Now output ONLY the SOAP text with the six sections, in order, each labelled like:
+Subjective:
+Objective:
+Assessment:
+Plan:
+Medications Dispensed:
+Aftercare:
 `;
 
-      user = `
-You will receive JSON-like input from the app with:
-- soapType: "appointment" or "surgery"
-- caseLabel: optional free text
-- fields: raw user inputs
-- strictMode: true/false
-- refinementNote: optional free-text additions from a refine step.
+    return baseRules;
+  }
 
-Task:
-1) Generate a complete SOAP using the rules above.
-2) Respect strictMode behaviour.
-3) Never contradict explicit user-entered data.
-4) If strict and something is missing, say it was not provided.
-5) In Help Me mode, you may add safe, generic normals and then list assumptions in "Missing/Assumed" at the end of Assessment.
+  if (mode === "consult") {
+    const question = payload?.message || "";
+    return `
+You are Lohit's veterinary consult assistant. Give concise, practical guidance for a small animal GP vet in Ontario.
+Assume the user understands basic medicine; focus on differentials, next diagnostics, treatment options, and client communication.
+Answer in paragraph + short bullet points, Avimark-pastable.
 
-Now here is the input:
-
-soapType: ${soapType}
-caseLabel: ${caseLabel || '(none)'}
-strictMode: ${strictMode ? 'true' : 'false'}
-refinementNote: ${refinementNote || '(none)'}
-
-fields:
-${JSON.stringify(fields, null, 2)}
+Question:
+${question}
 `;
+  }
 
-    } else if (mode === 'toolbox-bloodwork') {
-      const { text, detailLevel, includeDiffs, includeClientFriendly } = payload;
+  if (mode === "toolbox-bloodwork") {
+    const { text, detailLevel, includeDiffs, includeClientFriendly } = payload || {};
+    return `
+You are "Bloodwork Helper Lite" for Lohit's clinic.
 
-      system = `
-You are "Bloodwork Helper Lite" for a veterinary clinic.
-
-Goal:
-- Convert raw bloodwork / lab notes from the veterinarian into a SHORT Assessment-style snippet for Avimark.
-
-Rules:
-- Output ONLY the snippet (no headings).
-- Use simple clinical language, short sentences or jot notes.
-- Do not invent exact numeric values.
-- If includeDiffs = true, add 2–4 brief likely differentials.
-- If includeClientFriendly = true, finish with 1–2 owner-friendly sentences.
-
-detailLevel:
-- "short": 1–2 sentences.
-- "standard": 3–6 sentences.
-`;
-
-      user = `
-detailLevel: ${detailLevel}
-includeDiffs: ${includeDiffs ? 'true' : 'false'}
-includeClientFriendly: ${includeClientFriendly ? 'true' : 'false'}
-
-Raw vet notes:
+Source text (lab values, comments, etc.):
+---
 ${text}
+---
+
+Detail level: ${detailLevel} (short = 1–2 sentences; standard = a short paragraph)
+Include differentials list? ${includeDiffs ? "Yes, include 3–5 likely differentials per key problem" : "No, keep it brief."}
+Client-friendly explanation requested? ${includeClientFriendly ? "Yes, include a second, simple paragraph suitable to paste into an email or discharge." : "No, vet-facing only."}
+
+Output format:
+
+1) "Vet summary:" followed by 1–2 short paragraphs in vet language.
+${includeDiffs ? "2) 'Differentials:' bullet list grouped by main abnormality." : ""}
+${includeClientFriendly ? "3) 'Client-friendly summary:' 1 short paragraph in simple language." : ""}
+
+No headings other than those labels. Avimark-compatible text only.
 `;
+  }
 
-    } else if (mode === 'toolbox-email') {
-      const { emailType, petName, ownerName, timeframe, notes } = payload;
+  if (mode === "toolbox-email") {
+    const { emailType, petName, ownerName, timeframe, notes } = payload || {};
+    return `
+You write quick, friendly, professional veterinary client emails that paste cleanly into Avimark.
 
-      system = `
-You are "Client Email Helper Lite" for a veterinary clinic.
+Email type: ${emailType} (e.g., bloodwork follow-up, dental estimate, vaccine reminder)
+Pet name: ${petName || "(pet name not given)"}
+Owner name: ${ownerName || "(owner name not given)"}
+Timeframe / appointment info: ${timeframe || "(not specified)"}
+Extra notes from vet: ${notes || "(none)"}
 
-Goal:
-- Draft a clear, kind, professional email BODY (no greeting, no signature) for clients.
+Write:
+- A short email body only (no "To:" or signatures, just the message).
+- Warm but efficient, low-drama, clear next steps.
+- Canadian spelling is okay; avoid medical jargon unless necessary.
+- Assume clinic will add their standard signature.
 
-Rules:
-- Do NOT include "Dear ..." or sign-off.
-- Use Canadian spelling when relevant.
-- Reassuring but honest; avoid promising outcomes.
-- Refer to the pet by name when provided.
-- Keep paragraphs short.
-- Do not mention prices unless they appear in the notes.
-- Never include IDs, phone numbers, or microchip numbers.
+Text should be ready to paste straight into an email template field.
 `;
+  }
 
-      user = `
-emailType: ${emailType}
-petName: ${petName || '(not provided)'}
-ownerName: ${ownerName || '(not provided)'}
-recheckTimeframe: ${timeframe || '(not provided)'}
+  return "You are a helpful veterinary assistant. The clinic forgot to specify mode; answer briefly and clearly.";
+}
 
-Extra notes:
-${notes || '(none)'}
-`;
-
-    } else if (mode === 'consult') {
-      const { message } = payload;
-
-      system = `
-You are a friendly, efficient veterinary assistant for Dr. Lohit Busanelli.
-
-Use:
-- The doctor may ask for SOAP snippets, discharge instructions, client emails, letters, or planning help.
-- Reply in Avimark-friendly plain text (no bullets, no emojis).
-- Short paragraphs or jot notes.
-- Assume Ontario, Canada.
-- Do not include microchip numbers or client contact details.
-`;
-
-      user = message;
-    } else {
-      return res.status(400).json({ error: 'Unknown mode' });
+// ---------- API ROUTE ----------
+app.post("/api/run", async (req, res) => {
+  try {
+    const { mode, payload } = req.body || {};
+    if (!mode) {
+      return res.status(400).json({ error: "Missing mode" });
     }
 
-    const content = await callOpenAI({ system, user });
-    res.json({ result: content });
+    const prompt = buildPrompt(mode, payload);
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are the backend brain of the Lohit SOAP App v1.6. Always follow the clinic formatting rules and Avimark spacing requirements.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+    const text = completion.choices?.[0]?.message?.content || "";
+    return res.json({ result: text });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    console.error("Error in /api/run:", err);
+    return res.status(500).json({ error: "OpenAI request failed" });
   }
 });
 
-// SPA fallback
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-const PORT = process.env.PORT || 3000;
+// ---------- START SERVER ----------
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Lohit SOAP App v1.6 running on port ${PORT}`);
 });
