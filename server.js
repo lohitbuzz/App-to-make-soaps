@@ -1,4 +1,4 @@
-// Lohit SOAP App v1.4 server
+// Lohit SOAP App server - root index.html version
 // CommonJS, no dotenv, designed for Render
 
 const express = require('express');
@@ -7,9 +7,6 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Point to the "public" folder where index.html lives
-const publicDir = path.join(__dirname, 'public');
-
 // In-memory case store for attachments (resets when server restarts)
 const cases = {};
 
@@ -17,14 +14,14 @@ const cases = {};
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-// Serve static files out of /public (including index.html, JS, CSS)
-app.use(express.static(publicDir));
+// Serve static files (index.html, JS, CSS, etc.) from root
+app.use(express.static(__dirname));
 
 // ---- ROUTES ----
 
-// Root – always send public/index.html (handles both main + capture via query)
+// Root – always send index.html (handles both main + capture modes via query)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(publicDir, 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Get attachments for a case
@@ -87,6 +84,7 @@ app.post('/api/generate-soap', async (req, res) => {
 
     const payload = req.body || {};
 
+    // NOTE: This is a simple v1 prompt – we can later replace with your full Master Rules brain.
     const systemPrompt = `
 You are the backend brain for "Lohit SOAP App", a veterinary SOAP generator.
 You receive structured intake JSON from the web app and MUST output a single JSON object.
@@ -95,7 +93,7 @@ ALWAYS follow these clinic rules:
 
 - Format for surgeries: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare.
 - Subjective: concise, owner concerns + presenting problem only.
-- Objective: full PE body systems paragraph style (General, Vitals if provided, Eyes/Ears/Oral/Nose/Resp/CV/Abdomen/Urogenital/MSK/Neuro/Integ/Lymphatic). 
+- Objective: full PE body systems paragraph style (General, Vitals if provided, Eyes/Ears/Oral/Nose/Resp/CV/Abdomen/Urogenital/MSK/Neuro/Integ/Lymphatic).
   Use ONLY data given; if not provided, write "Not specifically documented, within normal limits unless otherwise noted."
 - Assessment: problem list and overall assessment (e.g. "Healthy for spay"). Interpret diagnostics here, NOT in Objective.
 - Plan (for surgeries) MUST be ordered exactly:
@@ -108,7 +106,6 @@ ALWAYS follow these clinic rules:
   7) Recovery
   8) Medications Dispensed
   9) Aftercare
-  Within Plan, you can combine 8) + 9) with brief phrases but keep headings clear.
 - Medications Dispensed: list only take-home meds with name, concentration in [brackets], dose, route, and duration (no exact clock times).
 - Aftercare: activity restriction, incision monitoring, e-collar, recheck, and any special notes.
 - For bloodwork/diagnostics: raw values/summaries live in Objective; the meaning lives in Assessment.
@@ -194,5 +191,5 @@ No markdown, no extra commentary, JSON only.
 
 // ---- START SERVER ----
 app.listen(PORT, () => {
-  console.log(`Lohit SOAP App v1.4 listening on port ${PORT}`);
+  console.log(`Lohit SOAP App listening on port ${PORT}`);
 });
