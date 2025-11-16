@@ -1,1527 +1,498 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Lohit SOAP App v1.4.1</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    :root {
-      --bg: #020917;
-      --bg-alt: #061122;
-      --card: #07172c;
-      --card-soft: #0b1d36;
-      --accent: #46c0a9;
-      --accent-soft: rgba(70, 192, 169, 0.18);
-      --accent-strong: #5eead4;
-      --danger: #f97373;
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --border: #1f2933;
-      --radius-lg: 18px;
-      --radius-md: 12px;
-      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.5);
-      --transition-fast: 150ms ease-out;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "Helvetica Neue", Arial, sans-serif;
-      background: radial-gradient(circle at top, #0b1f3a 0, #020917 55%);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-
-    #app-root {
-      width: 100%;
-      max-width: 1050px;
-      padding: 16px 12px 40px;
-    }
-
-    .app-shell {
-      background: linear-gradient(145deg, #020617, #02040c);
-      border-radius: 32px;
-      padding: 18px 16px 24px;
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .app-shell::before {
-      content: "";
-      position: absolute;
-      inset: -120px;
-      background:
-        radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.16), transparent 55%),
-        radial-gradient(circle at 100% 10%, rgba(45, 212, 191, 0.16), transparent 55%);
-      opacity: 0.9;
-      pointer-events: none;
-      mix-blend-mode: screen;
-    }
-
-    .app-inner {
-      position: relative;
-      z-index: 1;
-    }
-
-    h1 {
-      font-size: 1.25rem;
-      margin: 0;
-      letter-spacing: 0.03em;
-    }
-
-    .subtitle {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(15, 23, 42, 0.9);
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 0.72rem;
-      color: var(--muted);
-      border: 1px solid rgba(148, 163, 184, 0.35);
-    }
-
-    .pill-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: #10b981;
-      box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.25);
-    }
-
-    .tabs-row {
-      display: flex;
-      gap: 6px;
-      margin: 10px 0 14px;
-    }
-
-    .chip-toggle {
-      flex: 0 0 auto;
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      background: rgba(15, 23, 42, 0.7);
-      color: var(--muted);
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: background var(--transition-fast), transform var(--transition-fast),
-        box-shadow var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
-    }
-
-    .chip-toggle.active {
-      background: radial-gradient(circle at top left, var(--accent-strong), #0b1628);
-      color: #042f2e;
-      border-color: var(--accent-strong);
-      box-shadow: 0 10px 25px rgba(34, 197, 167, 0.35);
-      transform: translateY(-0.5px);
-    }
-
-    .chip-toggle span {
-      opacity: 0.75;
-    }
-
-    .chip-toggle.active span {
-      opacity: 1;
-      font-weight: 600;
-    }
-
-    .layout-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr);
-      gap: 12px;
-    }
-
-    @media (max-width: 880px) {
-      .layout-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-
-    .card {
-      background: radial-gradient(circle at top left, #0f172a, #020617);
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      padding: 12px 12px 14px;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.7);
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(24px);
-      transition: transform var(--transition-fast), box-shadow var(--transition-fast),
-        border-color var(--transition-fast), background var(--transition-fast);
-    }
-
-    .card:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
-      border-color: rgba(148, 163, 184, 0.8);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .card-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      color: #dbeafe;
-    }
-
-    .card-subtitle {
-      font-size: 0.72rem;
-      color: var(--muted);
-    }
-
-    label {
-      font-size: 0.78rem;
-      color: var(--muted);
-      display: block;
-      margin-bottom: 3px;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    textarea,
-    select {
-      width: 100%;
-      padding: 7px 9px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      background: radial-gradient(circle at top, #020617, #02091b);
-      color: var(--text);
-      font-size: 0.8rem;
-      outline: none;
-      transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
-        background-color var(--transition-fast), transform var(--transition-fast);
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: #6b7280;
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 55px;
-      max-height: 180px;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      border-color: var(--accent-strong);
-      box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.6);
-      background: #020617;
-      transform: translateY(-0.5px);
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .row > div {
-      flex: 1;
-    }
-
-    .radio-row,
-    .checkbox-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 4px;
-      font-size: 0.76rem;
-    }
-
-    .radio-row label,
-    .checkbox-row label {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      margin: 0;
-      color: var(--muted);
-      cursor: pointer;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      border-radius: 999px;
-      padding: 3px 7px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      font-size: 0.7rem;
-      color: var(--muted);
-    }
-
-    .tag strong {
-      color: #e5e7eb;
-    }
-
-    .btn {
-      border-radius: 999px;
-      border: none;
-      padding: 7px 13px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: radial-gradient(circle at top left, var(--accent), #22c55e);
-      color: #022c22;
-      box-shadow: 0 12px 30px rgba(34, 197, 167, 0.45);
-      transition: transform var(--transition-fast), box-shadow var(--transition-fast),
-        filter var(--transition-fast), background var(--transition-fast);
-      white-space: nowrap;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 18px 42px rgba(34, 197, 167, 0.6);
-      filter: brightness(1.03);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-      box-shadow: 0 8px 22px rgba(34, 197, 167, 0.5);
-    }
-
-    .btn-secondary {
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--muted);
-      box-shadow: none;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(17, 24, 39, 0.95);
-      color: #e5e7eb;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.75);
-    }
-
-    .btn-small {
-      padding: 4px 9px;
-      font-size: 0.74rem;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.7rem;
-      border-radius: 999px;
-      padding: 3px 7px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      color: var(--muted);
-    }
-
-    .badge-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--accent-strong);
-    }
-
-    .section-divider {
-      margin: 8px 0;
-      height: 1px;
-      background: linear-gradient(
-        to right,
-        transparent,
-        rgba(148, 163, 184, 0.4),
-        transparent
-      );
-      border-radius: 999px;
-    }
-
-    .soap-output-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 6px;
-    }
-
-    .soap-field {
-      position: relative;
-    }
-
-    .soap-label-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2px;
-    }
-
-    .copy-btn-inline {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-    }
-
-    .copy-all-row {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-    }
-
-    .copy-pill {
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 0.74rem;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--muted);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background var(--transition-fast), color var(--transition-fast),
-        box-shadow var(--transition-fast), transform var(--transition-fast);
-    }
-
-    .copy-pill:hover {
-      background: rgba(15, 118, 110, 0.35);
-      color: #e5e7eb;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.7);
-      transform: translateY(-0.5px);
-    }
-
-    .mini-note {
-      font-size: 0.72rem;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    .attachments-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    .attachment-thumb {
-      width: 72px;
-      height: 72px;
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      background: #020617;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .attachment-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .qr-img {
-      width: 132px;
-      height: 132px;
-      border-radius: 16px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      margin-top: 6px;
-    }
-
-    .qr-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-    }
-
-    .status-text {
-      font-size: 0.75rem;
-      margin-top: 6px;
-      color: var(--muted);
-    }
-
-    .status-text.error {
-      color: var(--danger);
-    }
-
-    .status-text.success {
-      color: #4ade80;
-    }
-
-    /* Capture (phone / device) mode */
-
-    .capture-shell {
-      min-height: 90vh;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .capture-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .capture-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .capture-card {
-      background: radial-gradient(circle at top left, #020617, #020617);
-      border-radius: var(--radius-lg);
-      padding: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .capture-row {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    canvas {
-      max-width: 100%;
-      border-radius: 16px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      background: #020617;
-      touch-action: none;
-    }
-
-    .pill-small {
-      font-size: 0.7rem;
-      padding: 3px 7px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .pill-small span {
-      color: #e5e7eb;
-    }
-  </style>
-</head>
-<body>
-  <div id="app-root">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lohit SOAP App v1.4</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
     <div class="app-shell">
-      <div class="app-inner">
-        <!-- Main app container -->
-        <div id="main-app" style="display:none;">
-          <div class="top-row">
-            <div>
-              <h1>Lohit SOAP App v1.4.1</h1>
-              <div class="subtitle">Appointment &amp; Surgery SOAPs · Attachments · QR &amp; on-device capture</div>
-            </div>
-            <div class="pill">
-              <div class="pill-dot"></div>
-              <span id="case-pill">Case: —</span>
-            </div>
-          </div>
-
-          <div class="tabs-row">
-            <button class="chip-toggle active" id="toggle-appointment">
-              <span>Appointment</span>
-            </button>
-            <button class="chip-toggle" id="toggle-surgery">
-              <span>Surgery</span>
-            </button>
-            <div style="flex:1;"></div>
-            <div class="badge">
-              <div class="badge-dot"></div>
-              <span>Local-only · clipboard paste into Avimark</span>
-            </div>
-          </div>
-
-          <div class="layout-grid">
-            <!-- LEFT COLUMN: Intake -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">Case Intake</div>
-                  <div class="card-subtitle">Minimal typing in, full SOAP out.</div>
-                </div>
-                <div class="tag">
-                  <strong>Mode</strong>
-                  <span id="mode-tag-text">Appointment</span>
-                </div>
-              </div>
-
-              <div class="row">
-                <div>
-                  <label>Case label / Patient name (optional)</label>
-                  <input id="case-label" type="text" placeholder="e.g. Luna – rescue cat spay" />
-                </div>
-                <div>
-                  <label>Species</label>
-                  <select id="species">
-                    <option value="Dog">Dog</option>
-                    <option value="Cat">Cat</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="row">
-                <div>
-                  <label>Profile</label>
-                  <select id="profile">
-                    <option value="Client">Client</option>
-                    <option value="Rescue">Rescue</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Accuracy mode</label>
-                  <select id="accuracy">
-                    <option value="strict">Strict (no guessing)</option>
-                    <option value="medium">Medium (safe fill-ins)</option>
-                    <option value="liberal">Liberal (templated normals)</option>
-                  </select>
-                </div>
-              </div>
-
-              <label>Reason for visit</label>
-              <input id="reason" type="text" placeholder="e.g. vomiting, wellness exam, rescue spay day" />
-
-              <label>History / Subjective</label>
-              <textarea id="history" placeholder="Owner-reported history, appetite, behaviour, CSVD, meds..."></textarea>
-
-              <label>Objective / PE (data only)</label>
-              <textarea id="objective" placeholder="PE findings, vitals, body systems. Data only; no interpretation."></textarea>
-
-              <label>Diagnostics (data only)</label>
-              <textarea id="diagnostics" placeholder="Bloodwork, UA, imaging results as data only (no interpretation)."></textarea>
-
-              <div class="section-divider"></div>
-
-              <label>Assessment</label>
-              <textarea id="assessment-input" placeholder="Problem list, assessment, interpretations of diagnostics."></textarea>
-
-              <label>Plan (summary)</label>
-              <textarea id="plan-input" placeholder="Treatments, anaesthesia considerations, rechecks, client communication notes."></textarea>
-
-              <!-- Surgery-only intake -->
-              <div id="surgery-intake" style="margin-top:10px; display:none;">
-                <div class="section-divider"></div>
-                <div class="card-subtitle" style="margin-bottom:4px;">Surgery intake</div>
-
-                <div class="row">
-                  <div>
-                    <label>Surgery template</label>
-                    <select id="surgery-template">
-                      <option value="Dog spay - client">Dog spay – client</option>
-                      <option value="Dog neuter - client">Dog neuter – client</option>
-                      <option value="Cat spay - client">Cat spay – client</option>
-                      <option value="Cat neuter - client">Cat neuter – client</option>
-                      <option value="Dog spay - rescue">Dog spay – rescue</option>
-                      <option value="Dog neuter - rescue">Dog neuter – rescue</option>
-                      <option value="Cat spay - rescue">Cat spay – rescue</option>
-                      <option value="Cat neuter - rescue">Cat neuter – rescue</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label>Age</label>
-                    <input id="age" type="text" placeholder="e.g. 5m, 2y" />
-                  </div>
-                  <div>
-                    <label>Weight (kg)</label>
-                    <input id="weight" type="number" step="0.1" placeholder="e.g. 4.2" />
-                  </div>
-                </div>
-
-                <div class="card-subtitle" style="margin-top:6px;">Pre-op bloodwork</div>
-                <div class="radio-row">
-                  <label><input type="radio" name="bw" value="declined" checked /> Declined (owner aware of risks)</label>
-                  <label><input type="radio" name="bw" value="normal" /> Done – normal</label>
-                  <label><input type="radio" name="bw" value="abnormal" /> Done – abnormal</label>
-                </div>
-                <textarea id="bw-details" placeholder="If abnormal, key value changes as data only (e.g. mild ↑ALT)."></textarea>
-
-                <div class="section-divider"></div>
-
-                <div class="card-subtitle">Catheter &amp; fluids</div>
-                <div class="checkbox-row">
-                  <label><input id="iv-catheter" type="checkbox" /> IV catheter placed</label>
-                  <label><input id="iv-fluids-used" type="checkbox" /> IV fluids used</label>
-                  <label><input id="iv-fluids-declined" type="checkbox" /> IV fluids declined</label>
-                  <label><input id="fluids-risk" type="checkbox" /> Owner understands risks (when fluids declined)</label>
-                </div>
-
-                <div class="row">
-                  <div>
-                    <label>Gauge</label>
-                    <select id="iv-gauge">
-                      <option value="">–</option>
-                      <option value="24G">24G</option>
-                      <option value="22G">22G</option>
-                      <option value="20G">20G</option>
-                      <option value="18G">18G</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label>Site</label>
-                    <select id="iv-site">
-                      <option value="">–</option>
-                      <option value="cephalic">Cephalic</option>
-                      <option value="saphenous">Saphenous</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label>Side</label>
-                    <select id="iv-side">
-                      <option value="">–</option>
-                      <option value="left">Left</option>
-                      <option value="right">Right</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label>Rate (mL/kg/hr)</label>
-                    <input id="fluid-rate" type="number" step="0.1" placeholder="e.g. 5" />
-                  </div>
-                </div>
-
-                <div class="section-divider"></div>
-
-                <div class="card-subtitle">Anaesthesia &amp; analgesia (summary)</div>
-                <label>Premed summary</label>
-                <input
-                  id="premed-summary"
-                  type="text"
-                  placeholder="e.g. Methadone [10 mg/mL] 0.2 mg/kg IM, Midazolam [5 mg/mL] 0.2 mg/kg IM"
-                />
-
-                <label>Induction &amp; maintenance</label>
-                <input
-                  id="induction-summary"
-                  type="text"
-                  placeholder="e.g. Propofol [10 mg/mL] 2–5 mg/kg IV to effect; Isoflurane in oxygen."
-                />
-
-                <label>Intra-op meds / blocks</label>
-                <input
-                  id="intraop-summary"
-                  type="text"
-                  placeholder="e.g. Lidocaine [20 mg/mL] splash block along SQ tissue prior to closing."
-                />
-
-                <label>Post-op injectables</label>
-                <input
-                  id="postop-inj-summary"
-                  type="text"
-                  placeholder="e.g. Meloxicam [5 mg/mL] 0.2 mg/kg SQ, Buprenorphine [0.3 mg/mL] 0.02 mg/kg SQ."
-                />
-
-                <label>Take-home meds</label>
-                <input
-                  id="takehome-summary"
-                  type="text"
-                  placeholder="e.g. Meloxicam [1.3 mg/mL] 0.05 mg/kg PO q24h x3 days; Gabapentin [100 mg/mL] 5 mg/kg PO q8–12h."
-                />
-
-                <div class="section-divider"></div>
-
-                <div class="card-subtitle">Surgery notes</div>
-                <label>Subjective / history add-ons</label>
-                <textarea
-                  id="sx-subjective-notes"
-                  placeholder="Extra rescue details, shelter notes, behavioural comments..."
-                ></textarea>
-
-                <label>PE / Objective variations</label>
-                <textarea
-                  id="sx-pe-notes"
-                  placeholder="Any PE abnormalities (e.g. deciduous 104 present, firm.)"
-                ></textarea>
-
-                <label>Procedure details / intra-op findings</label>
-                <textarea
-                  id="sx-procedure-notes"
-                  placeholder="Extras beyond standard spay/neuter script (e.g. hernia repair, mild fat lipoma)."
-                ></textarea>
-
-                <label>Extra aftercare notes</label>
-                <textarea
-                  id="sx-aftercare-notes"
-                  placeholder="Additional restrictions, monitoring beyond standard spay/neuter discharge."
-                ></textarea>
-              </div>
-            </div>
-
-            <!-- RIGHT COLUMN: Attachments, QR, SOAP output, Toolbox, Feedback -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">Attachments &amp; capture</div>
-                  <div class="card-subtitle">Add anesthesia sheets, labs, photos from desktop or this device.</div>
-                </div>
-                <div class="pill-small">
-                  <span>Tap for privacy</span>
-                  <span style="width:8px;height:8px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,0.35);"></span>
-                </div>
-              </div>
-
-              <div>
-                <label>Add from desktop / this device</label>
-                <input id="desktop-attachments" type="file" accept="image/*" multiple />
-                <div class="mini-note">
-                  Images are stored in memory only (server restarts clear them). Use AVImark for long-term storage.
-                </div>
-              </div>
-
-              <div style="margin-top:6px;">
-                <div class="row" style="align-items:center; margin-bottom:4px;">
-                  <div>
-                    <label>Open phone capture (QR)</label>
-                  </div>
-                  <button class="btn-secondary btn-small" id="btn-generate-qr">Show QR</button>
-                </div>
-
-                <div class="qr-img" id="qr-box" style="display:none;">
-                  <img id="qr-image" alt="QR for phone capture" />
-                </div>
-                <div class="mini-note">
-                  Scan with your phone to open a capture page for this case, draw boxes to hide sensitive info, then save.
-                </div>
-
-                <!-- NEW: on-device capture button -->
-                <div class="row" style="align-items:center; margin-top:6px; gap:8px;">
-                  <button class="btn-secondary btn-small" id="btn-open-capture-here">
-                    Use this device (camera + blur)
-                  </button>
-                  <div class="mini-note">
-                    Opens the redaction camera on this device (no phone/QR needed).
-                  </div>
-                </div>
-              </div>
-
-              <div class="section-divider"></div>
-
-              <div>
-                <div class="card-subtitle" style="margin-bottom:4px;">Attachments for this case</div>
-                <div class="attachments-list" id="attachments-list"></div>
-                <div class="row" style="margin-top:6px;">
-                  <button class="btn-secondary btn-small" id="btn-refresh-attachments">Refresh from server</button>
-                  <div class="mini-note" id="attachments-status">No attachments yet.</div>
-                </div>
-              </div>
-
-              <div class="section-divider"></div>
-
-              <div>
-                <button class="btn" id="btn-generate-soap">
-                  <span>Generate SOAP</span>
-                </button>
-                <div class="status-text" id="soap-status"></div>
-              </div>
-
-              <div class="section-divider"></div>
-
-              <div>
-                <div class="card-title" style="margin-bottom:4px;">SOAP Output</div>
-                <div class="copy-all-row">
-                  <button class="copy-pill" id="btn-copy-full">
-                    <span>Copy full SOAP</span>
-                  </button>
-                  <button class="copy-pill" id="btn-copy-plan-meds-after">
-                    <span>Copy Plan + Meds + Aftercare</span>
-                  </button>
-                </div>
-                <div class="soap-output-grid">
-                  <div class="soap-field">
-                    <div class="soap-label-row">
-                      <label>Subjective</label>
-                      <button class="btn-secondary btn-small copy-btn-inline" data-copy-target="soap-subjective">
-                        Copy
-                      </button>
-                    </div>
-                    <textarea id="soap-subjective"></textarea>
-                  </div>
-                  <div class="soap-field">
-                    <div class="soap-label-row">
-                      <label>Objective</label>
-                      <button class="btn-secondary btn-small copy-btn-inline" data-copy-target="soap-objective">
-                        Copy
-                      </button>
-                    </div>
-                    <textarea id="soap-objective"></textarea>
-                  </div>
-                  <div class="soap-field">
-                    <div class="soap-label-row">
-                      <label>Assessment</label>
-                      <button class="btn-secondary btn-small copy-btn-inline" data-copy-target="soap-assessment">
-                        Copy
-                      </button>
-                    </div>
-                    <textarea id="soap-assessment"></textarea>
-                  </div>
-                  <div class="soap-field">
-                    <div class="soap-label-row">
-                      <label>Plan</label>
-                      <button class="btn-secondary btn-small copy-btn-inline" data-copy-target="soap-plan">
-                        Copy
-                      </button>
-                    </div>
-                    <textarea id="soap-plan"></textarea>
-                  </div>
-                  <div class="soap-field">
-                    <div class="soap-label-row">
-                      <label>Medications Dispensed</label>
-                      <button class="btn-secondary btn-small copy-btn-inline" data-copy-target="soap-meds">
-                        Copy
-                      </button>
-                    </div>
-                    <textarea id="soap-meds"></textarea>
-                  </div>
-                  <div class="soap-field">
-                    <div class="soap-label-row">
-                      <label>Aftercare</label>
-                      <button class="btn-secondary btn-small copy-btn-inline" data-copy-target="soap-aftercare">
-                        Copy
-                      </button>
-                    </div>
-                    <textarea id="soap-aftercare"></textarea>
-                  </div>
-                </div>
-
-                <div class="mini-note">
-                  Clipboard: paste into AVImark. Future: Windows helper will paste each section into the right field.
-                </div>
-              </div>
-
-              <div class="section-divider"></div>
-
-              <div>
-                <div class="card-title" style="margin-bottom:4px;">Toolbox (v1 skeleton)</div>
-                <div class="card-subtitle">
-                  Placeholder for bloodwork helper, email helper, free-form mode. Train via feedback box below.
-                </div>
-              </div>
-
-              <div class="section-divider"></div>
-
-              <div>
-                <div class="card-title" style="margin-bottom:4px;">Feedback &amp; Training Intake</div>
-                <div class="card-subtitle">
-                  Paste example SOAPs, rescue templates, or notes for future versions here. They won’t affect this SOAP yet.
-                </div>
-                <textarea
-                  id="feedback-input"
-                  style="margin-top:6px;"
-                  placeholder="e.g. Rescue dog spay example, or 'Cat neuter template is missing Onsior line'."
-                ></textarea>
-                <button class="btn-secondary btn-small" style="margin-top:6px;" id="btn-save-feedback">
-                  Save feedback (local)
-                </button>
-                <div class="mini-note" id="feedback-status"></div>
-              </div>
-            </div>
-          </div>
+      <header class="app-header">
+        <div>
+          <h1>Lohit SOAP App v1.4</h1>
+          <p class="subtitle">
+            Appointment &amp; Surgery SOAPs · Attachments · QR phone capture
+          </p>
         </div>
+        <div class="header-badges">
+          <span class="badge badge-soft" id="modeBadge">Mode: Appointment</span>
+          <span class="badge badge-soft" id="caseBadge">Case: —</span>
+          <button class="badge badge-privacy" id="privacyBadge">
+            Tap for privacy
+          </button>
+        </div>
+      </header>
 
-        <!-- Capture / redaction mode -->
-        <div id="capture-app" style="display:none;">
-          <div class="capture-shell">
-            <div class="capture-header">
-              <div>
-                <div class="capture-title">Blur sensitive info</div>
-                <div class="subtitle">
-                  Case <span id="capture-case-id">—</span> · Draw boxes over microchips, owner names, phone numbers, Lab IDs, etc.
-                </div>
-              </div>
-              <button class="btn-secondary btn-small" id="btn-exit-capture">Done</button>
+      <main class="layout">
+        <!-- CASE / INTAKE CARD -->
+        <section class="card" id="intakeCard">
+          <div class="card-header">
+            <div class="pill-toggle" id="caseTypeToggle">
+              <button data-type="appointment" class="pill active">
+                Appointment
+              </button>
+              <button data-type="surgery" class="pill">Surgery</button>
             </div>
+            <span class="card-label">Case Intake</span>
+          </div>
 
-            <div class="capture-card">
-              <div class="card-subtitle">1. Pick a photo</div>
-              <div class="capture-row">
-                <input id="capture-file" type="file" accept="image/*" />
-                <div class="mini-note">
-                  Tip: use your camera from the file chooser. The image stays local until you tap “Save redacted”.
-                </div>
-              </div>
+          <div class="grid grid-2">
+            <div class="field">
+              <label>Case label / Patient name (optional)</label>
+              <input id="caseLabel" placeholder="e.g. Luna – rescue cat spay" />
             </div>
-
-            <div class="capture-card">
-              <div class="card-subtitle">2. Draw boxes to hide sensitive data</div>
-              <div class="capture-row">
-                <canvas id="capture-canvas"></canvas>
-                <div class="mini-note">
-                  Touch / click and drag to paint black boxes. New boxes simply layer on top.
-                </div>
-              </div>
-            </div>
-
-            <div class="capture-card">
-              <div class="card-subtitle">3. Save redacted copy to this case</div>
-              <div class="capture-row">
-                <div class="row" style="align-items:center;">
-                  <button class="btn" id="btn-save-redacted">
-                    <span>Save redacted to case</span>
-                  </button>
-                  <button class="btn-secondary btn-small" id="btn-reset-canvas">Reset</button>
-                </div>
-                <div class="status-text" id="capture-status"></div>
-                <div class="mini-note">
-                  On your desktop, click “Refresh from server” in the Attachments card to see the redacted image appear.
-                </div>
-              </div>
+            <div class="field">
+              <label>Species</label>
+              <select id="species">
+                <option value="dog">Dog</option>
+                <option value="cat">Cat</option>
+              </select>
             </div>
           </div>
-        </div>
 
+          <div class="grid grid-2">
+            <div class="field">
+              <label>Profile</label>
+              <select id="profile">
+                <option value="client">Client</option>
+                <option value="rescue">Rescue</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Accuracy mode</label>
+              <select id="accuracyMode">
+                <option value="strict">Strict (no guessing)</option>
+                <option value="medium">Medium</option>
+                <option value="liberal">Liberal (templated normals)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Reason for visit</label>
+            <textarea
+              id="reason"
+              rows="2"
+              placeholder="e.g. vomiting, wellness exam, rescue spay day"
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>History / Subjective</label>
+            <textarea
+              id="history"
+              rows="3"
+              placeholder="Owner-reported history, appetite, behaviour, CSVD, meds…"
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Objective / PE (data only)</label>
+            <textarea
+              id="objective"
+              rows="3"
+              placeholder="PE findings, vitals, body systems. Data only; no interpretation."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Diagnostics (data only)</label>
+            <textarea
+              id="diagnostics"
+              rows="3"
+              placeholder="Bloodwork, UA, imaging results as data only (no interpretation)."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Assessment</label>
+            <textarea
+              id="assessmentNote"
+              rows="3"
+              placeholder="Problem list, assessment, interpretations of diagnostics."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Plan (summary)</label>
+            <textarea
+              id="planSummary"
+              rows="3"
+              placeholder="Treatments, anaesthesia considerations, rechecks, client communication notes."
+            ></textarea>
+          </div>
+
+          <!-- SURGERY-SPECIFIC BLOCK -->
+          <div id="surgeryBlock" class="surgery-block hidden">
+            <h3 class="section-label">Surgery intake</h3>
+
+            <div class="grid grid-3">
+              <div class="field">
+                <label>Surgery template</label>
+                <select id="surgeryTemplate">
+                  <option value="dog-spay-client">Dog spay – client</option>
+                  <option value="dog-neuter-client">Dog neuter – client</option>
+                  <option value="cat-spay-client">Cat spay – client</option>
+                  <option value="cat-neuter-client">Cat neuter – client</option>
+
+                  <option value="dog-spay-rescue">Dog spay – rescue</option>
+                  <option value="dog-neuter-rescue">Dog neuter – rescue</option>
+                  <option value="cat-spay-rescue">Cat spay – rescue</option>
+                  <option value="cat-neuter-rescue">Cat neuter – rescue</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Age</label>
+                <input id="age" placeholder="e.g. 5y, 2m" />
+              </div>
+              <div class="field">
+                <label>Weight (kg)</label>
+                <input id="weight" type="number" step="0.1" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Pre-op bloodwork</label>
+              <div class="radio-row" id="bwGroup">
+                <label>
+                  <input
+                    type="radio"
+                    name="bw"
+                    value="declined"
+                    checked
+                  />Declined (owner aware of risks)
+                </label>
+                <label>
+                  <input type="radio" name="bw" value="normal" />Done – normal
+                </label>
+                <label>
+                  <input type="radio" name="bw" value="abnormal" />Done –
+                  abnormal
+                </label>
+              </div>
+              <textarea
+                id="bwDetails"
+                rows="2"
+                placeholder="If abnormal, key value changes as data only (e.g. mild ↑ALT)."
+              ></textarea>
+            </div>
+
+            <h3 class="section-label">Catheter &amp; fluids</h3>
+            <div class="grid grid-4">
+              <div class="field checkbox-field">
+                <label>
+                  <input type="checkbox" id="ivPlaced" />
+                  IV catheter placed
+                </label>
+              </div>
+              <div class="field">
+                <label>Gauge</label>
+                <select id="ivGauge">
+                  <option value="">–</option>
+                  <option>18g</option>
+                  <option>20g</option>
+                  <option>22g</option>
+                  <option>24g</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Site</label>
+                <select id="ivSite">
+                  <option value="">–</option>
+                  <option>Cephalic</option>
+                  <option>Saphenous</option>
+                  <option>Jugular</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Side</label>
+                <select id="ivSide">
+                  <option value="">–</option>
+                  <option>Left</option>
+                  <option>Right</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-3">
+              <div class="field checkbox-field">
+                <label>
+                  <input type="checkbox" id="fluidsUsed" />
+                  IV fluids used
+                </label>
+              </div>
+              <div class="field checkbox-field">
+                <label>
+                  <input type="checkbox" id="fluidsDeclined" />
+                  IV fluids declined
+                </label>
+              </div>
+              <div class="field checkbox-field">
+                <label>
+                  <input type="checkbox" id="ownerUnderstandsFluids" />
+                  Owner understands risks (when fluids declined)
+                </label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Rate (mL/kg/hr)</label>
+              <input
+                id="fluidRate"
+                type="number"
+                step="0.1"
+                placeholder="e.g. 5"
+              />
+            </div>
+
+            <h3 class="section-label">Anaesthesia &amp; analgesia (summary)</h3>
+
+            <div class="field">
+              <label>Premed summary</label>
+              <textarea
+                id="premedSummary"
+                rows="2"
+                placeholder="e.g. Methadone [10 mg/mL] 0.2 mg/kg IM, Midazolam [5 mg/mL] 0.2 mg/kg IM."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Induction &amp; maintenance</label>
+              <textarea
+                id="inductionSummary"
+                rows="2"
+                placeholder="e.g. Propofol [10 mg/mL] 2–5 mg/kg IV to effect; isoflurane in oxygen."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Intra-op meds / blocks</label>
+              <textarea
+                id="intraOpSummary"
+                rows="2"
+                placeholder="e.g. Lidocaine [20 mg/mL] splash block along SQ tissue prior to closing."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Post-op injectables</label>
+              <textarea
+                id="postOpInjectables"
+                rows="2"
+                placeholder="e.g. Meloxicam [5 mg/mL] 0.2 mg/kg SQ; Buprenorphine [0.3 mg/mL] 0.02 mg/kg SQ."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Take-home meds</label>
+              <textarea
+                id="takeHomeMeds"
+                rows="2"
+                placeholder="e.g. Meloxicam [1.3 mg/mL] 0.05 mg/kg PO q24h ×3 days; Gabapentin [100 mg/mL] 5 mg/kg PO q8–12h."
+              ></textarea>
+            </div>
+
+            <h3 class="section-label">Surgery notes</h3>
+
+            <div class="field">
+              <label>Subjective / history add-ons</label>
+              <textarea
+                id="surgSubjective"
+                rows="2"
+                placeholder="Extra rescue details, shelter notes, behavioural comments…"
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>PE / Objective variations</label>
+              <textarea
+                id="surgObjective"
+                rows="2"
+                placeholder="Any PE abnormalities (e.g. deciduous 104 present, firm.)."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Procedure details / intra-op findings</label>
+              <textarea
+                id="surgIntraOp"
+                rows="3"
+                placeholder="Extras beyond standard spay/neuter script (e.g. hernia repair, mild fat lipoma)."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Extra aftercare notes</label>
+              <textarea
+                id="surgAftercare"
+                rows="2"
+                placeholder="Additional restrictions, monitoring beyond standard spay/neuter discharge."
+              ></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- ATTACHMENTS & PHONE CAPTURE -->
+        <section class="card" id="attachmentsCard">
+          <div class="card-header">
+            <span class="card-label">Attachments &amp; phone capture</span>
+            <span class="badge badge-privacy-soft" id="privacyStatus">
+              Local-only · clipboard paste into Avimark
+            </span>
+          </div>
+
+          <div class="field">
+            <label>Add from this device (desktop, iPad, or phone)</label>
+            <input type="file" id="desktopFiles" accept="image/*" />
+            <p class="hint">
+              You can choose an existing photo or use the camera. You’ll be able
+              to draw black boxes to hide microchips, owner names, Lab IDs,
+              etc., before it’s stored.
+            </p>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="field">
+              <label>Open phone capture (QR)</label>
+              <div class="qr-box">
+                <img id="qrImage" alt="QR code" />
+              </div>
+              <button id="showQrBtn" class="btn-secondary">Show QR</button>
+              <p class="hint">
+                Scan with your phone camera to open a capture page for this
+                case. Redacted images are linked back here.
+              </p>
+            </div>
+
+            <div class="field">
+              <label>Attachments for this case</label>
+              <div id="attachmentsList" class="attachments-list">
+                <p class="hint" id="attachmentsEmpty">
+                  No attachments yet.
+                </p>
+              </div>
+              <button id="refreshAttachments" class="btn-secondary">
+                Refresh from server
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- SOAP OUTPUT -->
+        <section class="card" id="soapCard">
+          <div class="card-header">
+            <span class="card-label">SOAP output</span>
+            <div class="inline-buttons">
+              <button id="copyFullSoap" class="btn-secondary">
+                Copy full SOAP
+              </button>
+              <button id="copyPlanBundle" class="btn-secondary">
+                Copy Plan + Meds + Aftercare
+              </button>
+            </div>
+          </div>
+
+          <button id="generateSoap" class="btn-primary full-width">
+            Generate SOAP
+          </button>
+          <p class="hint" id="generatorStatus">
+            SOAP generated text is meant for review before pasting into Avimark.
+          </p>
+
+          <div class="soap-section">
+            <label>Subjective</label>
+            <div class="soap-row">
+              <textarea id="subjectiveOut" rows="2"></textarea>
+              <button data-copy="subjectiveOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div class="soap-section">
+            <label>Objective</label>
+            <div class="soap-row">
+              <textarea id="objectiveOut" rows="3"></textarea>
+              <button data-copy="objectiveOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div class="soap-section">
+            <label>Assessment</label>
+            <div class="soap-row">
+              <textarea id="assessmentOut" rows="3"></textarea>
+              <button data-copy="assessmentOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div class="soap-section">
+            <label>Plan</label>
+            <div class="soap-row">
+              <textarea id="planOut" rows="4"></textarea>
+              <button data-copy="planOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div class="soap-section">
+            <label>Medications Dispensed</label>
+            <div class="soap-row">
+              <textarea id="medsOut" rows="2"></textarea>
+              <button data-copy="medsOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div class="soap-section">
+            <label>Aftercare</label>
+            <div class="soap-row">
+              <textarea id="aftercareOut" rows="3"></textarea>
+              <button data-copy="aftercareOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- FEEDBACK / TRAINING -->
+        <section class="card" id="feedbackCard">
+          <div class="card-header">
+            <span class="card-label">Feedback &amp; training intake</span>
+          </div>
+          <p class="hint">
+            Paste example SOAPs, rescue templates, or notes for future versions.
+            They won’t change this SOAP instantly, but we’ll use them to adjust
+            the Assistant + master rules.
+          </p>
+          <textarea
+            id="feedbackText"
+            rows="3"
+            placeholder="e.g. Rescue dog spay example, or 'Cat neuter template is missing Onsior line'."
+          ></textarea>
+          <button id="saveFeedback" class="btn-secondary">
+            Save feedback (local)
+          </button>
+        </section>
+      </main>
+    </div>
+
+    <!-- BLUR / PRIVACY MODAL -->
+    <div id="blurModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Blur sensitive info</h3>
+          <button id="closeModal" class="icon-btn">&times;</button>
+        </div>
+        <p class="hint">
+          Draw solid boxes over microchips, client names, phone numbers,
+          addresses, Lab IDs, etc.
+        </p>
+        <div class="canvas-wrap">
+          <canvas id="blurCanvas"></canvas>
+        </div>
+        <div class="modal-actions">
+          <button id="resetBlur" class="btn-secondary">Reset</button>
+          <button id="cancelBlur" class="btn-secondary">Cancel</button>
+          <button id="saveBlur" class="btn-primary">Save redacted</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    (function () {
-      const qs = (id) => document.getElementById(id);
-
-      const mainApp = qs('main-app');
-      const captureApp = qs('capture-app');
-
-      // Detect mode from query params
-      const params = new URLSearchParams(window.location.search);
-      const modeParam = params.get('mode');
-      const urlCaseId = params.get('caseId');
-
-      let currentCaseId = urlCaseId || ('C' + Math.random().toString(36).slice(2, 8).toUpperCase());
-
-      function setCasePill() {
-        const pill = qs('case-pill');
-        const capturePill = qs('capture-case-id');
-        if (pill) pill.textContent = 'Case: ' + currentCaseId;
-        if (capturePill) capturePill.textContent = currentCaseId;
-      }
-
-      function switchToMain() {
-        mainApp.style.display = '';
-        captureApp.style.display = 'none';
-        setCasePill();
-      }
-
-      function switchToCapture() {
-        mainApp.style.display = 'none';
-        captureApp.style.display = '';
-        setCasePill();
-      }
-
-      if (modeParam === 'capture') {
-        switchToCapture();
-      } else {
-        switchToMain();
-      }
-
-      // ----- Main app logic -----
-
-      if (mainApp) {
-        const toggleAppointment = qs('toggle-appointment');
-        const toggleSurgery = qs('toggle-surgery');
-        const modeTagText = qs('mode-tag-text');
-        const surgeryIntake = qs('surgery-intake');
-
-        toggleAppointment.addEventListener('click', () => {
-          toggleAppointment.classList.add('active');
-          toggleSurgery.classList.remove('active');
-          modeTagText.textContent = 'Appointment';
-          surgeryIntake.style.display = 'none';
-        });
-
-        toggleSurgery.addEventListener('click', () => {
-          toggleSurgery.classList.add('active');
-          toggleAppointment.classList.remove('active');
-          modeTagText.textContent = 'Surgery';
-          surgeryIntake.style.display = '';
-        });
-
-        // IV fluids logic
-        const ivFluidsUsed = qs('iv-fluids-used');
-        const ivFluidsDeclined = qs('iv-fluids-declined');
-        const fluidRate = qs('fluid-rate');
-
-        function updateFluidsState() {
-          if (ivFluidsDeclined.checked) {
-            ivFluidsUsed.checked = false;
-            fluidRate.disabled = true;
-            fluidRate.value = '';
-          } else {
-            fluidRate.disabled = !ivFluidsUsed.checked;
-          }
-        }
-
-        ivFluidsUsed.addEventListener('change', updateFluidsState);
-        ivFluidsDeclined.addEventListener('change', updateFluidsState);
-        updateFluidsState();
-
-        // Attachments
-
-        const attachmentsList = qs('attachments-list');
-        const attachmentsStatus = qs('attachments-status');
-
-        async function fetchAttachments() {
-          try {
-            const res = await fetch('/api/cases/' + encodeURIComponent(currentCaseId) + '/attachments');
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-            const attachments = data.attachments || [];
-
-            attachmentsList.innerHTML = '';
-
-            if (!attachments.length) {
-              attachmentsStatus.textContent = 'No attachments yet.';
-              return;
-            }
-
-            attachmentsStatus.textContent = attachments.length + ' attachment(s) linked to this case.';
-            attachments.forEach((att) => {
-              const div = document.createElement('div');
-              div.className = 'attachment-thumb';
-              const img = document.createElement('img');
-              img.src = att.dataUrl;
-              img.alt = 'Attachment';
-              div.appendChild(img);
-              attachmentsList.appendChild(div);
-            });
-          } catch (err) {
-            console.error(err);
-            attachmentsStatus.textContent = 'Error loading attachments.';
-          }
-        }
-
-        qs('btn-refresh-attachments').addEventListener('click', fetchAttachments);
-
-        // Desktop / device attachment upload
-        qs('desktop-attachments').addEventListener('change', async (e) => {
-          const files = Array.from(e.target.files || []);
-          if (!files.length) return;
-          attachmentsStatus.textContent = 'Uploading ' + files.length + ' image(s)...';
-
-          for (const file of files) {
-            const dataUrl = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            });
-
-            await fetch('/api/cases/' + encodeURIComponent(currentCaseId) + '/attachments', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ dataUrl })
-            });
-          }
-
-          attachmentsStatus.textContent = 'Upload complete.';
-          fetchAttachments();
-        });
-
-        // QR generation (Google Chart)
-        const btnGenerateQr = qs('btn-generate-qr');
-        const qrBox = qs('qr-box');
-        const qrImg = qs('qr-image');
-
-        if (btnGenerateQr) {
-          btnGenerateQr.addEventListener('click', () => {
-            const captureUrl =
-              window.location.origin +
-              '/?mode=capture&caseId=' +
-              encodeURIComponent(currentCaseId);
-            const src =
-              'https://chart.googleapis.com/chart?cht=qr&chs=320x320&chld=L|0&chl=' +
-              encodeURIComponent(captureUrl);
-
-            qrImg.src = src;
-            qrBox.style.display = 'flex';
-          });
-        }
-
-        // NEW: open capture/redaction on THIS device
-        const btnOpenCaptureHere = qs('btn-open-capture-here');
-        if (btnOpenCaptureHere) {
-          btnOpenCaptureHere.addEventListener('click', () => {
-            const url =
-              window.location.origin +
-              '/?mode=capture&caseId=' +
-              encodeURIComponent(currentCaseId);
-            window.location.href = url;
-          });
-        }
-
-        // SOAP generation
-        const soapStatus = qs('soap-status');
-
-        function getRadioValue(name) {
-          const els = document.querySelectorAll('input[name="' + name + '"]');
-          for (const el of els) {
-            if (el.checked) return el.value;
-          }
-          return '';
-        }
-
-        function buildPayload() {
-          const isSurgery = toggleSurgery.classList.contains('active');
-
-          const payload = {
-            caseId: currentCaseId,
-            caseLabel: qs('case-label').value.trim(),
-            mode: isSurgery ? 'Surgery' : 'Appointment',
-            species: qs('species').value,
-            profile: qs('profile').value,
-            accuracy: qs('accuracy').value,
-            reason: qs('reason').value.trim(),
-            history: qs('history').value.trim(),
-            objective: qs('objective').value.trim(),
-            diagnostics: qs('diagnostics').value.trim(),
-            assessment: qs('assessment-input').value.trim(),
-            planSummary: qs('plan-input').value.trim()
-          };
-
-          if (isSurgery) {
-            payload.surgery = {
-              template: qs('surgery-template').value,
-              age: qs('age').value.trim(),
-              weightKg: qs('weight').value || '',
-              bloodworkStatus: getRadioValue('bw'),
-              bloodworkDetails: qs('bw-details').value.trim(),
-              ivCatheter: qs('iv-catheter').checked,
-              ivFluidsUsed: qs('iv-fluids-used').checked,
-              ivFluidsDeclined: qs('iv-fluids-declined').checked,
-              fluidsRiskDiscussed: qs('fluids-risk').checked,
-              ivGauge: qs('iv-gauge').value,
-              ivSite: qs('iv-site').value,
-              ivSide: qs('iv-side').value,
-              fluidRate: qs('fluid-rate').value,
-              premedSummary: qs('premed-summary').value.trim(),
-              inductionSummary: qs('induction-summary').value.trim(),
-              intraopSummary: qs('intraop-summary').value.trim(),
-              postopInjectables: qs('postop-inj-summary').value.trim(),
-              takehomeSummary: qs('takehome-summary').value.trim(),
-              sxSubjectiveNotes: qs('sx-subjective-notes').value.trim(),
-              sxPENotes: qs('sx-pe-notes').value.trim(),
-              sxProcedureNotes: qs('sx-procedure-notes').value.trim(),
-              sxAftercareNotes: qs('sx-aftercare-notes').value.trim()
-            };
-          }
-
-          return payload;
-        }
-
-        async function generateSoap() {
-          soapStatus.textContent = 'Generating SOAP...';
-          soapStatus.className = 'status-text';
-
-          try {
-            const payload = buildPayload();
-            const res = await fetch('/api/generate-soap', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-              const errBody = await res.json().catch(() => ({}));
-              throw new Error(errBody.error || 'Server error');
-            }
-
-            const data = await res.json();
-            const soap = data.soap || {};
-
-            qs('soap-subjective').value = soap.subjective || '';
-            qs('soap-objective').value = soap.objective || '';
-            qs('soap-assessment').value = soap.assessment || '';
-            qs('soap-plan').value = soap.plan || '';
-            qs('soap-meds').value = soap.medications_dispensed || '';
-            qs('soap-aftercare').value = soap.aftercare || '';
-
-            soapStatus.textContent = 'SOAP generated. Review before pasting into AVImark.';
-            soapStatus.className = 'status-text success';
-          } catch (err) {
-            console.error(err);
-            soapStatus.textContent = 'Error generating SOAP: ' + err.message;
-            soapStatus.className = 'status-text error';
-          }
-        }
-
-        qs('btn-generate-soap').addEventListener('click', generateSoap);
-
-        // Copy helpers
-        function copyText(text) {
-          if (!text) return;
-          navigator.clipboard.writeText(text).catch((err) => {
-            console.error('Clipboard error', err);
-          });
-        }
-
-        document.querySelectorAll('.copy-btn-inline').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const targetId = btn.getAttribute('data-copy-target');
-            const el = qs(targetId);
-            if (el) copyText(el.value);
-          });
-        });
-
-        qs('btn-copy-full').addEventListener('click', () => {
-          const full =
-            'Subjective:\n' +
-            qs('soap-subjective').value +
-            '\n\nObjective:\n' +
-            qs('soap-objective').value +
-            '\n\nAssessment:\n' +
-            qs('soap-assessment').value +
-            '\n\nPlan:\n' +
-            qs('soap-plan').value +
-            '\n\nMedications Dispensed:\n' +
-            qs('soap-meds').value +
-            '\n\nAftercare:\n' +
-            qs('soap-aftercare').value;
-
-          copyText(full);
-        });
-
-        qs('btn-copy-plan-meds-after').addEventListener('click', () => {
-          const txt =
-            'Plan:\n' +
-            qs('soap-plan').value +
-            '\n\nMedications Dispensed:\n' +
-            qs('soap-meds').value +
-            '\n\nAftercare:\n' +
-            qs('soap-aftercare').value;
-
-          copyText(txt);
-        });
-
-        // Feedback – simple local store
-        const feedbackStatus = qs('feedback-status');
-        qs('btn-save-feedback').addEventListener('click', () => {
-          try {
-            const value = qs('feedback-input').value || '';
-            localStorage.setItem('soapAppFeedback', value);
-            feedbackStatus.textContent = 'Saved locally on this device.';
-          } catch (err) {
-            console.error(err);
-            feedbackStatus.textContent = 'Could not save locally, but I still see what you wrote.';
-          }
-        });
-
-        try {
-          const existing = localStorage.getItem('soapAppFeedback');
-          if (existing && !qs('feedback-input').value) {
-            qs('feedback-input').value = existing;
-          }
-        } catch {}
-
-        // Initial case pill + attachments
-        setCasePill();
-        fetchAttachments();
-      }
-
-      // ----- Capture / redaction mode -----
-      if (captureApp) {
-        const fileInput = qs('capture-file');
-        const canvas = qs('capture-canvas');
-        const ctx = canvas.getContext('2d');
-        const captureStatus = qs('capture-status');
-
-        let img = null;
-        let drawing = false;
-        let startX = 0;
-        let startY = 0;
-
-        function ensureCanvasSize() {
-          const width = canvas.clientWidth || 320;
-          const height = width * 1.3;
-          canvas.width = width * window.devicePixelRatio;
-          canvas.height = height * window.devicePixelRatio;
-          ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
-        }
-
-        function resetCanvas() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          if (img) {
-            const ratio = Math.min(
-              canvas.width / img.width,
-              canvas.height / img.height
-            );
-            const w = img.width * ratio;
-            const h = img.height * ratio;
-            const x = (canvas.width - w) / 2;
-            const y = (canvas.height - h) / 2;
-            ctx.drawImage(img, x, y, w, h);
-          }
-        }
-
-        ensureCanvasSize();
-
-        window.addEventListener('resize', () => {
-          ensureCanvasSize();
-          resetCanvas();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            img = new Image();
-            img.onload = () => {
-              resetCanvas();
-            };
-            img.src = reader.result;
-          };
-          reader.readAsDataURL(file);
-        });
-
-        function getCanvasCoords(evt) {
-          const rect = canvas.getBoundingClientRect();
-          const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-          const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-          return {
-            x: clientX - rect.left,
-            y: clientY - rect.top
-          };
-        }
-
-        function startDraw(evt) {
-          if (!img) return;
-          drawing = true;
-          const pos = getCanvasCoords(evt);
-          startX = pos.x;
-          startY = pos.y;
-        }
-
-        function endDraw(evt) {
-          if (!drawing || !img) return;
-          drawing = false;
-          const pos = getCanvasCoords(evt);
-          const x = Math.min(startX, pos.x);
-          const y = Math.min(startY, pos.y);
-          const w = Math.abs(pos.x - startX);
-          const h = Math.abs(pos.y - startY);
-          if (w < 4 || h < 4) return;
-          ctx.fillStyle = '#000000';
-          ctx.globalAlpha = 0.98;
-          ctx.fillRect(x, y, w, h);
-          ctx.globalAlpha = 1;
-        }
-
-        canvas.addEventListener('mousedown', startDraw);
-        canvas.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          startDraw(e);
-        });
-
-        canvas.addEventListener('mouseup', endDraw);
-        canvas.addEventListener('mouseleave', () => {
-          drawing = false;
-        });
-        canvas.addEventListener('touchend', (e) => {
-          e.preventDefault();
-          drawing = false;
-        });
-        canvas.addEventListener('touchcancel', (e) => {
-          e.preventDefault();
-          drawing = false;
-        });
-
-        qs('btn-reset-canvas').addEventListener('click', () => {
-          if (!img) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-          } else {
-            resetCanvas();
-          }
-        });
-
-        qs('btn-save-redacted').addEventListener('click', async () => {
-          try {
-            if (!img) {
-              captureStatus.textContent = 'Pick a photo first.';
-              captureStatus.className = 'status-text error';
-              return;
-            }
-            captureStatus.textContent = 'Uploading redacted image...';
-            captureStatus.className = 'status-text';
-
-            const dataUrl = canvas.toDataURL('image/png');
-
-            const res = await fetch(
-              '/api/cases/' + encodeURIComponent(currentCaseId) + '/attachments',
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dataUrl })
-              }
-            );
-
-            if (!res.ok) {
-              const errBody = await res.json().catch(() => ({}));
-              throw new Error(errBody.error || 'HTTP ' + res.status);
-            }
-
-            captureStatus.textContent =
-              'Redacted image saved for this case. You can close this tab or go back.';
-            captureStatus.className = 'status-text success';
-          } catch (err) {
-            console.error(err);
-            captureStatus.textContent = 'Error saving redacted image: ' + err.message;
-            captureStatus.className = 'status-text error';
-          }
-        });
-
-        qs('btn-exit-capture').addEventListener('click', () => {
-          const baseUrl = window.location.origin + '/';
-          window.location.href = baseUrl;
-        });
-
-        setCasePill();
-      }
-    })();
-  </script>
-</body>
+    <script src="app.js"></script>
+  </body>
 </html>
