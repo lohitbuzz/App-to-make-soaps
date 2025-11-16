@@ -1,0 +1,46 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #202020;
+  color: white;
+  padding: 20px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+nav button {
+  margin: 5px;
+  padding: 10px 15px;
+  font-size: 16px;
+}
+
+.tab {
+  margin-top: 20px;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+input, select, textarea {
+  width: 100%;
+  margin-top: 5px;
+  padding: 8px;
+  border-radius: 4px;
+  border: none;
+}
+
+textarea {
+  height: 80px;
+}
+
+.soap-output pre {
+  background: #333;
+  padding: 10px;
+  white-space: pre-wrap;
+  border-radius: 4px;
+}
