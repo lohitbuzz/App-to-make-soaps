@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lohit SOAP App v1.4</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <h1>Lohit SOAP App v1.4</h1>
+          <p class="subtitle">
+            Appointment &amp; Surgery SOAPs · Attachments · QR phone capture
+          </p>
+        </div>
+        <div class="header-badges">
+          <span class="badge badge-soft" id="modeBadge">Mode: Appointment</span>
+          <span class="badge badge-soft" id="caseBadge">Case: —</span>
+          <button class="badge badge-privacy" id="privacyBadge">
+            Tap for privacy
+          </button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <!-- CASE / INTAKE CARD -->
+        <section class="card" id="intakeCard">
+          <div class="card-header">
+            <div class="pill-toggle" id="caseTypeToggle">
+              <button data-type="appointment" class="pill active">
+                Appointment
+              </button>
+              <button data-type="surgery" class="pill">Surgery</button>
+            </div>
+            <span class="card-label">Case Intake</span>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="field">
+              <label>Case label / Patient name (optional)</label>
+              <input id="caseLabel" placeholder="e.g. Luna – rescue cat spay" />
+            </div>
+            <div class="field">
+              <label>Species</label>
+              <select id="species">
+                <option value="dog">Dog</option>
+                <option value="cat">Cat</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="field">
+              <label>Profile</label>
+              <select id="profile">
+                <option value="client">Client</option>
+                <option value="rescue">Rescue</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Accuracy mode</label>
+              <select id="accuracyMode">
+                <option value="strict">Strict (no guessing)</option>
+                <option value="medium">Medium</option>
+                <option value="liberal">Liberal (templated normals)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Reason for visit</label>
+            <textarea
+              id="reason"
+              rows="2"
+              placeholder="e.g. vomiting, wellness exam, rescue spay day"
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>History / Subjective</label>
+            <textarea
+              id="history"
+              rows="3"
+              placeholder="Owner-reported history, appetite, behaviour, CSVD, meds…"
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Objective / PE (data only)</label>
+            <textarea
+              id="objective"
+              rows="3"
+              placeholder="PE findings, vitals, body systems. Data only; no interpretation."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Diagnostics (data only)</label>
+            <textarea
+              id="diagnostics"
+              rows="3"
+              placeholder="Bloodwork, UA, imaging results as data only (no interpretation)."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Assessment</label>
+            <textarea
+              id="assessmentNote"
+              rows="3"
+              placeholder="Problem list, assessment, interpretations of diagnostics."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Plan (summary)</label>
+            <textarea
+              id="planSummary"
+              rows="3"
+              placeholder="Treatments, anaesthesia considerations, rechecks, client communication notes."
+            ></textarea>
+          </div>
+
+          <!-- SURGERY-SPECIFIC BLOCK -->
+          <div id="surgeryBlock" class="surgery-block hidden">
+            <h3 class="section-label">Surgery intake</h3>
+
+            <div class="grid grid-3">
+              <div class="field">
+                <label>Surgery template</label>
+                <select id="surgeryTemplate">
+                  <option value="dog-spay-client">Dog spay – client</option>
+                  <option value="dog-neuter-client">Dog neuter – client</option>
+                  <option value="cat-spay-client">Cat spay – client</option>
+                  <option value="cat-neuter-client">Cat neuter – client</option>
+
+                  <option value="dog-spay-rescue">Dog spay – rescue</option>
+                  <option value="dog-neuter-rescue">Dog neuter – rescue</option>
+                  <option value="cat-spay-rescue">Cat spay – rescue</option>
+                  <option value="cat-neuter-rescue">Cat neuter – rescue</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Age</label>
+                <input id="age" placeholder="e.g. 5y, 2m" />
+              </div>
+              <div class="field">
+                <label>Weight (kg)</label>
+                <input id="weight" type="number" step="0.1" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Pre-op bloodwork</label>
+              <div class="radio-row" id="bwGroup">
+                <label>
+                  <input
+                    type="radio"
+                    name="bw"
+                    value="declined"
+                    checked
+                  />Declined (owner aware of risks)
+                </label>
+                <label>
+                  <input type="radio" name="bw" value="normal" />Done – normal
+                </label>
+                <label>
+                  <input type="radio" name="bw" value="abnormal" />Done –
+                  abnormal
+                </label>
+              </div>
+              <textarea
+                id="bwDetails"
+                rows="2"
+                placeholder="If abnormal, key value changes as data only (e.g. mild ↑ALT)."
+              ></textarea>
+            </div>
+
+            <h3 class="section-label">Catheter &amp; fluids</h3>
+            <div class="grid grid-4">
+              <div class="field checkbox-field">
+                <label>
+                  <input type="checkbox" id="ivPlaced" />
+                  IV catheter placed
+                </label>
+              </div>
+              <div class="field">
+                <label>Gauge</label>
+                <select id="ivGauge">
+                  <option value="">–</option>
+                  <option>18g</option>
+                  <option>20g</option>
+                  <option>22g</option>
+                  <option>24g</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Site</label>
+                <select id="ivSite">
+                  <option value="">–</option>
+                  <option>Cephalic</option>
+                  <option>Saphenous</option>
+                  <option>Jugular</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Side</label>
+                <select id="ivSide">
+                  <option value="">–</option>
+                  <option>Left</option>
+                  <option>Right</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-3">
+              <div class="field checkbox-field">
+                <label>
+                  <input type="checkbox" id="fluidsUsed" />
+                  IV fluids used
+                </label>
+              </div>
+              <div class="field checkbox-field">
+                <label>
+                  <input type="checkbox" id="fluidsDeclined" />
+                  IV fluids declined
+                </label>
+              </div>
+              <div class="field checkbox-field">
+                <label>
+                  <input type="checkbox" id="ownerUnderstandsFluids" />
+                  Owner understands risks (when fluids declined)
+                </label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Rate (mL/kg/hr)</label>
+              <input
+                id="fluidRate"
+                type="number"
+                step="0.1"
+                placeholder="e.g. 5"
+              />
+            </div>
+
+            <h3 class="section-label">Anaesthesia &amp; analgesia (summary)</h3>
+
+            <div class="field">
+              <label>Premed summary</label>
+              <textarea
+                id="premedSummary"
+                rows="2"
+                placeholder="e.g. Methadone [10 mg/mL] 0.2 mg/kg IM, Midazolam [5 mg/mL] 0.2 mg/kg IM."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Induction &amp; maintenance</label>
+              <textarea
+                id="inductionSummary"
+                rows="2"
+                placeholder="e.g. Propofol [10 mg/mL] 2–5 mg/kg IV to effect; isoflurane in oxygen."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Intra-op meds / blocks</label>
+              <textarea
+                id="intraOpSummary"
+                rows="2"
+                placeholder="e.g. Lidocaine [20 mg/mL] splash block along SQ tissue prior to closing."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Post-op injectables</label>
+              <textarea
+                id="postOpInjectables"
+                rows="2"
+                placeholder="e.g. Meloxicam [5 mg/mL] 0.2 mg/kg SQ; Buprenorphine [0.3 mg/mL] 0.02 mg/kg SQ."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Take-home meds</label>
+              <textarea
+                id="takeHomeMeds"
+                rows="2"
+                placeholder="e.g. Meloxicam [1.3 mg/mL] 0.05 mg/kg PO q24h ×3 days; Gabapentin [100 mg/mL] 5 mg/kg PO q8–12h."
+              ></textarea>
+            </div>
+
+            <h3 class="section-label">Surgery notes</h3>
+
+            <div class="field">
+              <label>Subjective / history add-ons</label>
+              <textarea
+                id="surgSubjective"
+                rows="2"
+                placeholder="Extra rescue details, shelter notes, behavioural comments…"
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>PE / Objective variations</label>
+              <textarea
+                id="surgObjective"
+                rows="2"
+                placeholder="Any PE abnormalities (e.g. deciduous 104 present, firm.)."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Procedure details / intra-op findings</label>
+              <textarea
+                id="surgIntraOp"
+                rows="3"
+                placeholder="Extras beyond standard spay/neuter script (e.g. hernia repair, mild fat lipoma)."
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Extra aftercare notes</label>
+              <textarea
+                id="surgAftercare"
+                rows="2"
+                placeholder="Additional restrictions, monitoring beyond standard spay/neuter discharge."
+              ></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- ATTACHMENTS & PHONE CAPTURE -->
+        <section class="card" id="attachmentsCard">
+          <div class="card-header">
+            <span class="card-label">Attachments &amp; phone capture</span>
+            <span class="badge badge-privacy-soft" id="privacyStatus">
+              Local-only · clipboard paste into Avimark
+            </span>
+          </div>
+
+          <div class="field">
+            <label>Add from this device (desktop, iPad, or phone)</label>
+            <input type="file" id="desktopFiles" accept="image/*" />
+            <p class="hint">
+              You can choose an existing photo or use the camera. You’ll be able
+              to draw black boxes to hide microchips, owner names, Lab IDs,
+              etc., before it’s stored.
+            </p>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="field">
+              <label>Open phone capture (QR)</label>
+              <div class="qr-box">
+                <img id="qrImage" alt="QR code" />
+              </div>
+              <button id="showQrBtn" class="btn-secondary">Show QR</button>
+              <p class="hint">
+                Scan with your phone camera to open a capture page for this
+                case. Redacted images are linked back here.
+              </p>
+            </div>
+
+            <div class="field">
+              <label>Attachments for this case</label>
+              <div id="attachmentsList" class="attachments-list">
+                <p class="hint" id="attachmentsEmpty">
+                  No attachments yet.
+                </p>
+              </div>
+              <button id="refreshAttachments" class="btn-secondary">
+                Refresh from server
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- SOAP OUTPUT -->
+        <section class="card" id="soapCard">
+          <div class="card-header">
+            <span class="card-label">SOAP output</span>
+            <div class="inline-buttons">
+              <button id="copyFullSoap" class="btn-secondary">
+                Copy full SOAP
+              </button>
+              <button id="copyPlanBundle" class="btn-secondary">
+                Copy Plan + Meds + Aftercare
+              </button>
+            </div>
+          </div>
+
+          <button id="generateSoap" class="btn-primary full-width">
+            Generate SOAP
+          </button>
+          <p class="hint" id="generatorStatus">
+            SOAP generated text is meant for review before pasting into Avimark.
+          </p>
+
+          <div class="soap-section">
+            <label>Subjective</label>
+            <div class="soap-row">
+              <textarea id="subjectiveOut" rows="2"></textarea>
+              <button data-copy="subjectiveOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div class="soap-section">
+            <label>Objective</label>
+            <div class="soap-row">
+              <textarea id="objectiveOut" rows="3"></textarea>
+              <button data-copy="objectiveOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div class="soap-section">
+            <label>Assessment</label>
+            <div class="soap-row">
+              <textarea id="assessmentOut" rows="3"></textarea>
+              <button data-copy="assessmentOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div class="soap-section">
+            <label>Plan</label>
+            <div class="soap-row">
+              <textarea id="planOut" rows="4"></textarea>
+              <button data-copy="planOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div class="soap-section">
+            <label>Medications Dispensed</label>
+            <div class="soap-row">
+              <textarea id="medsOut" rows="2"></textarea>
+              <button data-copy="medsOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+
+          <div class="soap-section">
+            <label>Aftercare</label>
+            <div class="soap-row">
+              <textarea id="aftercareOut" rows="3"></textarea>
+              <button data-copy="aftercareOut" class="copy-btn">Copy</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- FEEDBACK / TRAINING -->
+        <section class="card" id="feedbackCard">
+          <div class="card-header">
+            <span class="card-label">Feedback &amp; training intake</span>
+          </div>
+          <p class="hint">
+            Paste example SOAPs, rescue templates, or notes for future versions.
+            They won’t change this SOAP instantly, but we’ll use them to adjust
+            the Assistant + master rules.
+          </p>
+          <textarea
+            id="feedbackText"
+            rows="3"
+            placeholder="e.g. Rescue dog spay example, or 'Cat neuter template is missing Onsior line'."
+          ></textarea>
+          <button id="saveFeedback" class="btn-secondary">
+            Save feedback (local)
+          </button>
+        </section>
+      </main>
+    </div>
+
+    <!-- BLUR / PRIVACY MODAL -->
+    <div id="blurModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Blur sensitive info</h3>
+          <button id="closeModal" class="icon-btn">&times;</button>
+        </div>
+        <p class="hint">
+          Draw solid boxes over microchips, client names, phone numbers,
+          addresses, Lab IDs, etc.
+        </p>
+        <div class="canvas-wrap">
+          <canvas id="blurCanvas"></canvas>
+        </div>
+        <div class="modal-actions">
+          <button id="resetBlur" class="btn-secondary">Reset</button>
+          <button id="cancelBlur" class="btn-secondary">Cancel</button>
+          <button id="saveBlur" class="btn-primary">Save redacted</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
