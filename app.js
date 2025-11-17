@@ -64,8 +64,24 @@
       "Dental – COHAT: full-mouth rads unless declined, subgingival scaling, polishing, charting, nerve blocks, extractions as needed per AAHA/AVDC.",
     "dental-cohat-no-rads":
       "Dental – COHAT (no rads): chart thoroughly and document that radiographs were declined; extractions still per AAHA/AVDC.",
-    "mass-removal":
-      "Mass removal: include location, size, margins, closure pattern, drain use, and histopathology yes/no.",
+    "pyometra-spay":
+      "Pyometra spay: include uterine size, rupture status, lavage, and abdominal closure details.",
+    "exploratory-laparotomy":
+      "Ex-lap: describe organs explored, biopsies, and closure in layers with appropriate Monocryl sizes.",
+    "enterotomy":
+      "Enterotomy: note intestinal segment, reason (FB, biopsy), leak test, and closure pattern.",
+    "gastrotomy":
+      "Gastrotomy: location of incision, FB retrieval, two-layer closure if used.",
+    "gastropexy":
+      "Gastropexy: type (incisional/belt loop) and side; document prophylactic vs emergency.",
+    "cystotomy":
+      "Cystotomy: stone type if known, number, bladder closure pattern, and lavage.",
+    "feline-urethral-unblock":
+      "Feline urethral unblock: include catheter size/type, duration, and post-op monitoring.",
+    "mass-removal-simple":
+      "Simple mass removal: small skin/SQ mass with primary closure; include size, margins, histopath yes/no.",
+    "mass-removal-complex":
+      "Complex mass removal: larger mass, tension-relieving techniques, or flap; document clearly.",
     "other":
       "Custom procedure: be explicit in Procedure notes about approach, findings, closure, complications."
   };
@@ -78,12 +94,12 @@
   select.addEventListener("change", updateHint);
   updateHint();
 
-  // fluidsDeclined disables rate field
   function updateFluidsState() {
     if (!fluidsRate) return;
     if (fluidsDeclined && fluidsDeclined.checked) {
       fluidsRate.disabled = true;
       fluidsRate.placeholder = "Fluids declined";
+      fluidsRate.value = "";
     } else {
       fluidsRate.disabled = false;
       fluidsRate.placeholder = "e.g., 5 ml/kg/hr dogs, 3 ml/kg/hr cats";
@@ -94,6 +110,116 @@
     updateFluidsState();
   }
 })();
+
+// ---------- ATTACHMENTS (front-end only) ----------
+var nextAttachmentId = 1;
+var appointmentAttachments = [];
+var surgeryAttachments = [];
+
+function renderAttachments(listId, attachmentsArray) {
+  var container = document.getElementById(listId);
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!attachmentsArray.length) {
+    var empty = document.createElement("div");
+    empty.className = "attachments-empty";
+    empty.textContent = "No attachments added.";
+    container.appendChild(empty);
+    return;
+  }
+
+  for (var i = 0; i < attachmentsArray.length; i++) {
+    (function (att) {
+      var chip = document.createElement("div");
+      chip.className = "attachment-chip";
+
+      var nameSpan = document.createElement("span");
+      nameSpan.className = "attachment-name";
+      nameSpan.textContent = att.name;
+      chip.appendChild(nameSpan);
+
+      var typeSelect = document.createElement("select");
+      typeSelect.className = "attachment-type";
+      typeSelect.innerHTML =
+        '<option value="labs">Labs</option>' +
+        '<option value="imaging">Imaging</option>' +
+        '<option value="anesthesia">Anesthesia sheet</option>' +
+        '<option value="other">Other</option>';
+      typeSelect.value = att.type || "other";
+      typeSelect.addEventListener("change", function () {
+        att.type = typeSelect.value;
+      });
+      chip.appendChild(typeSelect);
+
+      var removeBtn = document.createElement("button");
+      removeBtn.className = "attachment-remove";
+      removeBtn.textContent = "✕";
+      removeBtn.addEventListener("click", function () {
+        var idx = attachmentsArray.indexOf(att);
+        if (idx !== -1) {
+          attachmentsArray.splice(idx, 1);
+          renderAttachments(listId, attachmentsArray);
+        }
+      });
+      chip.appendChild(removeBtn);
+
+      container.appendChild(chip);
+    })(attachmentsArray[i]);
+  }
+}
+
+function setupAttachmentSection(prefix, attachmentsArray) {
+  var takePhotoBtn = document.getElementById(prefix + "TakePhotoBtn");
+  var uploadFileBtn = document.getElementById(prefix + "UploadFileBtn");
+  var photoInput = document.getElementById(prefix + "PhotoInput");
+  var fileInput = document.getElementById(prefix + "FileInput");
+  var listId = prefix + "AttachmentsList";
+
+  if (!takePhotoBtn || !uploadFileBtn || !photoInput || !fileInput) return;
+
+  takePhotoBtn.addEventListener("click", function () {
+    photoInput.click();
+  });
+
+  uploadFileBtn.addEventListener("click", function () {
+    fileInput.click();
+  });
+
+  photoInput.addEventListener("change", function (e) {
+    var files = e.target.files || [];
+    for (var i = 0; i < files.length; i++) {
+      attachmentsArray.push({
+        id: nextAttachmentId++,
+        name: files[i].name || "photo",
+        type: "other",
+        file: files[i]
+      });
+    }
+    photoInput.value = "";
+    renderAttachments(listId, attachmentsArray);
+  });
+
+  fileInput.addEventListener("change", function (e) {
+    var files = e.target.files || [];
+    for (var i = 0; i < files.length; i++) {
+      attachmentsArray.push({
+        id: nextAttachmentId++,
+        name: files[i].name || "file",
+        type: "other",
+        file: files[i]
+      });
+    }
+    fileInput.value = "";
+    renderAttachments(listId, attachmentsArray);
+  });
+
+  // initial render
+  renderAttachments(listId, attachmentsArray);
+}
+
+setupAttachmentSection("appt", appointmentAttachments);
+setupAttachmentSection("sx", surgeryAttachments);
 
 // ---------- COMMON HELPERS ----------
 var statusEl = document.getElementById("queryStatus");
@@ -156,7 +282,6 @@ function splitSoapIntoSections(text) {
     sections[current] += (sections[current] ? "\n" : "") + line;
   }
 
-  // Fallback: if parsing failed, dump everything into Subjective
   var anyContent = false;
   for (var key in sections) {
     if (!sections.hasOwnProperty(key)) continue;
@@ -226,11 +351,11 @@ function updateFeedbackBarText(payload) {
     if (!a.diagnostics) missing.push("diagnostics");
     if (!a.assessment) missing.push("assessment");
     if (!a.plan) missing.push("plan");
-    // meds optional
   }
 
   if (!missing.length) {
-    fbText.textContent = " This looks pretty complete. Add any small details and hit Refine if you like.";
+    fbText.textContent =
+      " This looks pretty complete. Add any small details and hit Refine if you like.";
     return;
   }
 
@@ -257,11 +382,16 @@ if (genApptBtn) {
       meds: document.getElementById("apptMeds").value
     };
 
+    var attachmentsMeta = appointmentAttachments.map(function (a) {
+      return { name: a.name, type: a.type || "other" };
+    });
+
     var payload = {
       soapType: "appointment",
       strictMode: strictMode,
       caseLabel: caseLabel,
       fields: fields,
+      attachments: attachmentsMeta,
       refinementNote: null
     };
     lastSoapPayload = payload;
@@ -281,8 +411,10 @@ if (genSxBtn) {
     var accuracyMode = document.getElementById("accuracyMode").value || "help";
     var strictMode = accuracyMode === "strict";
 
+    var templateValue = document.getElementById("sxTemplate").value;
+
     var fields = {
-      template: document.getElementById("sxTemplate").value,
+      template: templateValue,
       asa: document.getElementById("sxASA").value,
       ett: document.getElementById("sxETT").value,
       catheter: document.getElementById("sxCatheter").value,
@@ -299,11 +431,20 @@ if (genSxBtn) {
       durations: document.getElementById("sxDurations").value
     };
 
+    var attachmentsMeta = surgeryAttachments.map(function (a) {
+      return { name: a.name, type: a.type || "other" };
+    });
+
+    // planStyle: templates use heading style, "other" uses numbered plan
+    var planStyle = templateValue === "other" ? "numbered" : "headings";
+
     var payload = {
       soapType: "surgery",
       strictMode: strictMode,
       caseLabel: caseLabel,
       fields: fields,
+      attachments: attachmentsMeta,
+      planStyle: planStyle,
       refinementNote: null
     };
     lastSoapPayload = payload;
