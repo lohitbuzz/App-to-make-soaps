@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Lohit SOAP App v1.6</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
@@ -18,85 +18,83 @@
   </header>
 
   <main>
-    <div class="tabs">
-      <button class="tab active" data-tab="appointment">Appointment</button>
-      <button class="tab" data-tab="surgery">Surgery</button>
-      <button class="tab" data-tab="freeform">Free-form / Consult</button>
-      <button class="tab" data-tab="toolbox">Toolbox Lite</button>
-    </div>
-
+    <!-- Top controls -->
     <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-tab="appointment">Appointment</button>
+        <button class="tab" data-tab="surgery">Surgery</button>
+        <button class="tab" data-tab="freeform">Free-form / Consult</button>
+        <button class="tab" data-tab="toolbox">Toolbox Lite</button>
+      </div>
+
       <div class="row">
         <div class="field">
           <label for="caseLabel">Case label / Patient name (optional)</label>
-          <input id="caseLabel" type="text" placeholder="e.g., Milo dental COHAT, 8y MN DSH" />
+          <input type="text" id="caseLabel" placeholder="e.g., Milo dental COHAT, 8y MN DSH">
         </div>
         <div class="field">
           <label for="accuracyMode">Mode</label>
           <select id="accuracyMode">
-            <option value="help">Help Me (safe assumptions)</option>
-            <option value="strict">Strict (no invention)</option>
+            <option value="help" selected>Help Me (safe assumptions)</option>
+            <option value="strict">Strict (no guessing)</option>
           </select>
         </div>
       </div>
-      <div class="status" id="queryStatus">Ready.</div>
+      <div id="queryStatus" class="status">Ready.</div>
     </div>
 
-    <!-- Appointment tab -->
-    <div class="card tab-panel" id="tab-appointment">
+    <!-- APPOINTMENT TAB -->
+    <div id="tab-appointment" class="card tab-panel">
       <h2>Appointment SOAP Inputs</h2>
+
       <div class="row">
         <div class="field">
           <label for="apptReason">Reason for visit</label>
-          <input id="apptReason" type="text" placeholder="e.g., vomiting, itchy ears, annual exam" />
+          <input type="text" id="apptReason" placeholder="e.g., vomiting, itchy ears, annual exam">
         </div>
         <div class="field">
           <label for="apptTPR">TPR (optional, no guessing)</label>
-          <input id="apptTPR" type="text" placeholder="e.g., T 38.7°C, P 110, R 28" />
+          <input type="text" id="apptTPR" placeholder="e.g., T 38.7°C, P 110, R 28">
         </div>
       </div>
-      <div class="row">
-        <div class="field">
-          <label for="apptHistory">History / Subjective</label>
-          <textarea id="apptHistory" placeholder="Owner-reported history, duration, diet, meds, etc."></textarea>
-        </div>
+
+      <div class="field">
+        <label for="apptHistory">History / Subjective</label>
+        <textarea id="apptHistory" placeholder="Owner-reported history, duration, diet, meds, etc."></textarea>
       </div>
-      <div class="row">
-        <div class="field">
-          <label for="apptPE">Physical exam (data-only)</label>
-          <textarea id="apptPE" placeholder="You can type PE here, or leave blank and let Help Me mode fill safe normals."></textarea>
-        </div>
+
+      <div class="field">
+        <label for="apptPE">Physical exam (data-only)</label>
+        <textarea id="apptPE" placeholder="You can type PE here, or leave blank and let Help Me mode fill safe normals."></textarea>
       </div>
-      <div class="row">
-        <div class="field">
-          <label for="apptDiagnostics">Diagnostics (data-only)</label>
-          <textarea id="apptDiagnostics" placeholder="Lab/rads data, cytology, SNAP tests, etc."></textarea>
-        </div>
+
+      <div class="field">
+        <label for="apptDiagnostics">Diagnostics (data-only)</label>
+        <textarea id="apptDiagnostics" placeholder="Lab/rads data, cytology, SNAP tests, etc."></textarea>
       </div>
-      <div class="row">
-        <div class="field">
-          <label for="apptAssessment">Assessment (optional)</label>
-          <textarea id="apptAssessment" placeholder="Problem list, differentials, severity, etc."></textarea>
-        </div>
+
+      <div class="field">
+        <label for="apptAssessment">Assessment (optional)</label>
+        <textarea id="apptAssessment" placeholder="Problem list, differentials, severity, etc."></textarea>
       </div>
-      <div class="row">
-        <div class="field">
-          <label for="apptPlan">Plan (optional)</label>
-          <textarea id="apptPlan" placeholder="Treatments, diagnostics, follow-up, client communication."></textarea>
-        </div>
+
+      <div class="field">
+        <label for="apptPlan">Plan (optional)</label>
+        <textarea id="apptPlan" placeholder="Treatments, diagnostics, follow-up, client communication."></textarea>
       </div>
-      <div class="row">
-        <div class="field">
-          <label for="apptMeds">Medications dispensed (optional)</label>
-          <textarea id="apptMeds" placeholder="Include concentration in brackets if you know it."></textarea>
-        </div>
+
+      <div class="field">
+        <label for="apptMeds">Medications dispensed (optional)</label>
+        <textarea id="apptMeds" placeholder="Include concentration in brackets if you know it."></textarea>
       </div>
-      <button class="primary" id="generateAppointmentBtn">Generate Appointment SOAP</button>
+
+      <button id="generateAppointmentBtn" class="primary">Generate Appointment SOAP</button>
     </div>
 
-    <!-- Surgery tab -->
-    <div class="card tab-panel" id="tab-surgery" style="display:none;">
+    <!-- SURGERY TAB -->
+    <div id="tab-surgery" class="card tab-panel" style="display:none;">
       <h2>Surgery SOAP Inputs</h2>
+
       <div class="row">
         <div class="field">
           <label for="sxTemplate">Surgery template</label>
@@ -105,299 +103,564 @@
             <option value="canine-neuter">Canine neuter</option>
             <option value="feline-spay">Feline spay</option>
             <option value="feline-neuter">Feline neuter</option>
-            <option value="dental-cohat-rads">Dental COHAT (with rads)</option>
-            <option value="dental-cohat-no-rads">Dental COHAT (no rads)</option>
+            <option value="dental-cohat">Dental COHAT</option>
             <option value="mass-removal">Mass removal</option>
-            <option value="cystotomy">Cystotomy</option>
-            <option value="pyometra-spay">Pyometra spay</option>
-            <option value="exploratory">Exploratory laparotomy</option>
-            <option value="enterotomy">Enterotomy</option>
-            <option value="gastrotomy">Gastrotomy</option>
-            <option value="gastropexy">Gastropexy</option>
-            <option value="feline-blocked">Feline urethral unblock</option>
+            <option value="other">Other / custom</option>
           </select>
         </div>
         <div class="field">
           <label for="sxASA">ASA status</label>
-          <select id="sxASA">
-            <option value="">Select ASA</option>
-            <option value="ASA I">ASA I</option>
-            <option value="ASA II">ASA II</option>
-            <option value="ASA III">ASA III</option>
-            <option value="ASA IV">ASA IV</option>
-            <option value="ASA V">ASA V</option>
-          </select>
+          <input type="text" id="sxASA" placeholder="e.g., ASA II">
         </div>
       </div>
 
       <div class="row">
         <div class="field">
           <label for="sxETT">ET tube size</label>
-          <input id="sxETT" type="text" placeholder="e.g., 7.5 mm cuffed" />
+          <input type="text" id="sxETT" placeholder="e.g., 7.5 mm cuffed">
         </div>
         <div class="field">
-          <label for="sxCatheter">IV catheter gauge/site/side</label>
-          <input id="sxCatheter" type="text" placeholder="e.g., 22G cephalic, right" />
+          <label for="sxCatheter">IV catheter</label>
+          <input type="text" id="sxCatheter" placeholder="e.g., 22g cephalic, left">
         </div>
       </div>
 
       <div class="row">
         <div class="field">
-          <label for="sxFluidsRate">IV fluids (ml/kg/hr)</label>
-          <input id="sxFluidsRate" type="number" step="0.1" placeholder="e.g., 5 for dogs, 3 for cats" />
+          <label for="sxFluidsRate">Fluids rate (ml/kg/hr)</label>
+          <input type="text" id="sxFluidsRate" placeholder="e.g., 5 ml/kg/hr dogs, 3 ml/kg/hr cats">
         </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <div class="checkbox-row">
-            <input type="checkbox" id="sxFluidsDeclined" />
-            <label for="sxFluidsDeclined">Fluids declined</label>
-          </div>
+        <div class="field checkbox-row">
+          <input type="checkbox" id="sxFluidsDeclined">
+          <label for="sxFluidsDeclined">Fluids declined</label>
         </div>
+      </div>
+
+      <div class="field">
+        <label for="sxPremeds">Premedications</label>
+        <textarea id="sxPremeds" placeholder="e.g., Dexmedetomidine [0.5 mg/ml] + Hydromorphone [2 mg/ml] IM"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="sxInduction">Induction / Maintenance</label>
+        <textarea id="sxInduction" placeholder="e.g., Propofol [10 mg/ml] to effect, Isoflurane in oxygen"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="sxIntraOpMeds">Intra-op medications</label>
+        <textarea id="sxIntraOpMeds" placeholder="e.g., Meloxicam [5 mg/ml] SQ, Bupivacaine [0.5%] local blocks"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="sxProcedureNotes">Procedure notes</label>
+        <textarea id="sxProcedureNotes" placeholder="Key surgical findings, complications, closure details, etc."></textarea>
       </div>
 
       <div class="row">
-        <div class="field">
-          <label for="sxPremeds">Pre-medications</label>
-          <textarea id="sxPremeds" placeholder="e.g., Dexmedetomidine (0.5 mg/ml) + Hydromorphone (2 mg/ml) IM"></textarea>
+        <div class="field checkbox-row">
+          <input type="checkbox" id="sxMonocryl0">
+          <label for="sxMonocryl0">0 Monocryl override</label>
+        </div>
+        <div class="field checkbox-row">
+          <input type="checkbox" id="sxMonocryl2_0">
+          <label for="sxMonocryl2_0">2-0 Monocryl override</label>
+        </div>
+        <div class="field checkbox-row">
+          <input type="checkbox" id="sxMonocryl3_0">
+          <label for="sxMonocryl3_0">3-0 Monocryl override</label>
         </div>
       </div>
 
-      <div class="row">
-        <div class="field">
-          <label for="sxInduction">Induction / Maintenance</label>
-          <textarea id="sxInduction" placeholder="e.g., Propofol (10 mg/ml) IV to effect, Isoflurane in oxygen."></textarea>
-        </div>
+      <div class="field">
+        <label for="sxTPR">TPR / intra-op notes (optional)</label>
+        <textarea id="sxTPR"></textarea>
       </div>
 
-      <div class="row">
-        <div class="field">
-          <label for="sxIntraOpMeds">Intra-op medications</label>
-          <textarea id="sxIntraOpMeds" placeholder="CRI, nerve blocks, NSAIDs, additional opioids, etc."></textarea>
-        </div>
+      <div class="field">
+        <label for="sxDurations">Anesthesia / surgery durations (optional)</label>
+        <textarea id="sxDurations" placeholder="Only if both start & end times known; otherwise leave blank."></textarea>
       </div>
 
-      <div class="row">
-        <div class="field">
-          <label for="sxProcedureNotes">Surgical procedure notes</label>
-          <textarea id="sxProcedureNotes" placeholder="Key findings, tissues handled, closure style, special considerations."></textarea>
-        </div>
-      </div>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="sxMonocryl0" />
-        <label for="sxMonocryl0">Use 0 Monocryl (large dog override)</label>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="sxMonocryl2_0" />
-        <label for="sxMonocryl2_0">Use 2-0 Monocryl</label>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="sxMonocryl3_0" />
-        <label for="sxMonocryl3_0">Use 3-0 Monocryl</label>
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <label for="sxTPR">TPR (optional, no guessing)</label>
-          <input id="sxTPR" type="text" placeholder="T, P, R at start or trend" />
-        </div>
-        <div class="field">
-          <label for="sxDurations">Anesthesia/surgery durations (optional)</label>
-          <input id="sxDurations" type="text" placeholder="e.g., anesthesia 65 min, surgery 40 min" />
-        </div>
-      </div>
-
-      <button class="primary" id="generateSurgeryBtn">Generate Surgery SOAP</button>
+      <button id="generateSurgeryBtn" class="primary">Generate Surgery SOAP</button>
     </div>
 
-    <!-- Free-form / Consult -->
-    <div class="card tab-panel" id="tab-freeform" style="display:none;">
-      <h2>Free-form / Consult with AI</h2>
-      <p class="help-text">
-        Scratchpad for anything: SOAP snippets, discharge instructions, emails, letters, planning.
-        Use the global mic bubble or iPad keyboard mic to dictate.
-      </p>
-      <div class="row">
-        <div class="field">
-          <label for="consultInput">Type or dictate your request</label>
-          <textarea id="consultInput" placeholder="e.g., Draft a post-op email for a canine spay with mild diarrhea but good energy."></textarea>
-        </div>
+    <!-- FREE-FORM / CONSULT TAB -->
+    <div id="tab-freeform" class="card tab-panel" style="display:none;">
+      <h2>Free-form / Consult</h2>
+      <div class="field">
+        <label for="consultInput">Talk to your assistant</label>
+        <textarea id="consultInput" placeholder="e.g., 8y MN DSH, chronic vomiting, normal labs so far... What next?"></textarea>
       </div>
-      <button class="primary" id="runConsultBtn">Ask AI</button>
-      <div class="output-section" id="consultOutputSection" style="display:none;">
+      <button id="runConsultBtn" class="primary">Run consult</button>
+
+      <div id="consultOutputSection" class="output-section" style="display:none;">
         <div class="section-box">
           <div class="section-header">
-            <h3>AI Response</h3>
-            <button class="secondary" onclick="window.copyTextFromElement('consultOutput')">Copy text</button>
+            <h3>Consult output</h3>
           </div>
-          <div class="section-body" id="consultOutput"></div>
+          <div id="consultOutput" class="section-body"></div>
         </div>
       </div>
     </div>
 
-    <!-- Toolbox Lite -->
-    <div class="card tab-panel" id="tab-toolbox" style="display:none;">
+    <!-- TOOLBOX LITE TAB -->
+    <div id="tab-toolbox" class="card tab-panel" style="display:none;">
       <h2>Toolbox Lite</h2>
 
-      <div class="card inner-card">
-        <h2 class="inner-title">Bloodwork Helper (Lite)</h2>
-        <div class="row">
-          <div class="field">
-            <label for="bwText">Paste bloodwork / lab notes</label>
-            <textarea id="bwText" placeholder="Paste lab summary, your shorthand, or key abnormalities."></textarea>
-          </div>
+      <div class="inner-card">
+        <h3>Bloodwork Helper Lite</h3>
+        <div class="field">
+          <label for="bwText">Paste CBC/chem/UA text</label>
+          <textarea id="bwText" placeholder="Copy/paste the lab report text or values here."></textarea>
         </div>
         <div class="row">
           <div class="field">
             <label for="bwDetail">Detail level</label>
             <select id="bwDetail">
-              <option value="short">Short (1–2 sentences)</option>
-              <option value="standard">Standard (3–6 sentences)</option>
+              <option value="short">Short</option>
+              <option value="standard" selected>Standard</option>
             </select>
           </div>
-          <div class="field">
-            <label>&nbsp;</label>
-            <div class="checkbox-row">
-              <input type="checkbox" id="bwDiffs" />
-              <label for="bwDiffs">Include likely differentials</label>
-            </div>
-            <div class="checkbox-row">
-              <input type="checkbox" id="bwClientFriendly" />
-              <label for="bwClientFriendly">Add client-friendly explanation</label>
-            </div>
-          </div>
         </div>
-        <button class="primary" id="runBwHelperBtn">Generate Assessment Snippet</button>
-        <div class="output-section" id="bwOutputSection" style="display:none;">
+        <div class="checkbox-row">
+          <input type="checkbox" id="bwDiffs">
+          <label for="bwDiffs">Include differential list</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="bwClientFriendly">
+          <label for="bwClientFriendly">Add client-friendly summary</label>
+        </div>
+        <button id="runBwHelperBtn" class="primary">Run Bloodwork Helper</button>
+
+        <div id="bwOutputSection" class="output-section" style="display:none;">
           <div class="section-box">
             <div class="section-header">
-              <h3>Assessment Snippet</h3>
-              <button class="secondary" onclick="window.copyTextFromElement('bwOutput')">Copy snippet</button>
+              <h3>Bloodwork Helper output</h3>
             </div>
-            <div class="section-body" id="bwOutput"></div>
+            <div id="bwOutput" class="section-body"></div>
           </div>
         </div>
       </div>
 
-      <div class="card inner-card">
-        <h2 class="inner-title">Client Email Helper (Lite)</h2>
+      <hr>
+
+      <div class="inner-card">
+        <h3>Email / Client Communication Helper</h3>
         <div class="row">
           <div class="field">
             <label for="emailType">Email type</label>
             <select id="emailType">
-              <option value="bloodwork-normal">Bloodwork – mostly normal</option>
-              <option value="bloodwork-abnormal">Bloodwork – abnormalities present</option>
-              <option value="dental-estimate">Dental estimate explanation</option>
-              <option value="postop-checkin">Post-op check-in</option>
+              <option value="bloodwork-followup">Bloodwork follow-up</option>
+              <option value="dental-estimate">Dental estimate</option>
+              <option value="vaccine-reminder">Vaccine reminder</option>
+              <option value="general-update">General update</option>
             </select>
           </div>
           <div class="field">
-            <label for="emailPetName">Pet name</label>
-            <input id="emailPetName" type="text" placeholder="e.g., Milo" />
+            <label for="emailTimeframe">Timeframe / appointment info</label>
+            <input type="text" id="emailTimeframe" placeholder="e.g., 1–2 weeks, ASAP if worsening">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="emailPetName">Pet name (optional)</label>
+            <input type="text" id="emailPetName">
           </div>
           <div class="field">
             <label for="emailOwnerName">Owner name (optional)</label>
-            <input id="emailOwnerName" type="text" placeholder="e.g., Sarah" />
+            <input type="text" id="emailOwnerName">
           </div>
         </div>
-        <div class="row">
-          <div class="field">
-            <label for="emailTimeframe">Recheck / follow-up timeframe</label>
-            <input id="emailTimeframe" type="text" placeholder="e.g., 7–10 days, 1 month" />
-          </div>
+        <div class="field">
+          <label for="emailNotes">Extra clinical notes (optional)</label>
+          <textarea id="emailNotes"></textarea>
         </div>
-        <div class="row">
-          <div class="field">
-            <label for="emailNotes">Extra notes (optional)</label>
-            <textarea id="emailNotes" placeholder="Anything specific you want mentioned."></textarea>
-          </div>
-        </div>
-        <button class="primary" id="runEmailHelperBtn">Generate Email Body</button>
-        <div class="output-section" id="emailOutputSection" style="display:none;">
+        <button id="runEmailHelperBtn" class="primary">Generate email text</button>
+
+        <div id="emailOutputSection" class="output-section" style="display:none;">
           <div class="section-box">
             <div class="section-header">
-              <h3>Email Body</h3>
-              <button class="secondary" onclick="window.copyTextFromElement('emailOutput')">Copy email</button>
+              <h3>Email body</h3>
             </div>
-            <div class="section-body" id="emailOutput"></div>
+            <div id="emailOutput" class="section-body"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- SOAP output shared card -->
-    <div class="card" id="soapOutputCard" style="display:none;">
+    <!-- SOAP OUTPUT -->
+    <div id="soapOutputCard" class="card" style="display:none;">
       <h2>SOAP Output</h2>
-      <div class="feedback-bar" id="feedbackBar" style="display:none;">
-        <strong>Refine suggestion</strong>
-        <div id="feedbackText">
-          Add missing high-yield details (e.g., ET tube, catheter site, fluids, key PE findings) and refine the SOAP.
+
+      <div class="section-box">
+        <div class="section-header">
+          <h3>Subjective</h3>
+          <button class="secondary" onclick="copySection('Subjective')">Copy</button>
         </div>
-        <div class="feedback-actions">
-          <input id="refineNote" type="text"
-                 placeholder="Speak or type extra details here..."
-                 class="refine-input" />
-          <button class="secondary" id="refineBtn">Refine SOAP</button>
-        </div>
+        <div id="subjectiveOutput" class="section-body"></div>
       </div>
 
-      <div class="output-section">
-        <div class="section-box">
-          <div class="section-header">
-            <h3>Subjective</h3>
-            <button class="secondary" onclick="window.copySection('Subjective')">Copy</button>
-          </div>
-          <div class="section-body" id="subjectiveOutput"></div>
+      <div class="section-box">
+        <div class="section-header">
+          <h3>Objective</h3>
+          <button class="secondary" onclick="copySection('Objective')">Copy</button>
         </div>
-        <div class="section-box">
-          <div class="section-header">
-            <h3>Objective</h3>
-            <button class="secondary" onclick="window.copySection('Objective')">Copy</button>
-          </div>
-          <div class="section-body" id="objectiveOutput"></div>
+        <div id="objectiveOutput" class="section-body"></div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header">
+          <h3>Assessment</h3>
+          <button class="secondary" onclick="copySection('Assessment')">Copy</button>
         </div>
-        <div class="section-box">
-          <div class="section-header">
-            <h3>Assessment</h3>
-            <button class="secondary" onclick="window.copySection('Assessment')">Copy</button>
-          </div>
-          <div class="section-body" id="assessmentOutput"></div>
+        <div id="assessmentOutput" class="section-body"></div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header">
+          <h3>Plan</h3>
+          <button class="secondary" onclick="copySection('Plan')">Copy</button>
         </div>
-        <div class="section-box">
-          <div class="section-header">
-            <h3>Plan</h3>
-            <button class="secondary" onclick="window.copySection('Plan')">Copy</button>
-          </div>
-          <div class="section-body" id="planOutput"></div>
+        <div id="planOutput" class="section-body"></div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header">
+          <h3>Medications Dispensed</h3>
+          <button class="secondary" onclick="copySection('Medications Dispensed')">Copy</button>
         </div>
-        <div class="section-box">
-          <div class="section-header">
-            <h3>Medications Dispensed</h3>
-            <button class="secondary" onclick="window.copySection('Medications Dispensed')">Copy</button>
-          </div>
-          <div class="section-body" id="medsOutput"></div>
+        <div id="medsOutput" class="section-body"></div>
+      </div>
+
+      <div class="section-box">
+        <div class="section-header">
+          <h3>Aftercare</h3>
+          <button class="secondary" onclick="copySection('Aftercare')">Copy</button>
         </div>
-        <div class="section-box">
-          <div class="section-header">
-            <h3>Aftercare</h3>
-            <button class="secondary" onclick="window.copySection('Aftercare')">Copy</button>
-          </div>
-          <div class="section-body" id="aftercareOutput"></div>
-        </div>
+        <div id="aftercareOutput" class="section-body"></div>
       </div>
 
       <div class="copy-row">
-        <button class="primary" id="copyFullSoapBtn">Copy full SOAP</button>
-        <button class="secondary" id="copyPlanMedsAftercareBtn">Copy Plan + Meds + Aftercare</button>
+        <button id="copyFullSoapBtn" class="secondary">Copy full SOAP</button>
+        <button id="copyPlanMedsAftercareBtn" class="secondary">Copy Plan + Meds + Aftercare</button>
       </div>
     </div>
   </main>
 
-  <!-- Global mic bubble -->
-  <div class="mic-bubble" id="micBubble" title="Dictate into the last focused field">
-    <span>🎙</span>
+  <!-- Mic bubble -->
+  <div id="micBubble" class="mic-bubble">
+    🎙️
   </div>
 
-  <script src="app.js"></script>
+  <!-- INLINE JS: no external app.js needed -->
+  <script>
+    (function () {
+      "use strict";
+
+      // ---------- TAB SWITCHING ----------
+      var tabs = document.querySelectorAll(".tab");
+      var panels = {
+        appointment: document.getElementById("tab-appointment"),
+        surgery: document.getElementById("tab-surgery"),
+        freeform: document.getElementById("tab-freeform"),
+        toolbox: document.getElementById("tab-toolbox")
+      };
+
+      function showTab(name) {
+        for (var key in panels) {
+          if (!panels.hasOwnProperty(key)) continue;
+          var panel = panels[key];
+          if (!panel) continue;
+          panel.style.display = (key === name) ? "block" : "none";
+        }
+        for (var i = 0; i < tabs.length; i++) {
+          var t = tabs[i];
+          if (t.getAttribute("data-tab") === name) t.classList.add("active");
+          else t.classList.remove("active");
+        }
+      }
+
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].addEventListener("click", function () {
+          var name = this.getAttribute("data-tab");
+          if (name) showTab(name);
+        });
+      }
+      showTab("appointment");
+
+      // ---------- COMMON HELPERS ----------
+      var statusEl = document.getElementById("queryStatus");
+      var lastSoapPayload = null;
+
+      function setStatus(text) {
+        if (statusEl) statusEl.textContent = text;
+      }
+
+      function callBackend(mode, payload) {
+        setStatus("Working...");
+        return fetch("/api/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: mode, payload: payload })
+        }).then(function (resp) {
+          if (!resp.ok) {
+            setStatus("Error from server.");
+            throw new Error("Server error");
+          }
+          return resp.json();
+        }).then(function (data) {
+          setStatus("Ready.");
+          return data.result || "";
+        }).catch(function (err) {
+          console.error(err);
+          setStatus("Error from server.");
+          throw err;
+        });
+      }
+
+      function splitSoapIntoSections(text) {
+        var sections = {
+          "Subjective": "",
+          "Objective": "",
+          "Assessment": "",
+          "Plan": "",
+          "Medications Dispensed": "",
+          "Aftercare": ""
+        };
+        var current = null;
+        var lines = text.split(/\\r?\\n/);
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          var trimmed = line.trim();
+          if (/^Subjective:/i.test(trimmed)) { current = "Subjective"; continue; }
+          if (/^Objective:/i.test(trimmed)) { current = "Objective"; continue; }
+          if (/^Assessment:/i.test(trimmed)) { current = "Assessment"; continue; }
+          if (/^Plan:/i.test(trimmed)) { current = "Plan"; continue; }
+          if (/^Medications Dispensed:/i.test(trimmed)) { current = "Medications Dispensed"; continue; }
+          if (/^Aftercare:/i.test(trimmed)) { current = "Aftercare"; continue; }
+          if (!current) continue;
+          sections[current] += (sections[current] ? "\\n" : "") + line;
+        }
+        return sections;
+      }
+
+      function renderSoapSections(sections) {
+        var map = {
+          subjectiveOutput: "Subjective",
+          objectiveOutput: "Objective",
+          assessmentOutput: "Assessment",
+          planOutput: "Plan",
+          medsOutput: "Medications Dispensed",
+          aftercareOutput: "Aftercare"
+        };
+        for (var id in map) {
+          if (!map.hasOwnProperty(id)) continue;
+          var name = map[id];
+          var el = document.getElementById(id);
+          if (el) el.textContent = sections[name] || "";
+        }
+        var card = document.getElementById("soapOutputCard");
+        if (card) card.style.display = "block";
+      }
+
+      function copyToClipboard(text) {
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).catch(function () {});
+        }
+      }
+
+      // ---------- APPOINTMENT ----------
+      var genApptBtn = document.getElementById("generateAppointmentBtn");
+      if (genApptBtn) {
+        genApptBtn.addEventListener("click", function () {
+          var caseLabel = (document.getElementById("caseLabel").value || "").trim();
+          var mode = document.getElementById("accuracyMode").value || "help";
+          var strictMode = mode === "strict";
+
+          var fields = {
+            reason: document.getElementById("apptReason").value,
+            tpr: document.getElementById("apptTPR").value,
+            history: document.getElementById("apptHistory").value,
+            physicalExam: document.getElementById("apptPE").value,
+            diagnostics: document.getElementById("apptDiagnostics").value,
+            assessment: document.getElementById("apptAssessment").value,
+            plan: document.getElementById("apptPlan").value,
+            meds: document.getElementById("apptMeds").value
+          };
+
+          var payload = {
+            soapType: "appointment",
+            strictMode: strictMode,
+            caseLabel: caseLabel,
+            fields: fields,
+            refinementNote: null
+          };
+          lastSoapPayload = payload;
+
+          callBackend("soap", payload).then(function (text) {
+            var sections = splitSoapIntoSections(text);
+            renderSoapSections(sections);
+          });
+        });
+      }
+
+      // ---------- SURGERY ----------
+      var genSxBtn = document.getElementById("generateSurgeryBtn");
+      if (genSxBtn) {
+        genSxBtn.addEventListener("click", function () {
+          var caseLabel = (document.getElementById("caseLabel").value || "").trim();
+          var mode = document.getElementById("accuracyMode").value || "help";
+          var strictMode = mode === "strict";
+
+          var fields = {
+            template: document.getElementById("sxTemplate").value,
+            asa: document.getElementById("sxASA").value,
+            ett: document.getElementById("sxETT").value,
+            catheter: document.getElementById("sxCatheter").value,
+            fluidsRate: document.getElementById("sxFluidsRate").value,
+            fluidsDeclined: document.getElementById("sxFluidsDeclined").checked,
+            premeds: document.getElementById("sxPremeds").value,
+            induction: document.getElementById("sxInduction").value,
+            intraOpMeds: document.getElementById("sxIntraOpMeds").value,
+            procedureNotes: document.getElementById("sxProcedureNotes").value,
+            monocryl0: document.getElementById("sxMonocryl0").checked,
+            monocryl2_0: document.getElementById("sxMonocryl2_0").checked,
+            monocryl3_0: document.getElementById("sxMonocryl3_0").checked,
+            tpr: document.getElementById("sxTPR").value,
+            durations: document.getElementById("sxDurations").value
+          };
+
+          var payload = {
+            soapType: "surgery",
+            strictMode: strictMode,
+            caseLabel: caseLabel,
+            fields: fields,
+            refinementNote: null
+          };
+          lastSoapPayload = payload;
+
+          callBackend("soap", payload).then(function (text) {
+            var sections = splitSoapIntoSections(text);
+            renderSoapSections(sections);
+          });
+        });
+      }
+
+      // ---------- COPY BUTTONS ----------
+      window.copySection = function (name) {
+        var idMap = {
+          "Subjective": "subjectiveOutput",
+          "Objective": "objectiveOutput",
+          "Assessment": "assessmentOutput",
+          "Plan": "planOutput",
+          "Medications Dispensed": "medsOutput",
+          "Aftercare": "aftercareOutput"
+        };
+        var id = idMap[name];
+        if (!id) return;
+        var el = document.getElementById(id);
+        var text = el ? el.textContent : "";
+        copyToClipboard(text);
+      };
+
+      var copyFullBtn = document.getElementById("copyFullSoapBtn");
+      if (copyFullBtn) {
+        copyFullBtn.addEventListener("click", function () {
+          var s = document.getElementById("subjectiveOutput").textContent;
+          var o = document.getElementById("objectiveOutput").textContent;
+          var a = document.getElementById("assessmentOutput").textContent;
+          var p = document.getElementById("planOutput").textContent;
+          var m = document.getElementById("medsOutput").textContent;
+          var ac = document.getElementById("aftercareOutput").textContent;
+          var full = [
+            "Subjective:", s, "",
+            "Objective:", o, "",
+            "Assessment:", a, "",
+            "Plan:", p, "",
+            "Medications Dispensed:", m, "",
+            "Aftercare:", ac
+          ].join("\\n");
+          copyToClipboard(full);
+        });
+      }
+
+      var copyPMA = document.getElementById("copyPlanMedsAftercareBtn");
+      if (copyPMA) {
+        copyPMA.addEventListener("click", function () {
+          var p = document.getElementById("planOutput").textContent;
+          var m = document.getElementById("medsOutput").textContent;
+          var ac = document.getElementById("aftercareOutput").textContent;
+          var combo = [
+            "Plan:", p, "",
+            "Medications Dispensed:", m, "",
+            "Aftercare:", ac
+          ].join("\\n");
+          copyToClipboard(combo);
+        });
+      }
+
+      // ---------- CONSULT ----------
+      var runConsultBtn = document.getElementById("runConsultBtn");
+      if (runConsultBtn) {
+        runConsultBtn.addEventListener("click", function () {
+          var text = (document.getElementById("consultInput").value || "").trim();
+          if (!text) return;
+          callBackend("consult", { message: text }).then(function (out) {
+            document.getElementById("consultOutput").textContent = out;
+            document.getElementById("consultOutputSection").style.display = "block";
+          });
+        });
+      }
+
+      // ---------- TOOLBOX: BLOODWORK ----------
+      var runBwHelperBtn = document.getElementById("runBwHelperBtn");
+      if (runBwHelperBtn) {
+        runBwHelperBtn.addEventListener("click", function () {
+          var text = (document.getElementById("bwText").value || "").trim();
+          if (!text) return;
+          var detailLevel = document.getElementById("bwDetail").value;
+          var includeDiffs = document.getElementById("bwDiffs").checked;
+          var includeClientFriendly = document.getElementById("bwClientFriendly").checked;
+
+          callBackend("toolbox-bloodwork", {
+            text: text,
+            detailLevel: detailLevel,
+            includeDiffs: includeDiffs,
+            includeClientFriendly: includeClientFriendly
+          }).then(function (out) {
+            document.getElementById("bwOutput").textContent = out;
+            document.getElementById("bwOutputSection").style.display = "block";
+          });
+        });
+      }
+
+      // ---------- TOOLBOX: EMAIL ----------
+      var runEmailHelperBtn = document.getElementById("runEmailHelperBtn");
+      if (runEmailHelperBtn) {
+        runEmailHelperBtn.addEventListener("click", function () {
+          var payload = {
+            emailType: document.getElementById("emailType").value,
+            petName: document.getElementById("emailPetName").value,
+            ownerName: document.getElementById("emailOwnerName").value,
+            timeframe: document.getElementById("emailTimeframe").value,
+            notes: document.getElementById("emailNotes").value
+          };
+          callBackend("toolbox-email", payload).then(function (out) {
+            document.getElementById("emailOutput").textContent = out;
+            document.getElementById("emailOutputSection").style.display = "block";
+          });
+        });
+      }
+
+      // ---------- MIC BUBBLE ----------
+      var micBubble = document.getElementById("micBubble");
+      if (micBubble) {
+        micBubble.addEventListener("click", function () {
+          alert("On iPhone/iPad, use the keyboard mic to dictate into whichever text box is selected.");
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
