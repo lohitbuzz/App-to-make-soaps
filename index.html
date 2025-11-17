@@ -46,7 +46,7 @@
     <!-- QR card -->
     <div class="card" id="qrCard">
       <h2>Open on your phone</h2>
-      <p>Scan this QR code with your phone camera to open this app.</p>
+      <p>Scan this QR code with your phone camera to open this app and use the camera to attach photos.</p>
       <img id="qrImage" alt="QR code for this app" style="max-width:180px;">
     </div>
 
@@ -54,6 +54,7 @@
     <div id="tab-appointment" class="card tab-panel">
       <h2>Appointment SOAP Inputs</h2>
 
+      <!-- Minimal always-visible -->
       <div class="row">
         <div class="field">
           <label for="apptReason">Reason for visit</label>
@@ -70,23 +71,30 @@
         <textarea id="apptHistory" placeholder="Owner-reported history, duration, diet, meds, etc."></textarea>
       </div>
 
-      <div class="field">
-        <label for="apptPE">Physical exam (data-only)</label>
-        <textarea id="apptPE" placeholder="You can type PE here, or leave blank and let Help Me mode fill safe normals."></textarea>
+      <!-- Collapsed clinical detail -->
+      <div class="accordion" id="apptDetailsAcc">
+        <div class="accordion-header">More clinical detail (PE, Diagnostics, Assessment)</div>
+        <div class="accordion-body">
+          <div class="field">
+            <label for="apptPE">Physical exam (data-only)</label>
+            <textarea id="apptPE" placeholder="You can type PE here, or leave blank and let Help Me mode fill safe normals."></textarea>
+          </div>
+
+          <div class="field">
+            <label for="apptDiagnostics">Diagnostics (data-only)</label>
+            <textarea id="apptDiagnostics" placeholder="Lab/rads data, cytology, SNAP tests, etc."></textarea>
+          </div>
+
+          <div class="field">
+            <label for="apptAssessment">Assessment (optional)</label>
+            <textarea id="apptAssessment" placeholder="Problem list, differentials, severity, etc."></textarea>
+          </div>
+        </div>
       </div>
 
+      <!-- Always visible Plan + Meds -->
       <div class="field">
-        <label for="apptDiagnostics">Diagnostics (data-only)</label>
-        <textarea id="apptDiagnostics" placeholder="Lab/rads data, cytology, SNAP tests, etc."></textarea>
-      </div>
-
-      <div class="field">
-        <label for="apptAssessment">Assessment (optional)</label>
-        <textarea id="apptAssessment" placeholder="Problem list, differentials, severity, etc."></textarea>
-      </div>
-
-      <div class="field">
-        <label for="apptPlan">Plan (optional)</label>
+        <label for="apptPlan">Plan</label>
         <textarea id="apptPlan" placeholder="Treatments, diagnostics, follow-up, client communication."></textarea>
       </div>
 
@@ -99,15 +107,13 @@
       <div class="attachments-card">
         <div class="attachments-header">
           <h3>Attachments (optional)</h3>
-          <span>Labs, rads, anesthesia sheets, other docs.</span>
+          <span>Labs, rads, other docs. Use phone camera via QR if easier.</span>
         </div>
         <div class="attachments-actions">
           <button id="apptTakePhotoBtn" class="secondary small">📷 Take photo</button>
           <button id="apptUploadFileBtn" class="secondary small">🗂 Upload file</button>
         </div>
-        <div id="apptAttachmentsList" class="attachments-list">
-          <!-- chips go here -->
-        </div>
+        <div id="apptAttachmentsList" class="attachments-list"></div>
         <!-- hidden file inputs -->
         <input type="file" id="apptPhotoInput" accept="image/*" capture="environment" style="display:none;">
         <input type="file" id="apptFileInput" accept="image/*,application/pdf" multiple style="display:none;">
@@ -120,40 +126,43 @@
     <div id="tab-surgery" class="card tab-panel" style="display:none;">
       <h2>Surgery SOAP Inputs</h2>
       <p id="sxTemplateHint" class="hint-text">
-        Select a template to see procedure-specific reminders.
+        Select a template; only core fields show first. Expand sections below for more detail.
       </p>
 
+      <!-- Band A: core fields only -->
       <div class="row">
         <div class="field">
           <label for="sxTemplate">Surgery template</label>
           <select id="sxTemplate">
             <!-- Spay / neuter -->
-            <option value="canine-spay-standard">Canine spay – clinic</option>
-            <option value="canine-spay-rescue">Canine spay – rescue</option>
-            <option value="canine-neuter-standard">Canine neuter – clinic</option>
-            <option value="canine-neuter-rescue">Canine neuter – rescue</option>
-            <option value="feline-spay-standard">Feline spay – clinic</option>
-            <option value="feline-spay-rescue">Feline spay – rescue</option>
-            <option value="feline-neuter-standard">Feline neuter – clinic</option>
-            <option value="feline-neuter-rescue">Feline neuter – rescue</option>
-
-            <!-- Dental -->
-            <option value="dental-cohat">Dental – COHAT</option>
-            <option value="dental-cohat-no-rads">Dental – COHAT (no rads)</option>
-
-            <!-- Abdominal / soft tissue -->
-            <option value="pyometra-spay">Pyometra spay</option>
-            <option value="exploratory-laparotomy">Exploratory laparotomy</option>
-            <option value="enterotomy">Enterotomy</option>
-            <option value="gastrotomy">Gastrotomy</option>
-            <option value="gastropexy">Gastropexy</option>
-            <option value="cystotomy">Cystotomy</option>
-
-            <!-- Other -->
-            <option value="feline-urethral-unblock">Feline urethral unblock</option>
-            <option value="mass-removal-simple">Mass removal – simple</option>
-            <option value="mass-removal-complex">Mass removal – complex</option>
-            <option value="other">Other / custom</option>
+            <optgroup label="Spay / Neuter">
+              <option value="canine-spay-standard">Canine spay – clinic</option>
+              <option value="canine-spay-rescue">Canine spay – rescue</option>
+              <option value="canine-neuter-standard">Canine neuter – clinic</option>
+              <option value="canine-neuter-rescue">Canine neuter – rescue</option>
+              <option value="feline-spay-standard">Feline spay – clinic</option>
+              <option value="feline-spay-rescue">Feline spay – rescue</option>
+              <option value="feline-neuter-standard">Feline neuter – clinic</option>
+              <option value="feline-neuter-rescue">Feline neuter – rescue</option>
+            </optgroup>
+            <optgroup label="Dental">
+              <option value="dental-cohat">Dental – COHAT</option>
+              <option value="dental-cohat-no-rads">Dental – COHAT (no rads)</option>
+            </optgroup>
+            <optgroup label="Abdominal / Soft tissue">
+              <option value="pyometra-spay">Pyometra spay</option>
+              <option value="exploratory-laparotomy">Exploratory laparotomy</option>
+              <option value="enterotomy">Enterotomy</option>
+              <option value="gastrotomy">Gastrotomy</option>
+              <option value="gastropexy">Gastropexy</option>
+              <option value="cystotomy">Cystotomy</option>
+              <option value="feline-urethral-unblock">Feline urethral unblock</option>
+            </optgroup>
+            <optgroup label="Mass / Other">
+              <option value="mass-removal-simple">Mass removal – simple</option>
+              <option value="mass-removal-complex">Mass removal – complex</option>
+              <option value="other">Other / custom</option>
+            </optgroup>
           </select>
         </div>
         <div class="field">
@@ -162,7 +171,6 @@
         </div>
       </div>
 
-      <!-- Access / fluids band -->
       <div class="row">
         <div class="field">
           <label for="sxCatheter">IV catheter</label>
@@ -185,55 +193,161 @@
         </div>
       </div>
 
-      <!-- Drug block -->
-      <div class="field">
-        <label for="sxPremeds">Premedications</label>
-        <textarea id="sxPremeds" placeholder="e.g., Dexmedetomidine [0.5 mg/ml] + Hydromorphone [2 mg/ml] IM"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="sxInduction">Induction / Maintenance</label>
-        <textarea id="sxInduction" placeholder="e.g., Propofol [10 mg/ml] to effect, Isoflurane in oxygen"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="sxIntraOpMeds">Intra-op medications</label>
-        <textarea id="sxIntraOpMeds" placeholder="e.g., Meloxicam [5 mg/ml] SQ, Bupivacaine [0.5%] local blocks"></textarea>
-      </div>
-
-      <!-- TPR / durations -->
-      <div class="field">
-        <label for="sxTPR">TPR / intra-op notes (optional)</label>
-        <textarea id="sxTPR"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="sxDurations">Anesthesia / surgery durations (optional)</label>
-        <textarea id="sxDurations" placeholder="Only if both start & end times known; otherwise leave blank."></textarea>
-      </div>
-
-      <!-- Procedure + Monocryl -->
-      <div class="field">
-        <label for="sxProcedureNotes">Procedure notes</label>
-        <textarea id="sxProcedureNotes" placeholder="Key surgical findings, complications, closure details, etc."></textarea>
-      </div>
-
-      <div class="row">
-        <div class="field checkbox-row">
-          <input type="checkbox" id="sxMonocryl0">
-          <label for="sxMonocryl0">0 Monocryl override</label>
+      <!-- Band B: accordions (template-dependent) -->
+      <div id="sxAccordionContainer" class="accordion-container">
+        <!-- Anesthesia -->
+        <div class="accordion" id="sxAccAnes">
+          <div class="accordion-header">Anesthesia & Premeds</div>
+          <div class="accordion-body">
+            <div class="field">
+              <label for="sxPremeds">Premedications</label>
+              <textarea id="sxPremeds" placeholder="e.g., Dexmedetomidine [0.5 mg/ml] + Hydromorphone [2 mg/ml] IM"></textarea>
+            </div>
+            <div class="field">
+              <label for="sxInduction">Induction / Maintenance</label>
+              <textarea id="sxInduction" placeholder="e.g., Propofol [10 mg/ml] to effect, Isoflurane in oxygen"></textarea>
+            </div>
+            <div class="field">
+              <label for="sxIntraOpMeds">Intra-op medications</label>
+              <textarea id="sxIntraOpMeds" placeholder="e.g., Meloxicam [5 mg/ml] SQ, Bupivacaine [0.5%] local blocks"></textarea>
+            </div>
+          </div>
         </div>
-        <div class="field checkbox-row">
-          <input type="checkbox" id="sxMonocryl2_0">
-          <label for="sxMonocryl2_0">2-0 Monocryl override</label>
+
+        <!-- Generic surgery details -->
+        <div class="accordion" id="sxAccProcedure">
+          <div class="accordion-header">Surgery details & intra-op notes</div>
+          <div class="accordion-body">
+            <div class="field">
+              <label for="sxProcedureNotes">Procedure notes</label>
+              <textarea id="sxProcedureNotes" placeholder="Key surgical findings, complications, closure details, etc."></textarea>
+            </div>
+            <div class="field">
+              <label for="sxTPR">TPR / intra-op notes (optional)</label>
+              <textarea id="sxTPR"></textarea>
+            </div>
+            <div class="field">
+              <label for="sxDurations">Anesthesia / surgery durations (optional)</label>
+              <textarea id="sxDurations" placeholder="Only if both start & end times known; otherwise leave blank."></textarea>
+            </div>
+          </div>
         </div>
-        <div class="field checkbox-row">
-          <input type="checkbox" id="sxMonocryl3_0">
-          <label for="sxMonocryl3_0">3-0 Monocryl override</label>
+
+        <!-- Spay/neuter suture overrides -->
+        <div class="accordion" id="sxAccSpayOptions">
+          <div class="accordion-header">Spay / neuter suture overrides</div>
+          <div class="accordion-body">
+            <div class="row">
+              <div class="field checkbox-row">
+                <input type="checkbox" id="sxMonocryl0">
+                <label for="sxMonocryl0">0 Monocryl override</label>
+              </div>
+              <div class="field checkbox-row">
+                <input type="checkbox" id="sxMonocryl2_0">
+                <label for="sxMonocryl2_0">2-0 Monocryl override</label>
+              </div>
+              <div class="field checkbox-row">
+                <input type="checkbox" id="sxMonocryl3_0">
+                <label for="sxMonocryl3_0">3-0 Monocryl override</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dental specifics -->
+        <div class="accordion" id="sxAccDental">
+          <div class="accordion-header">Dental specifics</div>
+          <div class="accordion-body">
+            <div class="field">
+              <label for="sxDentalRads">Dental radiographs</label>
+              <select id="sxDentalRads">
+                <option value="">Not specified</option>
+                <option value="full">Full-mouth</option>
+                <option value="selected">Selected views</option>
+                <option value="declined">Declined</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="sxDentalPerio">Perio grade</label>
+              <select id="sxDentalPerio">
+                <option value="">Not specified</option>
+                <option value="I">I</option>
+                <option value="II">II</option>
+                <option value="III">III</option>
+                <option value="IV">IV</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Local blocks</label>
+              <div class="checkbox-row">
+                <input type="checkbox" id="sxBlockInfra">
+                <label for="sxBlockInfra">Infraorbital</label>
+              </div>
+              <div class="checkbox-row">
+                <input type="checkbox" id="sxBlockMaxillary">
+                <label for="sxBlockMaxillary">Maxillary</label>
+              </div>
+              <div class="checkbox-row">
+                <input type="checkbox" id="sxBlockMental">
+                <label for="sxBlockMental">Mental</label>
+              </div>
+              <div class="checkbox-row">
+                <input type="checkbox" id="sxBlockIA">
+                <label for="sxBlockIA">Inferior alveolar</label>
+              </div>
+            </div>
+            <div class="field">
+              <label for="sxDentalExtractionNotes">Extraction / flap notes</label>
+              <textarea id="sxDentalExtractionNotes" placeholder="10 blade used, periosteal elevator, flap, tension-free closure, etc."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mass removal specifics -->
+        <div class="accordion" id="sxAccMass">
+          <div class="accordion-header">Mass removal specifics</div>
+          <div class="accordion-body">
+            <div class="field">
+              <label for="sxMassLocation">Mass location</label>
+              <input type="text" id="sxMassLocation" placeholder="e.g., L lateral thorax skin">
+            </div>
+            <div class="field">
+              <label for="sxMassSize">Mass size</label>
+              <input type="text" id="sxMassSize" placeholder="e.g., 2.0 x 1.5 x 1.0 cm">
+            </div>
+            <div class="field">
+              <label for="sxHistopath">Histopathology</label>
+              <select id="sxHistopath">
+                <option value="">Not specified</option>
+                <option value="submitted">Submitted</option>
+                <option value="declined">Declined</option>
+                <option value="not-indicated">Not indicated</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="sxMassMargins">Margin / closure notes</label>
+              <textarea id="sxMassMargins" placeholder="Margins, tension-relieving techniques, flap if used."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Abdominal specifics -->
+        <div class="accordion" id="sxAccAbdo">
+          <div class="accordion-header">Abdominal findings & closure</div>
+          <div class="accordion-body">
+            <div class="field">
+              <label for="sxAbdoFindings">Abdominal findings</label>
+              <textarea id="sxAbdoFindings" placeholder="Organs explored, FBs, biopsies, uterine size, etc."></textarea>
+            </div>
+            <div class="field">
+              <label for="sxAbdoClosure">Abdominal closure details</label>
+              <textarea id="sxAbdoClosure" placeholder="Layers, Monocryl sizes, patterns, lavage if used."></textarea>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Attachments for Surgery -->
+      <!-- Band C: Attachments shared -->
       <div class="attachments-card">
         <div class="attachments-header">
           <h3>Attachments (optional)</h3>
@@ -243,9 +357,7 @@
           <button id="sxTakePhotoBtn" class="secondary small">📷 Take photo</button>
           <button id="sxUploadFileBtn" class="secondary small">🗂 Upload file</button>
         </div>
-        <div id="sxAttachmentsList" class="attachments-list">
-          <!-- chips go here -->
-        </div>
+        <div id="sxAttachmentsList" class="attachments-list"></div>
         <!-- hidden file inputs -->
         <input type="file" id="sxPhotoInput" accept="image/*" capture="environment" style="display:none;">
         <input type="file" id="sxFileInput" accept="image/*,application/pdf" multiple style="display:none;">
@@ -258,9 +370,25 @@
     <div id="tab-freeform" class="card tab-panel" style="display:none;">
       <h2>Free-form / Consult</h2>
       <div class="field">
-        <label for="consultInput">Describe your question or paste any text/images summary</label>
-        <textarea id="consultInput" placeholder="e.g., 8y MN DSH, chronic vomiting, normal labs so far... What next?"></textarea>
+        <label for="consultInput">Talk to the app (question, SOAP snippet, email, etc.)</label>
+        <textarea id="consultInput" placeholder="e.g., 8y MN DSH, chronic vomiting with normal labs so far... What next?"></textarea>
       </div>
+
+      <!-- Attachments for consult -->
+      <div class="attachments-card">
+        <div class="attachments-header">
+          <h3>Attachments (optional)</h3>
+          <span>Photos of labs, rads, whiteboards, notes.</span>
+        </div>
+        <div class="attachments-actions">
+          <button id="consultTakePhotoBtn" class="secondary small">📷 Take photo</button>
+          <button id="consultUploadFileBtn" class="secondary small">🗂 Upload file</button>
+        </div>
+        <div id="consultAttachmentsList" class="attachments-list"></div>
+        <input type="file" id="consultPhotoInput" accept="image/*" capture="environment" style="display:none;">
+        <input type="file" id="consultFileInput" accept="image/*,application/pdf" multiple style="display:none;">
+      </div>
+
       <button id="runConsultBtn" class="primary">Run consult</button>
 
       <div id="consultOutputSection" class="output-section" style="display:none;">
@@ -277,10 +405,25 @@
     <div id="tab-toolbox" class="card tab-panel" style="display:none;">
       <h2>Toolbox Lite</h2>
 
+      <!-- Shared attachments for toolbox -->
+      <div class="attachments-card">
+        <div class="attachments-header">
+          <h3>Attachments (optional)</h3>
+          <span>Labs, rads, whiteboard photos for helper tools.</span>
+        </div>
+        <div class="attachments-actions">
+          <button id="toolboxTakePhotoBtn" class="secondary small">📷 Take photo</button>
+          <button id="toolboxUploadFileBtn" class="secondary small">🗂 Upload file</button>
+        </div>
+        <div id="toolboxAttachmentsList" class="attachments-list"></div>
+        <input type="file" id="toolboxPhotoInput" accept="image/*" capture="environment" style="display:none;">
+        <input type="file" id="toolboxFileInput" accept="image/*,application/pdf" multiple style="display:none;">
+      </div>
+
       <div class="inner-card">
         <h3>Bloodwork Helper Lite</h3>
         <div class="field">
-          <label for="bwText">Paste CBC/chem/UA text</label>
+          <label for="bwText">Paste CBC/chem/UA text (optional if photos attached)</label>
           <textarea id="bwText" placeholder="Copy/paste the lab report text or values here."></textarea>
         </div>
         <div class="row">
