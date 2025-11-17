@@ -289,6 +289,47 @@ main {
   padding: 0 3px;
 }
 
+/* Accordions */
+.accordion {
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  margin-top: 8px;
+}
+
+.accordion-header {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background: #f9fafb;
+}
+
+.accordion-header::after {
+  content: "▸";
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.accordion.open .accordion-header::after {
+  content: "▾";
+}
+
+.accordion-body {
+  padding: 8px 10px 10px;
+  display: none;
+}
+
+.accordion.open .accordion-body {
+  display: block;
+}
+
+.accordion-container {
+  margin-top: 8px;
+}
+
 /* Mic bubble */
 .mic-bubble {
   position: fixed;
