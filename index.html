@@ -35,7 +35,7 @@
         <div class="field">
           <label for="accuracyMode">Mode</label>
           <select id="accuracyMode">
-            <option value="help" selected>Help Me (safe assumptions)</option>
+            <option value="help">Help Me (safe assumptions)</option>
             <option value="strict">Strict (no guessing)</option>
           </select>
         </div>
@@ -43,7 +43,7 @@
       <div id="queryStatus" class="status">Ready.</div>
     </div>
 
-    <!-- APPOINTMENT TAB -->
+    <!-- ------------- APPOINTMENT TAB ------------- -->
     <div id="tab-appointment" class="card tab-panel">
       <h2>Appointment SOAP Inputs</h2>
 
@@ -91,7 +91,7 @@
       <button id="generateAppointmentBtn" class="primary">Generate Appointment SOAP</button>
     </div>
 
-    <!-- SURGERY TAB -->
+    <!-- ------------- SURGERY TAB ------------- -->
     <div id="tab-surgery" class="card tab-panel" style="display:none;">
       <h2>Surgery SOAP Inputs</h2>
 
@@ -184,11 +184,11 @@
       <button id="generateSurgeryBtn" class="primary">Generate Surgery SOAP</button>
     </div>
 
-    <!-- FREE-FORM / CONSULT TAB -->
+    <!-- ------------- FREE-FORM / CONSULT TAB ------------- -->
     <div id="tab-freeform" class="card tab-panel" style="display:none;">
       <h2>Free-form / Consult</h2>
       <div class="field">
-        <label for="consultInput">Talk to your assistant</label>
+        <label for="consultInput">Describe your question or paste any text/images summary</label>
         <textarea id="consultInput" placeholder="e.g., 8y MN DSH, chronic vomiting, normal labs so far... What next?"></textarea>
       </div>
       <button id="runConsultBtn" class="primary">Run consult</button>
@@ -203,7 +203,7 @@
       </div>
     </div>
 
-    <!-- TOOLBOX LITE TAB -->
+    <!-- ------------- TOOLBOX LITE TAB ------------- -->
     <div id="tab-toolbox" class="card tab-panel" style="display:none;">
       <h2>Toolbox Lite</h2>
 
@@ -218,7 +218,7 @@
             <label for="bwDetail">Detail level</label>
             <select id="bwDetail">
               <option value="short">Short</option>
-              <option value="standard" selected>Standard</option>
+              <option value="standard">Standard</option>
             </select>
           </div>
         </div>
@@ -288,7 +288,7 @@
       </div>
     </div>
 
-    <!-- SOAP OUTPUT -->
+    <!-- ------------- SOAP OUTPUT CARD (shared) ------------- -->
     <div id="soapOutputCard" class="card" style="display:none;">
       <h2>SOAP Output</h2>
 
@@ -344,323 +344,20 @@
         <button id="copyFullSoapBtn" class="secondary">Copy full SOAP</button>
         <button id="copyPlanMedsAftercareBtn" class="secondary">Copy Plan + Meds + Aftercare</button>
       </div>
+
+      <div id="feedbackBar" class="feedback-bar" style="display:none;">
+        <strong>Refine this SOAP?</strong>
+        <input id="refineNote" class="refine-input" placeholder="Add missing details (e.g., ET tube 7.5, 22g catheter LR 5 ml/kg/hr)...">
+        <button id="refineBtn" class="secondary">Refine with these details</button>
+      </div>
     </div>
   </main>
 
   <!-- Mic bubble -->
   <div id="micBubble" class="mic-bubble">
-    🎙️
+    <span>🎙️</span>
   </div>
 
-  <!-- INLINE JS: no external app.js needed -->
-  <script>
-    (function () {
-      "use strict";
-
-      // ---------- TAB SWITCHING ----------
-      var tabs = document.querySelectorAll(".tab");
-      var panels = {
-        appointment: document.getElementById("tab-appointment"),
-        surgery: document.getElementById("tab-surgery"),
-        freeform: document.getElementById("tab-freeform"),
-        toolbox: document.getElementById("tab-toolbox")
-      };
-
-      function showTab(name) {
-        for (var key in panels) {
-          if (!panels.hasOwnProperty(key)) continue;
-          var panel = panels[key];
-          if (!panel) continue;
-          panel.style.display = (key === name) ? "block" : "none";
-        }
-        for (var i = 0; i < tabs.length; i++) {
-          var t = tabs[i];
-          if (t.getAttribute("data-tab") === name) t.classList.add("active");
-          else t.classList.remove("active");
-        }
-      }
-
-      for (var i = 0; i < tabs.length; i++) {
-        tabs[i].addEventListener("click", function () {
-          var name = this.getAttribute("data-tab");
-          if (name) showTab(name);
-        });
-      }
-      showTab("appointment");
-
-      // ---------- COMMON HELPERS ----------
-      var statusEl = document.getElementById("queryStatus");
-      var lastSoapPayload = null;
-
-      function setStatus(text) {
-        if (statusEl) statusEl.textContent = text;
-      }
-
-      function callBackend(mode, payload) {
-        setStatus("Working...");
-        return fetch("/api/run", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: mode, payload: payload })
-        }).then(function (resp) {
-          if (!resp.ok) {
-            setStatus("Error from server.");
-            throw new Error("Server error");
-          }
-          return resp.json();
-        }).then(function (data) {
-          setStatus("Ready.");
-          return data.result || "";
-        }).catch(function (err) {
-          console.error(err);
-          setStatus("Error from server.");
-          throw err;
-        });
-      }
-
-      function splitSoapIntoSections(text) {
-        var sections = {
-          "Subjective": "",
-          "Objective": "",
-          "Assessment": "",
-          "Plan": "",
-          "Medications Dispensed": "",
-          "Aftercare": ""
-        };
-        var current = null;
-        var lines = text.split(/\\r?\\n/);
-        for (var i = 0; i < lines.length; i++) {
-          var line = lines[i];
-          var trimmed = line.trim();
-          if (/^Subjective:/i.test(trimmed)) { current = "Subjective"; continue; }
-          if (/^Objective:/i.test(trimmed)) { current = "Objective"; continue; }
-          if (/^Assessment:/i.test(trimmed)) { current = "Assessment"; continue; }
-          if (/^Plan:/i.test(trimmed)) { current = "Plan"; continue; }
-          if (/^Medications Dispensed:/i.test(trimmed)) { current = "Medications Dispensed"; continue; }
-          if (/^Aftercare:/i.test(trimmed)) { current = "Aftercare"; continue; }
-          if (!current) continue;
-          sections[current] += (sections[current] ? "\\n" : "") + line;
-        }
-        return sections;
-      }
-
-      function renderSoapSections(sections) {
-        var map = {
-          subjectiveOutput: "Subjective",
-          objectiveOutput: "Objective",
-          assessmentOutput: "Assessment",
-          planOutput: "Plan",
-          medsOutput: "Medications Dispensed",
-          aftercareOutput: "Aftercare"
-        };
-        for (var id in map) {
-          if (!map.hasOwnProperty(id)) continue;
-          var name = map[id];
-          var el = document.getElementById(id);
-          if (el) el.textContent = sections[name] || "";
-        }
-        var card = document.getElementById("soapOutputCard");
-        if (card) card.style.display = "block";
-      }
-
-      function copyToClipboard(text) {
-        if (!text) return;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).catch(function () {});
-        }
-      }
-
-      // ---------- APPOINTMENT ----------
-      var genApptBtn = document.getElementById("generateAppointmentBtn");
-      if (genApptBtn) {
-        genApptBtn.addEventListener("click", function () {
-          var caseLabel = (document.getElementById("caseLabel").value || "").trim();
-          var mode = document.getElementById("accuracyMode").value || "help";
-          var strictMode = mode === "strict";
-
-          var fields = {
-            reason: document.getElementById("apptReason").value,
-            tpr: document.getElementById("apptTPR").value,
-            history: document.getElementById("apptHistory").value,
-            physicalExam: document.getElementById("apptPE").value,
-            diagnostics: document.getElementById("apptDiagnostics").value,
-            assessment: document.getElementById("apptAssessment").value,
-            plan: document.getElementById("apptPlan").value,
-            meds: document.getElementById("apptMeds").value
-          };
-
-          var payload = {
-            soapType: "appointment",
-            strictMode: strictMode,
-            caseLabel: caseLabel,
-            fields: fields,
-            refinementNote: null
-          };
-          lastSoapPayload = payload;
-
-          callBackend("soap", payload).then(function (text) {
-            var sections = splitSoapIntoSections(text);
-            renderSoapSections(sections);
-          });
-        });
-      }
-
-      // ---------- SURGERY ----------
-      var genSxBtn = document.getElementById("generateSurgeryBtn");
-      if (genSxBtn) {
-        genSxBtn.addEventListener("click", function () {
-          var caseLabel = (document.getElementById("caseLabel").value || "").trim();
-          var mode = document.getElementById("accuracyMode").value || "help";
-          var strictMode = mode === "strict";
-
-          var fields = {
-            template: document.getElementById("sxTemplate").value,
-            asa: document.getElementById("sxASA").value,
-            ett: document.getElementById("sxETT").value,
-            catheter: document.getElementById("sxCatheter").value,
-            fluidsRate: document.getElementById("sxFluidsRate").value,
-            fluidsDeclined: document.getElementById("sxFluidsDeclined").checked,
-            premeds: document.getElementById("sxPremeds").value,
-            induction: document.getElementById("sxInduction").value,
-            intraOpMeds: document.getElementById("sxIntraOpMeds").value,
-            procedureNotes: document.getElementById("sxProcedureNotes").value,
-            monocryl0: document.getElementById("sxMonocryl0").checked,
-            monocryl2_0: document.getElementById("sxMonocryl2_0").checked,
-            monocryl3_0: document.getElementById("sxMonocryl3_0").checked,
-            tpr: document.getElementById("sxTPR").value,
-            durations: document.getElementById("sxDurations").value
-          };
-
-          var payload = {
-            soapType: "surgery",
-            strictMode: strictMode,
-            caseLabel: caseLabel,
-            fields: fields,
-            refinementNote: null
-          };
-          lastSoapPayload = payload;
-
-          callBackend("soap", payload).then(function (text) {
-            var sections = splitSoapIntoSections(text);
-            renderSoapSections(sections);
-          });
-        });
-      }
-
-      // ---------- COPY BUTTONS ----------
-      window.copySection = function (name) {
-        var idMap = {
-          "Subjective": "subjectiveOutput",
-          "Objective": "objectiveOutput",
-          "Assessment": "assessmentOutput",
-          "Plan": "planOutput",
-          "Medications Dispensed": "medsOutput",
-          "Aftercare": "aftercareOutput"
-        };
-        var id = idMap[name];
-        if (!id) return;
-        var el = document.getElementById(id);
-        var text = el ? el.textContent : "";
-        copyToClipboard(text);
-      };
-
-      var copyFullBtn = document.getElementById("copyFullSoapBtn");
-      if (copyFullBtn) {
-        copyFullBtn.addEventListener("click", function () {
-          var s = document.getElementById("subjectiveOutput").textContent;
-          var o = document.getElementById("objectiveOutput").textContent;
-          var a = document.getElementById("assessmentOutput").textContent;
-          var p = document.getElementById("planOutput").textContent;
-          var m = document.getElementById("medsOutput").textContent;
-          var ac = document.getElementById("aftercareOutput").textContent;
-          var full = [
-            "Subjective:", s, "",
-            "Objective:", o, "",
-            "Assessment:", a, "",
-            "Plan:", p, "",
-            "Medications Dispensed:", m, "",
-            "Aftercare:", ac
-          ].join("\\n");
-          copyToClipboard(full);
-        });
-      }
-
-      var copyPMA = document.getElementById("copyPlanMedsAftercareBtn");
-      if (copyPMA) {
-        copyPMA.addEventListener("click", function () {
-          var p = document.getElementById("planOutput").textContent;
-          var m = document.getElementById("medsOutput").textContent;
-          var ac = document.getElementById("aftercareOutput").textContent;
-          var combo = [
-            "Plan:", p, "",
-            "Medications Dispensed:", m, "",
-            "Aftercare:", ac
-          ].join("\\n");
-          copyToClipboard(combo);
-        });
-      }
-
-      // ---------- CONSULT ----------
-      var runConsultBtn = document.getElementById("runConsultBtn");
-      if (runConsultBtn) {
-        runConsultBtn.addEventListener("click", function () {
-          var text = (document.getElementById("consultInput").value || "").trim();
-          if (!text) return;
-          callBackend("consult", { message: text }).then(function (out) {
-            document.getElementById("consultOutput").textContent = out;
-            document.getElementById("consultOutputSection").style.display = "block";
-          });
-        });
-      }
-
-      // ---------- TOOLBOX: BLOODWORK ----------
-      var runBwHelperBtn = document.getElementById("runBwHelperBtn");
-      if (runBwHelperBtn) {
-        runBwHelperBtn.addEventListener("click", function () {
-          var text = (document.getElementById("bwText").value || "").trim();
-          if (!text) return;
-          var detailLevel = document.getElementById("bwDetail").value;
-          var includeDiffs = document.getElementById("bwDiffs").checked;
-          var includeClientFriendly = document.getElementById("bwClientFriendly").checked;
-
-          callBackend("toolbox-bloodwork", {
-            text: text,
-            detailLevel: detailLevel,
-            includeDiffs: includeDiffs,
-            includeClientFriendly: includeClientFriendly
-          }).then(function (out) {
-            document.getElementById("bwOutput").textContent = out;
-            document.getElementById("bwOutputSection").style.display = "block";
-          });
-        });
-      }
-
-      // ---------- TOOLBOX: EMAIL ----------
-      var runEmailHelperBtn = document.getElementById("runEmailHelperBtn");
-      if (runEmailHelperBtn) {
-        runEmailHelperBtn.addEventListener("click", function () {
-          var payload = {
-            emailType: document.getElementById("emailType").value,
-            petName: document.getElementById("emailPetName").value,
-            ownerName: document.getElementById("emailOwnerName").value,
-            timeframe: document.getElementById("emailTimeframe").value,
-            notes: document.getElementById("emailNotes").value
-          };
-          callBackend("toolbox-email", payload).then(function (out) {
-            document.getElementById("emailOutput").textContent = out;
-            document.getElementById("emailOutputSection").style.display = "block";
-          });
-        });
-      }
-
-      // ---------- MIC BUBBLE ----------
-      var micBubble = document.getElementById("micBubble");
-      if (micBubble) {
-        micBubble.addEventListener("click", function () {
-          alert("On iPhone/iPad, use the keyboard mic to dictate into whichever text box is selected.");
-        });
-      }
-    })();
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
