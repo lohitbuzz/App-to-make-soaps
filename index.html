@@ -43,6 +43,13 @@
       <div id="queryStatus" class="status">Ready.</div>
     </div>
 
+    <!-- QR card -->
+    <div class="card" id="qrCard">
+      <h2>Open on your phone</h2>
+      <p>Scan this QR code with your phone camera to open this app.</p>
+      <img id="qrImage" alt="QR code for this app" style="max-width:180px;">
+    </div>
+
     <!-- ------------- APPOINTMENT TAB ------------- -->
     <div id="tab-appointment" class="card tab-panel">
       <h2>Appointment SOAP Inputs</h2>
@@ -94,16 +101,24 @@
     <!-- ------------- SURGERY TAB ------------- -->
     <div id="tab-surgery" class="card tab-panel" style="display:none;">
       <h2>Surgery SOAP Inputs</h2>
+      <p id="sxTemplateHint" class="hint-text">
+        Select a template to see procedure-specific reminders.
+      </p>
 
       <div class="row">
         <div class="field">
           <label for="sxTemplate">Surgery template</label>
           <select id="sxTemplate">
-            <option value="canine-spay">Canine spay</option>
-            <option value="canine-neuter">Canine neuter</option>
-            <option value="feline-spay">Feline spay</option>
-            <option value="feline-neuter">Feline neuter</option>
-            <option value="dental-cohat">Dental COHAT</option>
+            <option value="canine-spay-standard">Canine spay – clinic</option>
+            <option value="canine-spay-rescue">Canine spay – rescue</option>
+            <option value="canine-neuter-standard">Canine neuter – clinic</option>
+            <option value="canine-neuter-rescue">Canine neuter – rescue</option>
+            <option value="feline-spay-standard">Feline spay – clinic</option>
+            <option value="feline-spay-rescue">Feline spay – rescue</option>
+            <option value="feline-neuter-standard">Feline neuter – clinic</option>
+            <option value="feline-neuter-rescue">Feline neuter – rescue</option>
+            <option value="dental-cohat">Dental – COHAT</option>
+            <option value="dental-cohat-no-rads">Dental – COHAT (no rads)</option>
             <option value="mass-removal">Mass removal</option>
             <option value="other">Other / custom</option>
           </select>
@@ -346,8 +361,11 @@
       </div>
 
       <div id="feedbackBar" class="feedback-bar" style="display:none;">
-        <strong>Refine this SOAP?</strong>
-        <input id="refineNote" class="refine-input" placeholder="Add missing details (e.g., ET tube 7.5, 22g catheter LR 5 ml/kg/hr)...">
+        <div class="fb-main-line">
+          <strong>Refine this SOAP?</strong>
+          <span id="feedbackText"></span>
+        </div>
+        <input id="refineNote" class="refine-input" placeholder="Add missing details (e.g., ET tube 7.5, 22g cath left cephalic, LR 5 ml/kg/hr)...">
         <button id="refineBtn" class="secondary">Refine with these details</button>
       </div>
     </div>
