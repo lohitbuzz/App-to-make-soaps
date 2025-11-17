@@ -1,729 +1,399 @@
-// Lohit SOAP App v1.5 frontend
-// - SOAP-first layout
-// - Minimal intake
-// - Camera-only phone capture (?capture=1&caseId=...)
-// - Manual redaction tool posting data URLs to /api/cases/:caseId/attachments
+"use strict";
 
+// ---------- TAB SWITCHING ----------
 (function () {
-  const qs = (sel) => document.querySelector(sel);
-  const qsa = (sel) => Array.from(document.querySelectorAll(sel));
+  var tabs = document.querySelectorAll(".tab");
+  var panels = {
+    appointment: document.getElementById("tab-appointment"),
+    surgery: document.getElementById("tab-surgery"),
+    freeform: document.getElementById("tab-freeform"),
+    toolbox: document.getElementById("tab-toolbox")
+  };
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const isCaptureMode = urlParams.get("capture") === "1";
-  const caseIdFromUrl = urlParams.get("caseId") || "";
-  let currentCaseId = caseIdFromUrl || generateCaseId();
-
-  // Elements shared
-  const appMain = qs("#app-main");
-  const captureRoot = qs("#capture-mode");
-
-  // Redaction modal elements
-  const redactModal = qs("#redactModal");
-  const redactCanvas = qs("#redactCanvas");
-  const closeRedactBtn = qs("#closeRedactBtn");
-  const clearRedactBtn = qs("#clearRedactBtn");
-  const saveRedactBtn = qs("#saveRedactBtn");
-
-  let canvasCtx = null;
-  let imageObj = null;
-  let drawing = false;
-  let startX = 0;
-  let startY = 0;
-  let rectangles = [];
-  let pendingImageSource = null; // "desktop" | "capture"
-
-  // Desktop/main elements
-  const caseIdLabel = qs("#caseIdLabel");
-  const captureCaseIdLabel = qs("#captureCaseIdLabel");
-
-  const modeToggle = qs("#modeToggle");
-  const profileToggle = qs("#profileToggle");
-  const accuracyToggle = qs("#accuracyToggle");
-  const speciesSelect = qs("#speciesSelect");
-
-  const bloodworkChips = qs("#bloodworkChips");
-  const fluidChips = qs("#fluidChips");
-  const extraFlags = qs("#extraFlags");
-
-  const caseLabelInput = qs("#caseLabelInput");
-  const clinicalNotesInput = qs("#clinicalNotesInput");
-  const surgeryExtrasInput = qs("#surgeryExtrasInput");
-  const surgeryExtrasRow = qs("#surgeryExtrasRow");
-
-  const advancedToggle = qs("#advancedToggle");
-  const advancedSection = qs("#advancedSection");
-
-  const generateBtn = qs("#generateBtn");
-  const copyFullBtn = qs("#copyFullBtn");
-  const copyPlanBtn = qs("#copyPlanBtn");
-
-  const subjectiveOutput = qs("#subjectiveOutput");
-  const objectiveOutput = qs("#objectiveOutput");
-  const assessmentOutput = qs("#assessmentOutput");
-  const planOutput = qs("#planOutput");
-
-  const fileInput = qs("#fileInput");
-  const openRedactFromFileBtn = qs("#openRedactFromFileBtn");
-  const attachmentsList = qs("#attachmentsList");
-  const refreshAttachmentsBtn = qs("#refreshAttachmentsBtn");
-  const qrContainer = qs("#qrContainer");
-  const toggleQrBtn = qs("#toggleQrBtn");
-
-  // Capture-only elements (phone)
-  const captureFileInput = qs("#captureFileInput");
-  const openRedactFromCaptureBtn = qs("#openRedactFromCaptureBtn");
-
-  // Init
-  document.addEventListener("DOMContentLoaded", () => {
-    if (isCaptureMode) {
-      initCaptureMode();
-    } else {
-      initMainMode();
+  function showTab(name) {
+    for (var key in panels) {
+      if (!panels.hasOwnProperty(key)) continue;
+      var panel = panels[key];
+      if (!panel) continue;
+      panel.style.display = key === name ? "block" : "none";
     }
+    for (var i = 0; i < tabs.length; i++) {
+      var t = tabs[i];
+      if (t.getAttribute("data-tab") === name) t.classList.add("active");
+      else t.classList.remove("active");
+    }
+  }
+
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].addEventListener("click", function () {
+      var name = this.getAttribute("data-tab");
+      if (name) showTab(name);
+    });
+  }
+
+  showTab("appointment");
+})();
+
+// ---------- COMMON HELPERS ----------
+var statusEl = document.getElementById("queryStatus");
+var lastSoapPayload = null;
+
+function setStatus(text) {
+  if (statusEl) statusEl.textContent = text;
+}
+
+function callBackend(mode, payload) {
+  setStatus("Working...");
+  return fetch("/api/run", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode: mode, payload: payload })
+  }).then(function (resp) {
+    if (!resp.ok) {
+      setStatus("Error from server.");
+      throw new Error("Server error");
+    }
+    return resp.json();
+  }).then(function (data) {
+    setStatus("Ready.");
+    return data.result || "";
+  })["catch"](function (err) {
+    console.error(err);
+    setStatus("Error from server.");
+    throw err;
   });
+}
 
-  function generateCaseId() {
-    const ts = Date.now().toString(36).toUpperCase();
-    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `C-${ts}-${rand}`;
+function splitSoapIntoSections(text) {
+  var sections = {
+    "Subjective": "",
+    "Objective": "",
+    "Assessment": "",
+    "Plan": "",
+    "Medications Dispensed": "",
+    "Aftercare": ""
+  };
+
+  var current = null;
+  var lines = text.split(/\r?\n/);
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var trimmed = line.trim();
+    if (/^Subjective:/i.test(trimmed)) { current = "Subjective"; continue; }
+    if (/^Objective:/i.test(trimmed)) { current = "Objective"; continue; }
+    if (/^Assessment:/i.test(trimmed)) { current = "Assessment"; continue; }
+    if (/^Plan:/i.test(trimmed)) { current = "Plan"; continue; }
+    if (/^Medications Dispensed:/i.test(trimmed)) { current = "Medications Dispensed"; continue; }
+    if (/^Aftercare:/i.test(trimmed)) { current = "Aftercare"; continue; }
+    if (!current) continue;
+    sections[current] += (sections[current] ? "\n" : "") + line;
   }
+  return sections;
+}
 
-  /* ---------------- MAIN APP MODE ---------------- */
-
-  function initMainMode() {
-    appMain.classList.remove("hidden");
-    captureRoot.classList.add("hidden");
-
-    if (!caseIdFromUrl) {
-      const newUrl = `${window.location.origin}${window.location.pathname}?caseId=${encodeURIComponent(
-        currentCaseId
-      )}`;
-      window.history.replaceState({}, "", newUrl);
-    }
-
-    if (caseIdLabel) caseIdLabel.textContent = currentCaseId;
-
-    setupToggles();
-    setupAdvancedSection();
-    setupSOAPButtons();
-    setupCopyMiniButtons();
-    setupAttachments();
+function renderSoapSections(sections) {
+  var map = {
+    subjectiveOutput: "Subjective",
+    objectiveOutput: "Objective",
+    assessmentOutput: "Assessment",
+    planOutput: "Plan",
+    medsOutput: "Medications Dispensed",
+    aftercareOutput: "Aftercare"
+  };
+  for (var id in map) {
+    if (!map.hasOwnProperty(id)) continue;
+    var name = map[id];
+    var el = document.getElementById(id);
+    if (el) el.textContent = sections[name] || "";
   }
+  var card = document.getElementById("soapOutputCard");
+  var fb = document.getElementById("feedbackBar");
+  if (card) card.style.display = "block";
+  if (fb) fb.style.display = "block";
+}
 
-  function setupToggles() {
-    // Mode toggle (appointment vs surgery)
-    if (modeToggle) {
-      modeToggle.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-mode]");
-        if (!btn) return;
-        qsa("#modeToggle .pill-option").forEach((b) =>
-          b.classList.remove("active")
-        );
-        btn.classList.add("active");
-        updateSurgeryVisibility();
-      });
-      updateSurgeryVisibility();
-    }
-
-    // Profile
-    if (profileToggle) {
-      profileToggle.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-profile]");
-        if (!btn) return;
-        qsa("#profileToggle .pill-option").forEach((b) =>
-          b.classList.remove("active")
-        );
-        btn.classList.add("active");
-      });
-    }
-
-    // Accuracy
-    if (accuracyToggle) {
-      accuracyToggle.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-accuracy]");
-        if (!btn) return;
-        qsa("#accuracyToggle .pill-option").forEach((b) =>
-          b.classList.remove("active")
-        );
-        btn.classList.add("active");
-      });
-    }
-
-    // Bloodwork chips
-    if (bloodworkChips) {
-      bloodworkChips.addEventListener("click", (e) => {
-        const chip = e.target.closest(".chip");
-        if (!chip) return;
-        qsa("#bloodworkChips .chip").forEach((c) =>
-          c.classList.remove("active")
-        );
-        chip.classList.add("active");
-      });
-    }
-
-    // Fluids chips
-    if (fluidChips) {
-      fluidChips.addEventListener("click", (e) => {
-        const chip = e.target.closest(".chip");
-        if (!chip) return;
-        qsa("#fluidChips .chip").forEach((c) => c.classList.remove("active"));
-        chip.classList.add("active");
-      });
-    }
-
-    // Extra flags
-    if (extraFlags) {
-      extraFlags.addEventListener("click", (e) => {
-        const chip = e.target.closest(".chip");
-        if (!chip) return;
-        chip.classList.toggle("active");
-      });
-    }
+function copyToClipboard(text) {
+  if (!text) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)["catch"](function () { });
   }
+}
 
-  function updateSurgeryVisibility() {
-    const activeModeBtn = qs("#modeToggle .pill-option.active");
-    const mode = activeModeBtn?.dataset.mode || "appointment";
-    if (mode === "surgery") {
-      surgeryExtrasRow?.classList.remove("hidden");
-    } else {
-      surgeryExtrasRow?.classList.add("hidden");
-    }
-  }
+// ---------- APPOINTMENT ----------
+var genApptBtn = document.getElementById("generateAppointmentBtn");
+if (genApptBtn) {
+  genApptBtn.addEventListener("click", function () {
+    var caseLabel = (document.getElementById("caseLabel").value || "").trim();
+    var accuracyMode = document.getElementById("accuracyMode").value || "help";
+    var strictMode = accuracyMode === "strict";
 
-  function setupAdvancedSection() {
-    if (!advancedToggle || !advancedSection) return;
-    advancedToggle.addEventListener("click", () => {
-      const isHidden = advancedSection.classList.contains("hidden");
-      advancedSection.classList.toggle("hidden", !isHidden);
-      advancedToggle.textContent = isHidden
-        ? "▴ Less options"
-        : "▾ More options";
+    var fields = {
+      reason: document.getElementById("apptReason").value,
+      tpr: document.getElementById("apptTPR").value,
+      history: document.getElementById("apptHistory").value,
+      physicalExam: document.getElementById("apptPE").value,
+      diagnostics: document.getElementById("apptDiagnostics").value,
+      assessment: document.getElementById("apptAssessment").value,
+      plan: document.getElementById("apptPlan").value,
+      meds: document.getElementById("apptMeds").value
+    };
+
+    var payload = {
+      soapType: "appointment",
+      strictMode: strictMode,
+      caseLabel: caseLabel,
+      fields: fields,
+      refinementNote: null
+    };
+    lastSoapPayload = payload;
+
+    callBackend("soap", payload).then(function (text) {
+      var sections = splitSoapIntoSections(text);
+      renderSoapSections(sections);
     });
-  }
+  });
+}
 
-  function setupSOAPButtons() {
-    if (generateBtn) {
-      generateBtn.addEventListener("click", () => {
-        generateSOAP();
-      });
-    }
+// ---------- SURGERY ----------
+var genSxBtn = document.getElementById("generateSurgeryBtn");
+if (genSxBtn) {
+  genSxBtn.addEventListener("click", function () {
+    var caseLabel = (document.getElementById("caseLabel").value || "").trim();
+    var accuracyMode = document.getElementById("accuracyMode").value || "help";
+    var strictMode = accuracyMode === "strict";
 
-    if (copyFullBtn) {
-      copyFullBtn.addEventListener("click", () => {
-        const fullText = buildFullSOAPString();
-        copyToClipboard(fullText);
-      });
-    }
+    var fields = {
+      template: document.getElementById("sxTemplate").value,
+      asa: document.getElementById("sxASA").value,
+      ett: document.getElementById("sxETT").value,
+      catheter: document.getElementById("sxCatheter").value,
+      fluidsRate: document.getElementById("sxFluidsRate").value,
+      fluidsDeclined: document.getElementById("sxFluidsDeclined").checked,
+      premeds: document.getElementById("sxPremeds").value,
+      induction: document.getElementById("sxInduction").value,
+      intraOpMeds: document.getElementById("sxIntraOpMeds").value,
+      procedureNotes: document.getElementById("sxProcedureNotes").value,
+      monocryl0: document.getElementById("sxMonocryl0").checked,
+      monocryl2_0: document.getElementById("sxMonocryl2_0").checked,
+      monocryl3_0: document.getElementById("sxMonocryl3_0").checked,
+      tpr: document.getElementById("sxTPR").value,
+      durations: document.getElementById("sxDurations").value
+    };
 
-    if (copyPlanBtn) {
-      copyPlanBtn.addEventListener("click", () => {
-        copyToClipboard(planOutput.value || "");
-      });
-    }
-  }
+    var payload = {
+      soapType: "surgery",
+      strictMode: strictMode,
+      caseLabel: caseLabel,
+      fields: fields,
+      refinementNote: null
+    };
+    lastSoapPayload = payload;
 
-  function setupCopyMiniButtons() {
-    qsa(".mini-copy-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const targetId = btn.dataset.target;
-        const el = qs(`#${targetId}`);
-        if (!el) return;
-        copyToClipboard(el.value || "");
-      });
+    callBackend("soap", payload).then(function (text) {
+      var sections = splitSoapIntoSections(text);
+      renderSoapSections(sections);
     });
-  }
+  });
+}
 
-  function buildFullSOAPString() {
-    const subj = subjectiveOutput.value || "";
-    const obj = objectiveOutput.value || "";
-    const assess = assessmentOutput.value || "";
-    const plan = planOutput.value || "";
+// ---------- REFINE ----------
+var refineBtn = document.getElementById("refineBtn");
+if (refineBtn) {
+  refineBtn.addEventListener("click", function () {
+    if (!lastSoapPayload) return;
+    var note = document.getElementById("refineNote").value.trim();
+    var payload = JSON.parse(JSON.stringify(lastSoapPayload));
+    payload.refinementNote = note || "(no extra details provided)";
+    callBackend("soap", payload).then(function (text) {
+      var sections = splitSoapIntoSections(text);
+      renderSoapSections(sections);
+    });
+  });
+}
 
-    return [
+// ---------- COPY BUTTONS ----------
+window.copySection = function (name) {
+  var idMap = {
+    "Subjective": "subjectiveOutput",
+    "Objective": "objectiveOutput",
+    "Assessment": "assessmentOutput",
+    "Plan": "planOutput",
+    "Medications Dispensed": "medsOutput",
+    "Aftercare": "aftercareOutput"
+  };
+  var id = idMap[name];
+  if (!id) return;
+  var el = document.getElementById(id);
+  var text = el ? el.textContent : "";
+  copyToClipboard(text);
+};
+
+var copyFullBtn = document.getElementById("copyFullSoapBtn");
+if (copyFullBtn) {
+  copyFullBtn.addEventListener("click", function () {
+    var s = document.getElementById("subjectiveOutput").textContent;
+    var o = document.getElementById("objectiveOutput").textContent;
+    var a = document.getElementById("assessmentOutput").textContent;
+    var p = document.getElementById("planOutput").textContent;
+    var m = document.getElementById("medsOutput").textContent;
+    var ac = document.getElementById("aftercareOutput").textContent;
+    var full = [
       "Subjective:",
-      subj,
+      s,
       "",
       "Objective:",
-      obj,
+      o,
       "",
       "Assessment:",
-      assess,
+      a,
       "",
-      "Plan (including medications dispensed and aftercare):",
-      plan,
+      "Plan:",
+      p,
+      "",
+      "Medications Dispensed:",
+      m,
+      "",
+      "Aftercare:",
+      ac
     ].join("\n");
-  }
+    copyToClipboard(full);
+  });
+}
 
-  function getActiveToggleValue(containerSel, dataAttr, fallback) {
-    const active = qs(`${containerSel} .pill-option.active`);
-    return active ? active.dataset[dataAttr] || fallback : fallback;
-  }
+var copyPMA = document.getElementById("copyPlanMedsAftercareBtn");
+if (copyPMA) {
+  copyPMA.addEventListener("click", function () {
+    var p = document.getElementById("planOutput").textContent;
+    var m = document.getElementById("medsOutput").textContent;
+    var ac = document.getElementById("aftercareOutput").textContent;
+    var combo = [
+      "Plan:",
+      p,
+      "",
+      "Medications Dispensed:",
+      m,
+      "",
+      "Aftercare:",
+      ac
+    ].join("\n");
+    copyToClipboard(combo);
+  });
+}
 
-  function getActiveChipValue(containerSel, dataAttr, fallback) {
-    const active = qs(`${containerSel} .chip.active`);
-    return active ? active.dataset[dataAttr] || fallback : fallback;
-  }
+// ---------- CONSULT ----------
+var runConsultBtn = document.getElementById("runConsultBtn");
+if (runConsultBtn) {
+  runConsultBtn.addEventListener("click", function () {
+    var text = (document.getElementById("consultInput").value || "").trim();
+    if (!text) return;
+    callBackend("consult", { message: text }).then(function (out) {
+      var body = document.getElementById("consultOutput");
+      var sec = document.getElementById("consultOutputSection");
+      if (body) body.textContent = out;
+      if (sec) sec.style.display = "block";
+    });
+  });
+}
 
-  function getFlagsArray() {
-    if (!extraFlags) return [];
-    return qsa("#extraFlags .chip.active").map((chip) => chip.dataset.flag);
-  }
+// ---------- TOOLBOX: BLOODWORK ----------
+var runBwHelperBtn = document.getElementById("runBwHelperBtn");
+if (runBwHelperBtn) {
+  runBwHelperBtn.addEventListener("click", function () {
+    var text = (document.getElementById("bwText").value || "").trim();
+    if (!text) return;
+    var detailLevel = document.getElementById("bwDetail").value;
+    var includeDiffs = document.getElementById("bwDiffs").checked;
+    var includeClientFriendly = document.getElementById("bwClientFriendly").checked;
 
-  async function generateSOAP() {
-    const mode = getActiveToggleValue("#modeToggle", "mode", "appointment");
-    const profile = getActiveToggleValue(
-      "#profileToggle",
-      "profile",
-      "client"
-    );
-    const accuracy = getActiveToggleValue(
-      "#accuracyToggle",
-      "accuracy",
-      "medium"
-    );
-    const species = speciesSelect?.value || "dog";
+    callBackend("toolbox-bloodwork", {
+      text: text,
+      detailLevel: detailLevel,
+      includeDiffs: includeDiffs,
+      includeClientFriendly: includeClientFriendly
+    }).then(function (out) {
+      var body = document.getElementById("bwOutput");
+      var sec = document.getElementById("bwOutputSection");
+      if (body) body.textContent = out;
+      if (sec) sec.style.display = "block";
+    });
+  });
+}
 
-    const bloodworkStatus = getActiveChipValue(
-      "#bloodworkChips",
-      "bw",
-      "none"
-    );
-    const fluidsStatus = getActiveChipValue(
-      "#fluidChips",
-      "fluids",
-      "unspecified"
-    );
-
-    const flags = getFlagsArray();
-
-    const payload = {
-      caseId: currentCaseId,
-      caseLabel: caseLabelInput.value || "",
-      mode,
-      profile,
-      accuracy,
-      species,
-      bloodworkStatus,
-      fluidsStatus,
-      flags,
-      clinicalNotes: clinicalNotesInput.value || "",
-      surgeryExtras:
-        mode === "surgery" ? surgeryExtrasInput.value || "" : "",
+// ---------- TOOLBOX: EMAIL ----------
+var runEmailHelperBtn = document.getElementById("runEmailHelperBtn");
+if (runEmailHelperBtn) {
+  runEmailHelperBtn.addEventListener("click", function () {
+    var payload = {
+      emailType: document.getElementById("emailType").value,
+      petName: document.getElementById("emailPetName").value,
+      ownerName: document.getElementById("emailOwnerName").value,
+      timeframe: document.getElementById("emailTimeframe").value,
+      notes: document.getElementById("emailNotes").value
     };
+    callBackend("toolbox-email", payload).then(function (out) {
+      var body = document.getElementById("emailOutput");
+      var sec = document.getElementById("emailOutputSection");
+      if (body) body.textContent = out;
+      if (sec) sec.style.display = "block";
+    });
+  });
+}
 
-    generateBtn.disabled = true;
-    generateBtn.textContent = "Generating…";
+// ---------- MIC BUBBLE ----------
+var micBubble = document.getElementById("micBubble");
+var lastFocusedElement = null;
 
-    try {
-      const res = await fetch("/api/generate-soap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+document.addEventListener("focusin", function (e) {
+  var t = e.target;
+  if (!t) return;
+  if (t.tagName === "TEXTAREA" || t.tagName === "INPUT") {
+    lastFocusedElement = t;
+  }
+});
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("SOAP generation error:", errData);
-        alert(
-          "Error generating SOAP. Check server logs or OpenAI key if this keeps happening."
-        );
-        return;
-      }
+function initMicBubble() {
+  if (!micBubble) return;
+  var isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-      const data = await res.json();
-      const soap = data.soap || {};
-
-      subjectiveOutput.value = soap.subjective || "";
-      objectiveOutput.value = soap.objective || "";
-      assessmentOutput.value = soap.assessment || "";
-
-      // Combine plan + meds + aftercare into one big PLAN box
-      const basePlan = (soap.plan || "").trim();
-      const meds = (soap.medications_dispensed || "").trim();
-      const aftercare = (soap.aftercare || "").trim();
-
-      let combinedPlan = basePlan;
-      if (meds) {
-        combinedPlan +=
-          (combinedPlan ? "\n\n" : "") +
-          "Medications Dispensed:\n" +
-          meds;
-      }
-      if (aftercare) {
-        combinedPlan +=
-          (combinedPlan ? "\n\n" : "") +
-          "Aftercare:\n" +
-          aftercare;
-      }
-      planOutput.value = combinedPlan;
-    } catch (err) {
-      console.error("Error calling /api/generate-soap:", err);
-      alert("Network or server error while generating SOAP.");
-    } finally {
-      generateBtn.disabled = false;
-      generateBtn.textContent = "Generate SOAP";
-    }
+  if (isiOS || !SpeechRecognition) {
+    micBubble.addEventListener("click", function () {
+      alert("On iPhone/iPad, use the keyboard mic to dictate into the focused box. Browser speech recognition is not supported.");
+    });
+    return;
   }
 
-  function copyToClipboard(text) {
-    if (!navigator.clipboard) {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
+  var recognition = new SpeechRecognition();
+  recognition.lang = "en-CA";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  var listening = false;
+
+  recognition.addEventListener("result", function (event) {
+    var transcript = event.results[0][0].transcript;
+    if (!lastFocusedElement) return;
+    var el = lastFocusedElement;
+    var start = el.selectionStart || el.value.length;
+    var end = el.selectionEnd || el.value.length;
+    var before = el.value.slice(0, start);
+    var after = el.value.slice(end);
+    el.value = before + (before ? " " : "") + transcript + (after ? " " + after : "");
+  });
+
+  recognition.addEventListener("end", function () {
+    listening = false;
+    micBubble.classList.remove("listening");
+  });
+
+  micBubble.addEventListener("click", function () {
+    if (listening) {
+      recognition.stop();
       return;
     }
-    navigator.clipboard.writeText(text).catch((err) => {
-      console.warn("Clipboard error:", err);
-    });
-  }
+    listening = true;
+    micBubble.classList.add("listening");
+    recognition.start();
+  });
+}
 
-  /* ---------------- ATTACHMENTS & QR ---------------- */
-
-  function setupAttachments() {
-    // Show caseId
-    if (caseIdLabel) caseIdLabel.textContent = currentCaseId;
-
-    // Initial fetch
-    loadAttachments();
-
-    // Refresh
-    if (refreshAttachmentsBtn) {
-      refreshAttachmentsBtn.addEventListener("click", loadAttachments);
-    }
-
-    // QR
-    if (toggleQrBtn) {
-      toggleQrBtn.addEventListener("click", () => {
-        const isHidden = qrContainer.classList.contains("hidden");
-        if (isHidden) {
-          buildQrCode();
-        }
-        qrContainer.classList.toggle("hidden", !isHidden);
-        toggleQrBtn.textContent = isHidden ? "Hide QR" : "Show QR";
-      });
-    }
-
-    // Redaction from desktop file
-    if (openRedactFromFileBtn && fileInput) {
-      openRedactFromFileBtn.addEventListener("click", () => {
-        if (!fileInput.files || !fileInput.files[0]) {
-          alert("Please choose an image file first.");
-          return;
-        }
-        const file = fileInput.files[0];
-        pendingImageSource = "desktop";
-        openRedactionForFile(file);
-      });
-    }
-
-    // Redaction modal controls
-    if (closeRedactBtn) {
-      closeRedactBtn.addEventListener("click", closeRedactModal);
-    }
-    if (clearRedactBtn) {
-      clearRedactBtn.addEventListener("click", clearRectangles);
-    }
-    if (saveRedactBtn) {
-      saveRedactBtn.addEventListener("click", saveRedactedImage);
-    }
-  }
-
-  async function loadAttachments() {
-    try {
-      const res = await fetch(`/api/cases/${encodeURIComponent(currentCaseId)}/attachments`);
-      if (!res.ok) {
-        console.error("Failed to load attachments");
-        return;
-      }
-      const data = await res.json();
-      const attachments = data.attachments || [];
-      attachmentsList.innerHTML = "";
-      attachments.forEach((att) => {
-        const img = document.createElement("img");
-        img.src = att.dataUrl;
-        img.alt = "Attachment";
-        attachmentsList.appendChild(img);
-      });
-    } catch (err) {
-      console.error("Error loading attachments:", err);
-    }
-  }
-
-  function buildQrCode() {
-    if (!qrContainer) return;
-    qrContainer.innerHTML = "";
-    // Same index route, but capture mode
-    const captureUrl = `${window.location.origin}${window.location.pathname}?capture=1&caseId=${encodeURIComponent(
-      currentCaseId
-    )}`;
-    new QRCode(qrContainer, {
-      text: captureUrl,
-      width: 120,
-      height: 120,
-      correctLevel: QRCode.CorrectLevel.L,
-    });
-  }
-
-  /* ---------------- CAPTURE MODE (PHONE) ---------------- */
-
-  function initCaptureMode() {
-    captureRoot.classList.remove("hidden");
-    appMain.classList.add("hidden");
-
-    if (!caseIdFromUrl) {
-      const newUrl = `${window.location.origin}${window.location.pathname}?capture=1&caseId=${encodeURIComponent(
-        currentCaseId
-      )}`;
-      window.history.replaceState({}, "", newUrl);
-    }
-
-    if (captureCaseIdLabel) captureCaseIdLabel.textContent = currentCaseId;
-
-    // Capture redaction
-    if (openRedactFromCaptureBtn && captureFileInput) {
-      openRedactFromCaptureBtn.addEventListener("click", () => {
-        if (!captureFileInput.files || !captureFileInput.files[0]) {
-          alert("Take or choose a photo first.");
-          return;
-        }
-        const file = captureFileInput.files[0];
-        pendingImageSource = "capture";
-        openRedactionForFile(file);
-      });
-    }
-
-    // Redaction modal controls shared
-    if (closeRedactBtn) {
-      closeRedactBtn.addEventListener("click", closeRedactModal);
-    }
-    if (clearRedactBtn) {
-      clearRedactBtn.addEventListener("click", clearRectangles);
-    }
-    if (saveRedactBtn) {
-      saveRedactBtn.addEventListener("click", saveRedactedImage);
-    }
-  }
-
-  /* ---------------- REDACTION CANVAS ---------------- */
-
-  function openRedactionForFile(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imgSrc = e.target.result;
-      imageObj = new Image();
-      imageObj.onload = () => {
-        showRedactModal();
-        initCanvasWithImage(imageObj);
-      };
-      imageObj.src = imgSrc;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function showRedactModal() {
-    if (!redactModal) return;
-    redactModal.classList.remove("hidden");
-    if (!canvasCtx) {
-      canvasCtx = redactCanvas.getContext("2d");
-      setupCanvasEvents();
-    }
-    rectangles = [];
-  }
-
-  function closeRedactModal() {
-    if (!redactModal) return;
-    redactModal.classList.add("hidden");
-    rectangles = [];
-    imageObj = null;
-
-    if (pendingImageSource === "desktop" && fileInput) {
-      fileInput.value = "";
-    }
-    if (pendingImageSource === "capture" && captureFileInput) {
-      captureFileInput.value = "";
-    }
-    pendingImageSource = null;
-  }
-
-  function initCanvasWithImage(img) {
-    if (!redactCanvas || !canvasCtx) return;
-    // Fit image into canvas while preserving aspect ratio
-    const maxWidth = redactModal
-      ? redactModal.querySelector(".modal-body").clientWidth - 16
-      : window.innerWidth - 40;
-    const maxHeight = window.innerHeight * 0.6;
-
-    let drawWidth = img.width;
-    let drawHeight = img.height;
-    const widthRatio = maxWidth / img.width;
-    const heightRatio = maxHeight / img.height;
-    const scale = Math.min(widthRatio, heightRatio, 1);
-
-    drawWidth = img.width * scale;
-    drawHeight = img.height * scale;
-
-    redactCanvas.width = drawWidth;
-    redactCanvas.height = drawHeight;
-
-    canvasCtx.clearRect(0, 0, drawWidth, drawHeight);
-    canvasCtx.drawImage(img, 0, 0, drawWidth, drawHeight);
-  }
-
-  function setupCanvasEvents() {
-    const startDraw = (clientX, clientY) => {
-      const rect = redactCanvas.getBoundingClientRect();
-      startX = clientX - rect.left;
-      startY = clientY - rect.top;
-      drawing = true;
-    };
-
-    const moveDraw = (clientX, clientY) => {
-      if (!drawing || !imageObj) return;
-      const rect = redactCanvas.getBoundingClientRect();
-      const currentX = clientX - rect.left;
-      const currentY = clientY - rect.top;
-      redrawCanvasWithRect(currentX, currentY);
-    };
-
-    const endDraw = (clientX, clientY) => {
-      if (!drawing || !imageObj) return;
-      drawing = false;
-      const rect = redactCanvas.getBoundingClientRect();
-      const endX = clientX - rect.left;
-      const endY = clientY - rect.top;
-      const x = Math.min(startX, endX);
-      const y = Math.min(startY, endY);
-      const w = Math.abs(endX - startX);
-      const h = Math.abs(endY - startY);
-      if (w > 4 && h > 4) {
-        rectangles.push({ x, y, w, h });
-        redrawCanvasBase();
-        drawAllRectangles();
-      }
-    };
-
-    redactCanvas.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      startDraw(e.clientX, e.clientY);
-    });
-    redactCanvas.addEventListener("mousemove", (e) => {
-      e.preventDefault();
-      moveDraw(e.clientX, e.clientY);
-    });
-    redactCanvas.addEventListener("mouseup", (e) => {
-      e.preventDefault();
-      endDraw(e.clientX, e.clientY);
-    });
-    redactCanvas.addEventListener("mouseleave", (e) => {
-      if (drawing) {
-        e.preventDefault();
-        drawing = false;
-        redrawCanvasBase();
-        drawAllRectangles();
-      }
-    });
-
-    // Touch support
-    redactCanvas.addEventListener(
-      "touchstart",
-      (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        startDraw(touch.clientX, touch.clientY);
-      },
-      { passive: false }
-    );
-    redactCanvas.addEventListener(
-      "touchmove",
-      (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        moveDraw(touch.clientX, touch.clientY);
-      },
-      { passive: false }
-    );
-    redactCanvas.addEventListener(
-      "touchend",
-      (e) => {
-        e.preventDefault();
-        const touch = e.changedTouches[0];
-        endDraw(touch.clientX, touch.clientY);
-      },
-      { passive: false }
-    );
-  }
-
-  function redrawCanvasBase() {
-    if (!canvasCtx || !imageObj) return;
-    canvasCtx.clearRect(0, 0, redactCanvas.width, redactCanvas.height);
-    canvasCtx.drawImage(
-      imageObj,
-      0,
-      0,
-      redactCanvas.width,
-      redactCanvas.height
-    );
-  }
-
-  function drawAllRectangles() {
-    if (!canvasCtx) return;
-    canvasCtx.fillStyle = "#000000";
-    rectangles.forEach((r) => {
-      canvasCtx.fillRect(r.x, r.y, r.w, r.h);
-    });
-  }
-
-  function redrawCanvasWithRect(currentX, currentY) {
-    redrawCanvasBase();
-    drawAllRectangles();
-
-    const x = Math.min(startX, currentX);
-    const y = Math.min(startY, currentY);
-    const w = Math.abs(currentX - startX);
-    const h = Math.abs(currentY - startY);
-
-    canvasCtx.fillStyle = "rgba(15, 23, 42, 0.4)";
-    canvasCtx.fillRect(x, y, w, h);
-  }
-
-  function clearRectangles() {
-    rectangles = [];
-    if (imageObj) {
-      redrawCanvasBase();
-    }
-  }
-
-  async function saveRedactedImage() {
-    if (!canvasCtx) return;
-    const dataUrl = redactCanvas.toDataURL("image/png");
-
-    try {
-      const res = await fetch(
-        `/api/cases/${encodeURIComponent(currentCaseId)}/attachments`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dataUrl }),
-        }
-      );
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("Error saving redacted image:", errData);
-        alert("Error saving redacted image.");
-        return;
-      }
-      if (!isCaptureMode) {
-        await loadAttachments();
-      }
-      closeRedactModal();
-    } catch (err) {
-      console.error("Error saving redacted image:", err);
-      alert("Network or server error while saving image.");
-    }
-  }
-})();
+initMicBubble();
