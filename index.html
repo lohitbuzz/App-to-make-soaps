@@ -1,97 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Lohit SOAP App v1.6</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <main class="app-shell">
-      <!-- Top header -->
-      <header class="app-header">
-        <div>
-          <h1>Lohit SOAP App v1.6</h1>
-          <p class="subtitle">
-            Appointment · Surgery · Free-form · Toolbox Lite
-          </p>
-        </div>
-        <div class="privacy-pill">
-          Privacy: Local-first · Over-redact by default
-        </div>
-      </header>
-
-      <!-- Mode + tabs row -->
-      <section class="card">
-        <div class="tabs">
-          <button class="tab active" data-tab="appointmentSection" id="tabAppointment">
-            Appointment
-          </button>
-          <button class="tab" data-tab="surgerySection" id="tabSurgery">
-            Surgery
-          </button>
-          <button class="tab" data-tab="consultSection" id="tabConsult">
-            Free-form / Consult
-          </button>
-          <button class="tab" data-tab="toolboxSection" id="tabToolbox">
-            Toolbox Lite
-          </button>
-        </div>
-
-        <div class="form-row top-row">
-          <div class="field">
-            <label for="caseLabel">Case label / Patient name (optional)</label>
-            <input
-              id="caseLabel"
-              type="text"
-              placeholder="e.g., Milo dental COHAT, 8y MN DSH"
-            />
-          </div>
-          <div class="field">
-            <label for="modeSelect">Mode</label>
-            <select id="modeSelect">
-              <option value="helpMe">Help Me (safe assumptions)</option>
-              <option value="strict">Strict (no guessing)</option>
-            </select>
-          </div>
-        </div>
-        <p id="statusText">Ready.</p>
-      </section>
-
-      <!-- QR card (shared for all tabs) -->
-      <section class="card" id="qrCard">
-        <h2>Open on your phone</h2>
-        <p>
-          Scan this QR code with your phone camera to open this app and use the
-          camera to attach photos.
+<head>
+  <meta charset="UTF-8" />
+  <title>Lohit SOAP App v1.6</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- QR code library (small, client-side only) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="header-left">
+        <h1>Lohit SOAP App v1.6</h1>
+        <p class="header-subtitle">
+          Appointment · Surgery · Free-form · Toolbox Lite
         </p>
-        <div id="qrContainer"></div>
-      </section>
+      </div>
+      <div class="header-right">
+        <p class="privacy-pill">Privacy: Local-first · Over-redact by default</p>
+      </div>
+    </header>
 
-      <!-- APPOINTMENT TAB -->
-      <section id="appointmentSection" class="card">
-        <h2>Appointment SOAP Inputs</h2>
+    <!-- Top controls -->
+    <section class="card">
+      <div class="tab-row" id="mainTabs">
+        <button id="tabAppointment" class="tab tab-active">Appointment</button>
+        <button id="tabSurgery" class="tab">Surgery</button>
+        <button id="tabConsult" class="tab">Free-form / Consult</button>
+        <button id="tabToolbox" class="tab">Toolbox Lite</button>
+      </div>
 
-        <div class="form-row">
-          <div class="field">
-            <label for="appointmentReason">Reason for visit</label>
-            <input
-              id="appointmentReason"
-              type="text"
-              placeholder="e.g., vomiting, itchy ears, annual exam"
-            />
-          </div>
-          <div class="field">
-            <label for="appointmentTpr">TPR (optional, no guessing)</label>
-            <input
-              id="appointmentTpr"
-              type="text"
-              placeholder="e.g., T 38.7°C, P 110, R 28"
-            />
-          </div>
+      <div class="top-row">
+        <div class="field-group">
+          <label for="caseLabelInput">Case label / Patient name (optional)</label>
+          <input
+            id="caseLabelInput"
+            type="text"
+            placeholder="e.g., Milo dental COHAT, 8y MN DSH"
+          />
         </div>
+        <div class="field-group">
+          <label for="modeSelect">Mode</label>
+          <select id="modeSelect">
+            <option value="help">Help Me (safe assumptions)</option>
+            <option value="strict">Strict (no guessing)</option>
+          </select>
+        </div>
+      </div>
 
-        <div class="field">
+      <p id="statusMessage" class="status-message">Ready.</p>
+    </section>
+
+    <!-- QR card -->
+    <section class="card" id="qrCard">
+      <h2>Open on your phone</h2>
+      <p>Scan this QR code with your phone camera to open this app and use the camera to attach photos.</p>
+      <canvas id="qrCanvas" width="180" height="180"></canvas>
+    </section>
+
+    <!-- Appointment section -->
+    <section class="card" id="appointmentSection">
+      <h2>Appointment SOAP Inputs</h2>
+
+      <div class="two-column">
+        <div class="field-group">
+          <label for="appointmentReason">Reason for visit</label>
+          <input
+            id="appointmentReason"
+            type="text"
+            placeholder="e.g., vomiting, itchy ears, annual exam"
+          />
+        </div>
+        <div class="field-group">
+          <label for="appointmentTpr">TPR (optional, no guessing)</label>
+          <input
+            id="appointmentTpr"
+            type="text"
+            placeholder="e.g., T 38.7°C, P 110, R 28"
+          />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="appointmentQuick">Quick notes (minimal mode)</label>
+        <textarea
+          id="appointmentQuick"
+          rows="3"
+          placeholder="Short free-form notes if you don't want full SOAP inputs."
+        ></textarea>
+      </div>
+
+      <button id="appointmentToggleFull" class="link-button">
+        Show full SOAP input fields
+      </button>
+
+      <div id="appointmentFull" class="collapse">
+        <div class="field-group">
           <label for="appointmentHistory">History / Subjective</label>
           <textarea
             id="appointmentHistory"
@@ -100,428 +105,454 @@
           ></textarea>
         </div>
 
-        <!-- Collapsible extra details to keep UI light -->
-        <details class="details-block" id="appointmentDetails">
-          <summary>More clinical detail (optional)</summary>
+        <div class="field-group">
+          <label for="appointmentPe">Physical exam (data-only)</label>
+          <textarea
+            id="appointmentPe"
+            rows="3"
+            placeholder="You can type PE here, or leave blank and let Help Me mode fill safe normals."
+          ></textarea>
+        </div>
 
-          <div class="field">
-            <label for="appointmentPe">Physical exam (data-only)</label>
-            <textarea
-              id="appointmentPe"
-              rows="3"
-              placeholder="You can type PE here, or leave blank and let Help Me mode fill safe normals."
-            ></textarea>
-          </div>
+        <div class="field-group">
+          <label for="appointmentDiagnostics">Diagnostics (data-only)</label>
+          <textarea
+            id="appointmentDiagnostics"
+            rows="3"
+            placeholder="Lab/rads data, cytology, SNAP tests, etc."
+          ></textarea>
+        </div>
 
-          <div class="field">
-            <label for="appointmentDiagnostics">Diagnostics (data-only)</label>
-            <textarea
-              id="appointmentDiagnostics"
-              rows="3"
-              placeholder="Lab/rads data, cytology, SNAP tests, etc."
-            ></textarea>
-          </div>
+        <div class="field-group">
+          <label for="appointmentAssessment">Assessment (optional)</label>
+          <textarea
+            id="appointmentAssessment"
+            rows="3"
+            placeholder="Problem list, differentials, severity, etc."
+          ></textarea>
+        </div>
 
-          <div class="field">
-            <label for="appointmentAssessment">Assessment (optional)</label>
-            <textarea
-              id="appointmentAssessment"
-              rows="2"
-              placeholder="Problem list, differentials, severity, etc."
-            ></textarea>
-          </div>
+        <div class="field-group">
+          <label for="appointmentPlan">Plan (optional)</label>
+          <textarea
+            id="appointmentPlan"
+            rows="3"
+            placeholder="Treatments, diagnostics, follow-up, client communication."
+          ></textarea>
+        </div>
 
-          <div class="field">
-            <label for="appointmentPlan">Plan (optional)</label>
-            <textarea
-              id="appointmentPlan"
-              rows="3"
-              placeholder="Treatments, diagnostics, follow-up, client communication."
-            ></textarea>
-          </div>
+        <div class="field-group">
+          <label for="appointmentMeds">Medications dispensed (optional)</label>
+          <textarea
+            id="appointmentMeds"
+            rows="3"
+            placeholder="Include concentration in brackets if you know it."
+          ></textarea>
+        </div>
+      </div>
 
-          <div class="field">
-            <label for="appointmentMeds">Medications dispensed (optional)</label>
-            <textarea
-              id="appointmentMeds"
-              rows="2"
-              placeholder="Include concentration in brackets if you know it."
-            ></textarea>
-          </div>
-
-          <div class="field">
-            <label for="appointmentAttachments">Attachments (optional)</label>
+      <div class="field-group">
+        <label>Attachments (optional)</label>
+        <div class="file-row">
+          <label class="file-button">
+            📷 Take photo
             <input
               id="appointmentAttachments"
               type="file"
+              accept="image/*,application/pdf"
               multiple
-              accept="image/*,.pdf,.doc,.docx,.txt"
             />
-            <p class="help-text">
-              Photos of lab reports, rads, cytology, or Avimark windows. Filenames are
-              used as context; files themselves stay local.
-            </p>
-          </div>
-        </details>
+          </label>
+        </div>
+        <p class="hint">
+          Use your phone via the QR code to snap Avimark screenshots, lab reports, rads, whiteboard photos, etc.
+        </p>
+      </div>
 
-        <button id="generateAppointmentBtn" class="primary-btn">
-          Generate Appointment SOAP
+      <button id="generateAppointmentBtn" class="primary-button">
+        Generate Appointment SOAP
+      </button>
+    </section>
+
+    <!-- Surgery section -->
+    <section class="card hidden" id="surgerySection">
+      <h2>Surgery SOAP Inputs</h2>
+
+      <p id="surgeryTemplateBanner" class="template-banner">
+        Choose a surgery template to load default expectations (clinic vs rescue, dental, mass, etc.).
+      </p>
+
+      <div class="two-column">
+        <div class="field-group">
+          <label for="surgeryTemplate">Surgery template</label>
+          <select id="surgeryTemplate">
+            <option value="canine_neuter_clinic">Canine neuter – clinic</option>
+            <option value="canine_neuter_rescue">Canine neuter – rescue</option>
+            <option value="canine_spay_clinic">Canine spay – clinic</option>
+            <option value="canine_spay_rescue">Canine spay – rescue</option>
+            <option value="feline_neuter">Feline neuter</option>
+            <option value="feline_spay">Feline spay</option>
+            <option value="pyometra_spay">Pyometra spay</option>
+            <option value="cystotomy">Cystotomy</option>
+            <option value="enterotomy">Enterotomy</option>
+            <option value="gastrotomy">Gastrotomy</option>
+            <option value="gastropexy">Gastropexy</option>
+            <option value="feline_unblock">Feline urethral unblock</option>
+            <option value="dental_cohat_rads">Dental – COHAT with radiographs</option>
+            <option value="dental_cohat_norads">Dental – COHAT (no radiographs)</option>
+            <option value="mass_removal">Mass removal / biopsy</option>
+            <option value="other">Other / custom</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="surgeryAsa">ASA status</label>
+          <input
+            id="surgeryAsa"
+            type="text"
+            placeholder="e.g., ASA II"
+          />
+        </div>
+      </div>
+
+      <div class="two-column">
+        <div class="field-group">
+          <label for="surgeryIvCath">IV catheter</label>
+          <input
+            id="surgeryIvCath"
+            type="text"
+            placeholder="e.g., 22g cephalic, left"
+          />
+        </div>
+        <div class="field-group">
+          <label for="surgeryEtt">ET tube size</label>
+          <input
+            id="surgeryEtt"
+            type="text"
+            placeholder="e.g., 7.5 mm cuffed"
+          />
+        </div>
+      </div>
+
+      <div class="two-column">
+        <div class="field-group">
+          <label for="surgeryFluids">Fluids rate (ml/kg/hr)</label>
+          <input
+            id="surgeryFluids"
+            type="text"
+            placeholder="e.g., 5 ml/kg/hr dogs, 3 ml/kg/hr cats"
+          />
+        </div>
+        <div class="field-group checkbox-field">
+          <label>
+            <input id="surgeryFluidsDeclined" type="checkbox" />
+            Fluids declined
+          </label>
+        </div>
+      </div>
+
+      <div class="collapse-card">
+        <button class="collapse-toggle" id="anesthesiaToggle">
+          Anesthesia &amp; Premeds
         </button>
-      </section>
-
-      <!-- SURGERY TAB -->
-      <section id="surgerySection" class="card hidden">
-        <h2>Surgery SOAP Inputs</h2>
-
-        <!-- Top row: template + ASA -->
-        <div class="form-row">
-          <div class="field">
-            <label for="surgeryTemplate">Surgery template</label>
-            <select id="surgeryTemplate">
-              <option value="canine_neuter_clinic">Canine neuter – clinic</option>
-              <option value="canine_neuter_rescue">Canine neuter – rescue</option>
-              <option value="canine_spay_clinic">Canine spay – clinic</option>
-              <option value="canine_spay_rescue">Canine spay – rescue</option>
-              <option value="feline_neuter">Feline neuter</option>
-              <option value="feline_spay">Feline spay</option>
-              <option value="dental_cohat_rads">Dental – COHAT with radiographs</option>
-              <option value="dental_cohat_no_rads">
-                Dental – COHAT (no radiographs)
-              </option>
-              <option value="mass_removal_skin">Mass removal – skin / SQ</option>
-              <option value="pyometra_spay">Pyometra spay</option>
-              <option value="exploratory_laparotomy">Exploratory laparotomy</option>
-              <option value="enterotomy">Enterotomy</option>
-              <option value="gastrotomy">Gastrotomy</option>
-              <option value="gastropexy">Gastropexy</option>
-              <option value="cystotomy">Cystotomy</option>
-              <option value="feline_unblock">Feline urethral unblock</option>
-              <option value="other_custom">Other / custom surgery</option>
-            </select>
-            <p id="surgeryTemplateDescription" class="help-text">
-              Prescrotal neuter; default 2-0 Monocryl (&lt;35 kg) or 0 Monocryl
-              (&gt;35 kg) unless overridden.
-            </p>
-          </div>
-
-          <div class="field">
-            <label for="asaStatus">ASA status</label>
-            <input
-              id="asaStatus"
-              type="text"
-              placeholder="e.g., ASA II"
-            />
-          </div>
-        </div>
-
-        <!-- Core anesthesia basics -->
-        <div class="form-row">
-          <div class="field">
-            <label for="ivCatheter">IV catheter</label>
-            <input
-              id="ivCatheter"
-              type="text"
-              placeholder="e.g., 22g cephalic, left"
-            />
-          </div>
-          <div class="field">
-            <label for="etTube">ET tube size</label>
-            <input
-              id="etTube"
-              type="text"
-              placeholder="e.g., 7.5 mm cuffed"
-            />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="field">
-            <label for="fluidRate">Fluids rate (ml/kg/hr)</label>
-            <input
-              id="fluidRate"
-              type="text"
-              placeholder="e.g., 5 ml/kg/hr dogs, 3 ml/kg/hr cats"
-            />
-          </div>
-          <div class="field checkbox-field">
-            <label>
-              <input type="checkbox" id="fluidsDeclined" />
-              Fluids declined
-            </label>
-          </div>
-        </div>
-
-        <!-- Collapsible: anesthesia detail -->
-        <details class="details-block" id="surgeryAnesDetails">
-          <summary>Anesthesia &amp; medication details (optional)</summary>
-
-          <div class="field">
-            <label for="premedications">Premedications</label>
+        <div id="anesthesiaPanel" class="collapse open">
+          <div class="field-group">
+            <label for="surgeryPremeds">Premedications</label>
             <textarea
-              id="premedications"
+              id="surgeryPremeds"
               rows="2"
               placeholder="e.g., Dexmedetomidine [0.5 mg/ml] + Hydromorphone [2 mg/ml] IM"
             ></textarea>
           </div>
 
-          <div class="field">
-            <label for="induction">Induction / Maintenance</label>
+          <div class="field-group">
+            <label for="surgeryInduction">Induction / Maintenance</label>
             <textarea
-              id="induction"
+              id="surgeryInduction"
               rows="2"
               placeholder="e.g., Propofol [10 mg/ml] to effect, Isoflurane in oxygen"
             ></textarea>
           </div>
 
-          <div class="field">
-            <label for="intraopMeds">Intra-op medications</label>
+          <div class="field-group">
+            <label for="surgeryIntraop">Intra-op medications</label>
             <textarea
-              id="intraopMeds"
+              id="surgeryIntraop"
               rows="2"
               placeholder="e.g., Meloxicam [5 mg/ml] SQ, Bupivacaine [0.5%] local blocks"
             ></textarea>
           </div>
-        </details>
+        </div>
+      </div>
 
-        <!-- Collapsible: surgery & intra-op notes -->
-        <details class="details-block" id="surgeryDetailsBlock">
-          <summary>Surgery details &amp; intra-op notes (optional)</summary>
-
-          <div class="field">
-            <label for="procedureNotes">Procedure notes</label>
+      <div class="collapse-card">
+        <button class="collapse-toggle" id="surgeryDetailsToggle">
+          Surgery details &amp; intra-op notes
+        </button>
+        <div id="surgeryDetailsPanel" class="collapse open">
+          <div class="field-group">
+            <label for="surgeryProcedure">Procedure notes</label>
             <textarea
-              id="procedureNotes"
+              id="surgeryProcedure"
               rows="3"
-              placeholder="Key surgical findings, complications, closure details, dental extractions, etc."
+              placeholder="Key surgical findings, complications, closure details, etc."
             ></textarea>
           </div>
 
-          <div class="field">
-            <label for="tprNotes">TPR / intra-op notes (optional)</label>
-            <textarea
-              id="tprNotes"
-              rows="2"
-              placeholder="e.g., brief intra-op TPR, BP trends, notable events."
-            ></textarea>
+          <!-- Dental-only section -->
+          <div id="dentalSection" class="hidden">
+            <h3 class="section-subtitle">Dental-specific details</h3>
+            <div class="field-group">
+              <label for="surgeryDentalRads">Dental radiographs</label>
+              <select id="surgeryDentalRads">
+                <option value="">Select...</option>
+                <option value="full_mouth">Full-mouth radiographs performed</option>
+                <option value="partial">Selected radiographs performed</option>
+                <option value="declined">Radiographs declined</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="surgeryDentalExtractions">Extraction / flap notes</label>
+              <textarea
+                id="surgeryDentalExtractions"
+                rows="3"
+                placeholder="Teeth extracted, flap type, closure, complications."
+              ></textarea>
+            </div>
           </div>
 
-          <div class="field">
-            <label for="durationNotes">Anesthesia / surgery durations (optional)</label>
-            <textarea
-              id="durationNotes"
-              rows="2"
-              placeholder="Only if both start &amp; end times known; otherwise leave blank."
-            ></textarea>
-          </div>
-
-          <div class="field checkbox-group">
-            <span class="checkbox-label">Monocryl override</span>
-            <label>
-              <input type="checkbox" id="monocryl0" />
-              0 Monocryl override
-            </label>
-            <label>
-              <input type="checkbox" id="monocryl2_0" />
-              2-0 Monocryl override
-            </label>
-            <label>
-              <input type="checkbox" id="monocryl3_0" />
-              3-0 Monocryl override
-            </label>
-          </div>
-        </details>
-
-        <!-- Attachments (photos / docs) -->
-        <div class="field">
-          <label for="surgeryAttachments">Attachments (photos, labs, rads, consent forms)</label>
-          <input
-            id="surgeryAttachments"
-            type="file"
-            multiple
-            accept="image/*,.pdf,.doc,.docx,.txt"
-          />
-          <p class="help-text">
-            Snap anesthesia sheets, rads, lab reports, or consent forms from your
-            phone. Filenames are sent as context; files themselves stay local.
-          </p>
-        </div>
-
-        <button id="generateSurgeryBtn" class="primary-btn">
-          Generate Surgery SOAP
-        </button>
-      </section>
-
-      <!-- FREE-FORM / CONSULT TAB -->
-      <section id="consultSection" class="card hidden">
-        <h2>Free-form / Consult</h2>
-
-        <div class="field">
-          <label for="consultAttachments">Attachments (optional)</label>
-          <input
-            id="consultAttachments"
-            type="file"
-            multiple
-            accept="image/*,.pdf,.doc,.docx,.txt"
-          />
-          <p class="help-text">
-            Photos of whiteboards, notes, or records. Use this tab for telemed
-            consults or generic summaries.
-          </p>
-        </div>
-
-        <div class="field">
-          <label for="consultInput">What do you want to generate?</label>
-          <textarea
-            id="consultInput"
-            rows="5"
-            placeholder="Describe what you need: e.g., 'Turn these notes into a SOAP', 'Draft an email to the owner', etc."
-          ></textarea>
-        </div>
-
-        <button id="runConsultBtn" class="primary-btn">
-          Run Consult
-        </button>
-
-        <div class="field">
-          <label for="consultOutput">Consult output</label>
-          <textarea id="consultOutput" rows="10" readonly></textarea>
-        </div>
-      </section>
-
-      <!-- TOOLBOX LITE TAB -->
-      <section id="toolboxSection" class="card hidden">
-        <h2>Toolbox Lite</h2>
-
-        <!-- Attachments -->
-        <div class="field">
-          <label for="toolboxAttachments">Attachments (optional)</label>
-          <input
-            id="toolboxAttachments"
-            type="file"
-            multiple
-            accept="image/*,.pdf,.doc,.docx,.txt"
-          />
-          <p class="help-text">
-            Labs, rads, whiteboard photos for helper tools.
-          </p>
-        </div>
-
-        <!-- Bloodwork Helper Lite -->
-        <h3>Bloodwork Helper Lite</h3>
-
-        <div class="field">
-          <label for="toolboxLabText">
-            Paste CBC/chem/UA text (optional if photos attached)
-          </label>
-          <textarea
-            id="toolboxLabText"
-            rows="4"
-            placeholder="Copy/paste the lab report text or values here."
-          ></textarea>
-        </div>
-
-        <div class="form-row">
-          <div class="field">
-            <label for="toolboxDetailLevel">Detail level</label>
-            <select id="toolboxDetailLevel">
-              <option value="short">Short</option>
-              <option value="standard">Standard</option>
-              <option value="expanded">Expanded</option>
-            </select>
+          <!-- Mass/cystotomy section -->
+          <div id="massSection" class="hidden">
+            <h3 class="section-subtitle">Mass / biopsy / cystotomy details</h3>
+            <div class="field-group">
+              <label for="surgeryMassDetails">Mass / organ description</label>
+              <textarea
+                id="surgeryMassDetails"
+                rows="2"
+                placeholder="Location, size, consistency, appearance, margins."
+              ></textarea>
+            </div>
+            <div class="field-group">
+              <label for="surgeryHistopath">Histopathology</label>
+              <select id="surgeryHistopath">
+                <option value="">Select...</option>
+                <option value="submitted">Tissue submitted for histopathology</option>
+                <option value="not_submitted">Histopathology not submitted</option>
+              </select>
+            </div>
           </div>
         </div>
+      </div>
 
+      <div class="field-group">
+        <label>Monocryl override</label>
         <div class="checkbox-row">
-          <label>
-            <input type="checkbox" id="toolboxIncludeDifferentials" checked />
-            Include differential list
+          <label><input id="mono0Override" type="checkbox" /> 0 Monocryl override</label>
+          <label><input id="mono2Override" type="checkbox" /> 2-0 Monocryl override</label>
+          <label><input id="mono3Override" type="checkbox" /> 3-0 Monocryl override</label>
+        </div>
+        <p class="hint">
+          Default: 2-0 Monocryl for standard dog neuters; 0 Monocryl for &gt;35 kg, unless overridden.
+        </p>
+      </div>
+
+      <div class="field-group">
+        <label for="surgeryTpr">TPR / intra-op notes (optional)</label>
+        <textarea
+          id="surgeryTpr"
+          rows="2"
+          placeholder="Intra-op TPR trends, notable events."
+        ></textarea>
+      </div>
+
+      <div class="field-group">
+        <label for="surgeryDurations">Anesthesia / surgery durations (optional)</label>
+        <textarea
+          id="surgeryDurations"
+          rows="2"
+          placeholder="Only if both start &amp; end times known; otherwise leave blank."
+        ></textarea>
+      </div>
+
+      <div class="field-group">
+        <label>Attachments (optional)</label>
+        <div class="file-row">
+          <label class="file-button">
+            📷 Take photo
+            <input
+              id="surgeryAttachments"
+              type="file"
+              accept="image/*,application/pdf"
+              multiple
+            />
           </label>
-          <label>
-            <input type="checkbox" id="toolboxClientSummary" />
-            Add client-friendly summary
-          </label>
         </div>
+      </div>
 
-        <button id="runBloodworkHelperBtn" class="primary-btn">
-          Run Bloodwork Helper
-        </button>
-
-        <div class="field">
-          <label for="toolboxBloodworkOutput">Bloodwork Helper output</label>
-          <textarea id="toolboxBloodworkOutput" rows="10" readonly></textarea>
-        </div>
-      </section>
-
-      <!-- SHARED SOAP OUTPUT -->
-      <section class="card" id="soapOutputSection">
-        <h2>SOAP Output</h2>
-
-        <div class="soap-block">
-          <div class="soap-block-header">
-            <span>Subjective</span>
-            <button class="secondary-btn" id="copySubjectiveBtn">Copy</button>
-          </div>
-          <textarea id="subjectiveOutput" rows="4" readonly></textarea>
-        </div>
-
-        <div class="soap-block">
-          <div class="soap-block-header">
-            <span>Objective</span>
-            <button class="secondary-btn" id="copyObjectiveBtn">Copy</button>
-          </div>
-          <textarea id="objectiveOutput" rows="6" readonly></textarea>
-        </div>
-
-        <div class="soap-block">
-          <div class="soap-block-header">
-            <span>Assessment</span>
-            <button class="secondary-btn" id="copyAssessmentBtn">Copy</button>
-          </div>
-          <textarea id="assessmentOutput" rows="5" readonly></textarea>
-        </div>
-
-        <div class="soap-block">
-          <div class="soap-block-header">
-            <span>Plan</span>
-            <button class="secondary-btn" id="copyPlanBtn">Copy</button>
-          </div>
-          <textarea id="planOutput" rows="8" readonly></textarea>
-        </div>
-
-        <div class="soap-block">
-          <div class="soap-block-header">
-            <span>Medications Dispensed</span>
-            <button class="secondary-btn" id="copyMedsBtn">Copy</button>
-          </div>
-          <textarea id="medsOutput" rows="4" readonly></textarea>
-        </div>
-
-        <div class="soap-block">
-          <div class="soap-block-header">
-            <span>Aftercare</span>
-            <button class="secondary-btn" id="copyAftercareBtn">Copy</button>
-          </div>
-          <textarea id="aftercareOutput" rows="5" readonly></textarea>
-        </div>
-
-        <div class="button-row">
-          <button id="copyFullSoapBtn" class="secondary-btn">
-            Copy full SOAP
-          </button>
-          <button id="copyPlanMedsAftercareBtn" class="secondary-btn">
-            Copy Plan + Meds + Aftercare
-          </button>
-        </div>
-      </section>
-
-      <!-- Floating mic button -->
-      <button id="micButton" class="mic-button" aria-label="Voice input">
-        🎙️
+      <button id="generateSurgeryBtn" class="primary-button">
+        Generate Surgery SOAP
       </button>
-    </main>
+    </section>
 
-    <!-- QRCode library (for qrContainer) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="app.js"></script>
-  </body>
+    <!-- Consult / Free-form section -->
+    <section class="card hidden" id="consultSection">
+      <h2>Free-form / Consult</h2>
+      <div class="field-group">
+        <label for="consultText">Consult question or free-form request</label>
+        <textarea
+          id="consultText"
+          rows="6"
+          placeholder="Describe the case, question, or content you want the AI to draft (e.g., email, note, plan)."
+        ></textarea>
+      </div>
+
+      <div class="field-group">
+        <label>Attachments (optional)</label>
+        <div class="file-row">
+          <label class="file-button">
+            📷 Take photo
+            <input
+              id="consultAttachments"
+              type="file"
+              accept="image/*,application/pdf"
+              multiple
+            />
+          </label>
+        </div>
+      </div>
+
+      <button id="runConsultBtn" class="primary-button">
+        Run Consult
+      </button>
+
+      <div class="field-group">
+        <label>Consult output</label>
+        <textarea id="consultOutput" rows="8" readonly></textarea>
+      </div>
+    </section>
+
+    <!-- Toolbox Lite -->
+    <section class="card hidden" id="toolboxSection">
+      <h2>Toolbox Lite</h2>
+
+      <div class="field-group">
+        <label>Attachments (optional)</label>
+        <div class="file-row">
+          <label class="file-button">
+            📷 Take photo
+            <input
+              id="toolboxAttachments"
+              type="file"
+              accept="image/*,application/pdf"
+              multiple
+            />
+          </label>
+        </div>
+        <p class="hint">
+          Attach lab PDFs, screenshots, or photos of printouts. For now, the helper uses pasted text; photos are for future Vision tools.
+        </p>
+      </div>
+
+      <h3 class="section-subtitle">Bloodwork Helper Lite</h3>
+
+      <div class="field-group">
+        <label for="toolboxLabText">Paste CBC/chem/UA text (optional if photos attached)</label>
+        <textarea
+          id="toolboxLabText"
+          rows="6"
+          placeholder="Copy/paste the lab report text or values here."
+        ></textarea>
+      </div>
+
+      <div class="two-column">
+        <div class="field-group">
+          <label for="toolboxDetail">Detail level</label>
+          <select id="toolboxDetail">
+            <option value="short">Short</option>
+            <option value="standard">Standard</option>
+          </select>
+        </div>
+        <div class="field-group checkbox-field">
+          <label><input id="toolboxIncludeDiffs" type="checkbox" checked /> Include differential list</label>
+          <label><input id="toolboxIncludeClient" type="checkbox" /> Add client-friendly summary</label>
+        </div>
+      </div>
+
+      <button id="runBloodworkBtn" class="primary-button">
+        Run Bloodwork Helper
+      </button>
+
+      <div class="field-group">
+        <label>Bloodwork Helper output</label>
+        <textarea id="toolboxOutput" rows="10" readonly></textarea>
+      </div>
+    </section>
+
+    <!-- SOAP Output -->
+    <section class="card" id="soapOutputCard">
+      <h2>SOAP Output</h2>
+
+      <div class="soap-row">
+        <div class="soap-heading">
+          <span>Subjective</span>
+          <button class="copy-button" data-copy-target="soapSubjective">Copy</button>
+        </div>
+        <textarea id="soapSubjective" rows="3" readonly></textarea>
+      </div>
+
+      <div class="soap-row">
+        <div class="soap-heading">
+          <span>Objective</span>
+          <button class="copy-button" data-copy-target="soapObjective">Copy</button>
+        </div>
+        <textarea id="soapObjective" rows="5" readonly></textarea>
+      </div>
+
+      <div class="soap-row">
+        <div class="soap-heading">
+          <span>Assessment</span>
+          <button class="copy-button" data-copy-target="soapAssessment">Copy</button>
+        </div>
+        <textarea id="soapAssessment" rows="4" readonly></textarea>
+      </div>
+
+      <div class="soap-row">
+        <div class="soap-heading">
+          <span>Plan</span>
+          <button class="copy-button" data-copy-target="soapPlan">Copy</button>
+        </div>
+        <textarea id="soapPlan" rows="8" readonly></textarea>
+      </div>
+
+      <div class="soap-row">
+        <div class="soap-heading">
+          <span>Medications Dispensed</span>
+          <button class="copy-button" data-copy-target="soapMeds">Copy</button>
+        </div>
+        <textarea id="soapMeds" rows="3" readonly></textarea>
+      </div>
+
+      <div class="soap-row">
+        <div class="soap-heading">
+          <span>Aftercare</span>
+          <button class="copy-button" data-copy-target="soapAftercare">Copy</button>
+        </div>
+        <textarea id="soapAftercare" rows="4" readonly></textarea>
+      </div>
+
+      <div class="output-actions">
+        <button id="copyFullSoapBtn" class="secondary-button">Copy full SOAP</button>
+        <button id="copyPlanMedsAftercareBtn" class="secondary-button">
+          Copy Plan + Meds + Aftercare
+        </button>
+      </div>
+    </section>
+
+    <!-- Floating mic button -->
+    <button id="micButton" class="mic-fab" title="Dictate into last active field">
+      🎙️
+    </button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
 </html>
