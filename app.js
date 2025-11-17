@@ -34,7 +34,20 @@
   showTab("appointment");
 })();
 
-// ---------- SURGERY TEMPLATE HINTS + FLUIDS DISABLE ----------
+// ---------- GENERIC ACCORDION TOGGLING ----------
+document.addEventListener("click", function (e) {
+  var header = e.target.closest(".accordion-header");
+  if (!header) return;
+  var parent = header.closest(".accordion");
+  if (!parent) return;
+  if (parent.classList.contains("open")) {
+    parent.classList.remove("open");
+  } else {
+    parent.classList.add("open");
+  }
+});
+
+// ---------- SURGERY TEMPLATE HINTS + FAMILY + FLUIDS ----------
 (function () {
   var select = document.getElementById("sxTemplate");
   var hintEl = document.getElementById("sxTemplateHint");
@@ -45,9 +58,9 @@
 
   var hints = {
     "canine-spay-standard":
-      "Canine spay – clinic: standard OVH, linea alba approach; 2–0 Monocryl for body wall/SQ, 3–0 intradermal skin unless overrides used.",
+      "Canine spay – clinic: OVH, linea alba approach; default 2–0 Monocryl body wall/SQ, 3–0 intradermal skin unless overrides used.",
     "canine-spay-rescue":
-      "Canine spay – rescue: as clinic spay, plus ensure rescue notes/tattoo documented in Avimark (no ID numbers in SOAP).",
+      "Canine spay – rescue: as clinic spay, plus rescue notes/tattoo documented in Avimark (no ID numbers in SOAP).",
     "canine-neuter-standard":
       "Canine neuter – clinic: prescrotal approach; default 2–0 Monocryl (<35 kg) or 0 Monocryl (>35 kg) unless overridden.",
     "canine-neuter-rescue":
@@ -61,9 +74,9 @@
     "feline-neuter-rescue":
       "Feline neuter – rescue: similar to clinic; mention ear tip if done.",
     "dental-cohat":
-      "Dental – COHAT: full-mouth rads unless declined, subgingival scaling, polishing, charting, nerve blocks, extractions as needed per AAHA/AVDC.",
+      "Dental – COHAT: full-mouth rads unless declined, subgingival scaling, polishing, charting, nerve blocks, extractions per AAHA/AVDC.",
     "dental-cohat-no-rads":
-      "Dental – COHAT (no rads): chart thoroughly and document that radiographs were declined; extractions still per AAHA/AVDC.",
+      "Dental – COHAT (no rads): chart thoroughly and document that radiographs were declined.",
     "pyometra-spay":
       "Pyometra spay: include uterine size, rupture status, lavage, and abdominal closure details.",
     "exploratory-laparotomy":
@@ -71,7 +84,7 @@
     "enterotomy":
       "Enterotomy: note intestinal segment, reason (FB, biopsy), leak test, and closure pattern.",
     "gastrotomy":
-      "Gastrotomy: location of incision, FB retrieval, two-layer closure if used.",
+      "Gastrotomy: location of incision, FB retrieval, and closure details.",
     "gastropexy":
       "Gastropexy: type (incisional/belt loop) and side; document prophylactic vs emergency.",
     "cystotomy":
@@ -86,13 +99,115 @@
       "Custom procedure: be explicit in Procedure notes about approach, findings, closure, complications."
   };
 
-  function updateHint() {
-    var key = select.value;
-    hintEl.textContent = hints[key] || "Custom procedure – fill in details below.";
+  function getSurgeryFamily(value) {
+    if (!value) return "other";
+    if (value.indexOf("dental") === 0) return "dental";
+    if (value.indexOf("mass-removal") === 0) return "mass";
+    if (
+      value.indexOf("spay") !== -1 ||
+      value.indexOf("neuter") !== -1
+    ) return "spay-neuter";
+    if (
+      value === "pyometra-spay" ||
+      value === "exploratory-laparotomy" ||
+      value === "enterotomy" ||
+      value === "gastrotomy" ||
+      value === "gastropexy" ||
+      value === "cystotomy" ||
+      value === "feline-urethral-unblock"
+    ) return "abdominal";
+    return "other";
   }
 
-  select.addEventListener("change", updateHint);
-  updateHint();
+  function updateHintAndFamily() {
+    var key = select.value;
+    hintEl.textContent = hints[key] || "Custom procedure – fill in details below.";
+
+    var family = getSurgeryFamily(key);
+
+    var accAnes = document.getElementById("sxAccAnes");
+    var accProcedure = document.getElementById("sxAccProcedure");
+    var accSpay = document.getElementById("sxAccSpayOptions");
+    var accDental = document.getElementById("sxAccDental");
+    var accMass = document.getElementById("sxAccMass");
+    var accAbdo = document.getElementById("sxAccAbdo");
+
+    function hideAll() {
+      if (accAnes) accAnes.style.display = "none";
+      if (accProcedure) accProcedure.style.display = "none";
+      if (accSpay) accSpay.style.display = "none";
+      if (accDental) accDental.style.display = "none";
+      if (accMass) accMass.style.display = "none";
+      if (accAbdo) accAbdo.style.display = "none";
+
+      if (accAnes) accAnes.classList.remove("open");
+      if (accProcedure) accProcedure.classList.remove("open");
+      if (accSpay) accSpay.classList.remove("open");
+      if (accDental) accDental.classList.remove("open");
+      if (accMass) accMass.classList.remove("open");
+      if (accAbdo) accAbdo.classList.remove("open");
+    }
+
+    hideAll();
+
+    if (family === "spay-neuter") {
+      if (accAnes) {
+        accAnes.style.display = "block";
+        accAnes.classList.add("open");
+      }
+      if (accProcedure) {
+        accProcedure.style.display = "block";
+        accProcedure.classList.add("open");
+      }
+      if (accSpay) {
+        accSpay.style.display = "block";
+      }
+    } else if (family === "dental") {
+      if (accDental) {
+        accDental.style.display = "block";
+        accDental.classList.add("open");
+      }
+      if (accAnes) {
+        accAnes.style.display = "block";
+      }
+      if (accProcedure) {
+        accProcedure.style.display = "block";
+      }
+    } else if (family === "mass") {
+      if (accAnes) {
+        accAnes.style.display = "block";
+      }
+      if (accProcedure) {
+        accProcedure.style.display = "block";
+        accProcedure.classList.add("open");
+      }
+      if (accMass) {
+        accMass.style.display = "block";
+        accMass.classList.add("open");
+      }
+    } else if (family === "abdominal") {
+      if (accAnes) {
+        accAnes.style.display = "block";
+      }
+      if (accProcedure) {
+        accProcedure.style.display = "block";
+        accProcedure.classList.add("open");
+      }
+      if (accAbdo) {
+        accAbdo.style.display = "block";
+        accAbdo.classList.add("open");
+      }
+    } else {
+      // other/custom
+      if (accAnes) {
+        accAnes.style.display = "block";
+      }
+      if (accProcedure) {
+        accProcedure.style.display = "block";
+        accProcedure.classList.add("open");
+      }
+    }
+  }
 
   function updateFluidsState() {
     if (!fluidsRate) return;
@@ -105,16 +220,22 @@
       fluidsRate.placeholder = "e.g., 5 ml/kg/hr dogs, 3 ml/kg/hr cats";
     }
   }
+
+  select.addEventListener("change", updateHintAndFamily);
+  updateHintAndFamily();
+
   if (fluidsDeclined) {
     fluidsDeclined.addEventListener("change", updateFluidsState);
     updateFluidsState();
   }
 })();
 
-// ---------- ATTACHMENTS (front-end only) ----------
+// ---------- ATTACHMENTS (front-end only, re-used) ----------
 var nextAttachmentId = 1;
 var appointmentAttachments = [];
 var surgeryAttachments = [];
+var consultAttachments = [];
+var toolboxAttachments = [];
 
 function renderAttachments(listId, attachmentsArray) {
   var container = document.getElementById(listId);
@@ -145,6 +266,7 @@ function renderAttachments(listId, attachmentsArray) {
         '<option value="labs">Labs</option>' +
         '<option value="imaging">Imaging</option>' +
         '<option value="anesthesia">Anesthesia sheet</option>' +
+        '<option value="whiteboard">Whiteboard/notes</option>' +
         '<option value="other">Other</option>';
       typeSelect.value = att.type || "other";
       typeSelect.addEventListener("change", function () {
@@ -214,12 +336,13 @@ function setupAttachmentSection(prefix, attachmentsArray) {
     renderAttachments(listId, attachmentsArray);
   });
 
-  // initial render
   renderAttachments(listId, attachmentsArray);
 }
 
 setupAttachmentSection("appt", appointmentAttachments);
 setupAttachmentSection("sx", surgeryAttachments);
+setupAttachmentSection("consult", consultAttachments);
+setupAttachmentSection("toolbox", toolboxAttachments);
 
 // ---------- COMMON HELPERS ----------
 var statusEl = document.getElementById("queryStatus");
@@ -347,9 +470,6 @@ function updateFeedbackBarText(payload) {
     var a = payload.fields || {};
     if (!a.reason) missing.push("reason for visit");
     if (!a.history) missing.push("history");
-    if (!a.physicalExam) missing.push("PE data");
-    if (!a.diagnostics) missing.push("diagnostics");
-    if (!a.assessment) missing.push("assessment");
     if (!a.plan) missing.push("plan");
   }
 
@@ -413,8 +533,45 @@ if (genSxBtn) {
 
     var templateValue = document.getElementById("sxTemplate").value;
 
+    function getFamily(value) {
+      if (!value) return "other";
+      if (value.indexOf("dental") === 0) return "dental";
+      if (value.indexOf("mass-removal") === 0) return "mass";
+      if (
+        value.indexOf("spay") !== -1 ||
+        value.indexOf("neuter") !== -1
+      ) return "spay-neuter";
+      if (
+        value === "pyometra-spay" ||
+        value === "exploratory-laparotomy" ||
+        value === "enterotomy" ||
+        value === "gastrotomy" ||
+        value === "gastropexy" ||
+        value === "cystotomy" ||
+        value === "feline-urethral-unblock"
+      ) return "abdominal";
+      return "other";
+    }
+
+    var family = getFamily(templateValue);
+
+    var localBlocks = [];
+    if (document.getElementById("sxBlockInfra") && document.getElementById("sxBlockInfra").checked) {
+      localBlocks.push("infraorbital");
+    }
+    if (document.getElementById("sxBlockMaxillary") && document.getElementById("sxBlockMaxillary").checked) {
+      localBlocks.push("maxillary");
+    }
+    if (document.getElementById("sxBlockMental") && document.getElementById("sxBlockMental").checked) {
+      localBlocks.push("mental");
+    }
+    if (document.getElementById("sxBlockIA") && document.getElementById("sxBlockIA").checked) {
+      localBlocks.push("inferior-alveolar");
+    }
+
     var fields = {
       template: templateValue,
+      templateFamily: family,
       asa: document.getElementById("sxASA").value,
       ett: document.getElementById("sxETT").value,
       catheter: document.getElementById("sxCatheter").value,
@@ -428,14 +585,29 @@ if (genSxBtn) {
       monocryl2_0: document.getElementById("sxMonocryl2_0").checked,
       monocryl3_0: document.getElementById("sxMonocryl3_0").checked,
       tpr: document.getElementById("sxTPR").value,
-      durations: document.getElementById("sxDurations").value
+      durations: document.getElementById("sxDurations").value,
+
+      // Dental
+      dentalRads: document.getElementById("sxDentalRads").value,
+      dentalPerio: document.getElementById("sxDentalPerio").value,
+      localBlocks: localBlocks,
+      dentalExtractionNotes: document.getElementById("sxDentalExtractionNotes").value,
+
+      // Mass
+      massLocation: document.getElementById("sxMassLocation").value,
+      massSize: document.getElementById("sxMassSize").value,
+      histopath: document.getElementById("sxHistopath").value,
+      massMargins: document.getElementById("sxMassMargins").value,
+
+      // Abdominal
+      abdoFindings: document.getElementById("sxAbdoFindings").value,
+      abdoClosure: document.getElementById("sxAbdoClosure").value
     };
 
     var attachmentsMeta = surgeryAttachments.map(function (a) {
       return { name: a.name, type: a.type || "other" };
     });
 
-    // planStyle: templates use heading style, "other" uses numbered plan
     var planStyle = templateValue === "other" ? "numbered" : "headings";
 
     var payload = {
@@ -545,8 +717,16 @@ var runConsultBtn = document.getElementById("runConsultBtn");
 if (runConsultBtn) {
   runConsultBtn.addEventListener("click", function () {
     var text = (document.getElementById("consultInput").value || "").trim();
-    if (!text) return;
-    callBackend("consult", { message: text }).then(function (out) {
+    if (!text && !consultAttachments.length) return;
+
+    var attachmentsMeta = consultAttachments.map(function (a) {
+      return { name: a.name, type: a.type || "other" };
+    });
+
+    callBackend("consult", {
+      message: text,
+      attachments: attachmentsMeta
+    }).then(function (out) {
       var body = document.getElementById("consultOutput");
       var sec = document.getElementById("consultOutputSection");
       if (body) body.textContent = out;
@@ -560,16 +740,22 @@ var runBwHelperBtn = document.getElementById("runBwHelperBtn");
 if (runBwHelperBtn) {
   runBwHelperBtn.addEventListener("click", function () {
     var text = (document.getElementById("bwText").value || "").trim();
-    if (!text) return;
     var detailLevel = document.getElementById("bwDetail").value;
     var includeDiffs = document.getElementById("bwDiffs").checked;
     var includeClientFriendly = document.getElementById("bwClientFriendly").checked;
+
+    var attachmentsMeta = toolboxAttachments.map(function (a) {
+      return { name: a.name, type: a.type || "other" };
+    });
+
+    if (!text && !attachmentsMeta.length) return;
 
     callBackend("toolbox-bloodwork", {
       text: text,
       detailLevel: detailLevel,
       includeDiffs: includeDiffs,
-      includeClientFriendly: includeClientFriendly
+      includeClientFriendly: includeClientFriendly,
+      attachments: attachmentsMeta
     }).then(function (out) {
       var body = document.getElementById("bwOutput");
       var sec = document.getElementById("bwOutputSection");
@@ -583,12 +769,17 @@ if (runBwHelperBtn) {
 var runEmailHelperBtn = document.getElementById("runEmailHelperBtn");
 if (runEmailHelperBtn) {
   runEmailHelperBtn.addEventListener("click", function () {
+    var attachmentsMeta = toolboxAttachments.map(function (a) {
+      return { name: a.name, type: a.type || "other" };
+    });
+
     var payload = {
       emailType: document.getElementById("emailType").value,
       petName: document.getElementById("emailPetName").value,
       ownerName: document.getElementById("emailOwnerName").value,
       timeframe: document.getElementById("emailTimeframe").value,
-      notes: document.getElementById("emailNotes").value
+      notes: document.getElementById("emailNotes").value,
+      attachments: attachmentsMeta
     };
     callBackend("toolbox-email", payload).then(function (out) {
       var body = document.getElementById("emailOutput");
@@ -620,7 +811,7 @@ function initMicBubble() {
   if (isiOS || !SpeechRecognition) {
     micBubble.addEventListener("click", function () {
       alert(
-        "On iPhone/iPad, use the keyboard mic to dictate into the focused box. Browser speech recognition is not supported."
+        "On iPhone/iPad, use the keyboard mic to dictate into the focused box. Browser speech recognition is not fully supported."
       );
     });
     return;
