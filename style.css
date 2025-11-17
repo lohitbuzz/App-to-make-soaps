@@ -134,6 +134,11 @@ main {
   cursor: pointer;
 }
 
+.secondary.small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
 .section-box {
   border-radius: 10px;
   border: 1px solid #e5e7eb;
@@ -206,6 +211,82 @@ main {
 .inner-card h3 {
   margin-top: 0;
   font-size: 15px;
+}
+
+/* Attachments */
+.attachments-card {
+  margin-top: 10px;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+  padding: 8px 10px 10px;
+}
+
+.attachments-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.attachments-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.attachments-header span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.attachments-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.attachments-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.attachments-empty {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.attachment-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  padding: 3px 8px 3px 8px;
+  background: #f9fafb;
+  font-size: 12px;
+}
+
+.attachment-name {
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-type {
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.attachment-remove {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 3px;
 }
 
 /* Mic bubble */
