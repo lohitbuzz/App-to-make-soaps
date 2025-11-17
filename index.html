@@ -95,6 +95,24 @@
         <textarea id="apptMeds" placeholder="Include concentration in brackets if you know it."></textarea>
       </div>
 
+      <!-- Attachments for Appointment -->
+      <div class="attachments-card">
+        <div class="attachments-header">
+          <h3>Attachments (optional)</h3>
+          <span>Labs, rads, anesthesia sheets, other docs.</span>
+        </div>
+        <div class="attachments-actions">
+          <button id="apptTakePhotoBtn" class="secondary small">📷 Take photo</button>
+          <button id="apptUploadFileBtn" class="secondary small">🗂 Upload file</button>
+        </div>
+        <div id="apptAttachmentsList" class="attachments-list">
+          <!-- chips go here -->
+        </div>
+        <!-- hidden file inputs -->
+        <input type="file" id="apptPhotoInput" accept="image/*" capture="environment" style="display:none;">
+        <input type="file" id="apptFileInput" accept="image/*,application/pdf" multiple style="display:none;">
+      </div>
+
       <button id="generateAppointmentBtn" class="primary">Generate Appointment SOAP</button>
     </div>
 
@@ -109,6 +127,7 @@
         <div class="field">
           <label for="sxTemplate">Surgery template</label>
           <select id="sxTemplate">
+            <!-- Spay / neuter -->
             <option value="canine-spay-standard">Canine spay – clinic</option>
             <option value="canine-spay-rescue">Canine spay – rescue</option>
             <option value="canine-neuter-standard">Canine neuter – clinic</option>
@@ -117,9 +136,23 @@
             <option value="feline-spay-rescue">Feline spay – rescue</option>
             <option value="feline-neuter-standard">Feline neuter – clinic</option>
             <option value="feline-neuter-rescue">Feline neuter – rescue</option>
+
+            <!-- Dental -->
             <option value="dental-cohat">Dental – COHAT</option>
             <option value="dental-cohat-no-rads">Dental – COHAT (no rads)</option>
-            <option value="mass-removal">Mass removal</option>
+
+            <!-- Abdominal / soft tissue -->
+            <option value="pyometra-spay">Pyometra spay</option>
+            <option value="exploratory-laparotomy">Exploratory laparotomy</option>
+            <option value="enterotomy">Enterotomy</option>
+            <option value="gastrotomy">Gastrotomy</option>
+            <option value="gastropexy">Gastropexy</option>
+            <option value="cystotomy">Cystotomy</option>
+
+            <!-- Other -->
+            <option value="feline-urethral-unblock">Feline urethral unblock</option>
+            <option value="mass-removal-simple">Mass removal – simple</option>
+            <option value="mass-removal-complex">Mass removal – complex</option>
             <option value="other">Other / custom</option>
           </select>
         </div>
@@ -129,14 +162,15 @@
         </div>
       </div>
 
+      <!-- Access / fluids band -->
       <div class="row">
-        <div class="field">
-          <label for="sxETT">ET tube size</label>
-          <input type="text" id="sxETT" placeholder="e.g., 7.5 mm cuffed">
-        </div>
         <div class="field">
           <label for="sxCatheter">IV catheter</label>
           <input type="text" id="sxCatheter" placeholder="e.g., 22g cephalic, left">
+        </div>
+        <div class="field">
+          <label for="sxETT">ET tube size</label>
+          <input type="text" id="sxETT" placeholder="e.g., 7.5 mm cuffed">
         </div>
       </div>
 
@@ -151,6 +185,7 @@
         </div>
       </div>
 
+      <!-- Drug block -->
       <div class="field">
         <label for="sxPremeds">Premedications</label>
         <textarea id="sxPremeds" placeholder="e.g., Dexmedetomidine [0.5 mg/ml] + Hydromorphone [2 mg/ml] IM"></textarea>
@@ -166,6 +201,18 @@
         <textarea id="sxIntraOpMeds" placeholder="e.g., Meloxicam [5 mg/ml] SQ, Bupivacaine [0.5%] local blocks"></textarea>
       </div>
 
+      <!-- TPR / durations -->
+      <div class="field">
+        <label for="sxTPR">TPR / intra-op notes (optional)</label>
+        <textarea id="sxTPR"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="sxDurations">Anesthesia / surgery durations (optional)</label>
+        <textarea id="sxDurations" placeholder="Only if both start & end times known; otherwise leave blank."></textarea>
+      </div>
+
+      <!-- Procedure + Monocryl -->
       <div class="field">
         <label for="sxProcedureNotes">Procedure notes</label>
         <textarea id="sxProcedureNotes" placeholder="Key surgical findings, complications, closure details, etc."></textarea>
@@ -186,14 +233,22 @@
         </div>
       </div>
 
-      <div class="field">
-        <label for="sxTPR">TPR / intra-op notes (optional)</label>
-        <textarea id="sxTPR"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="sxDurations">Anesthesia / surgery durations (optional)</label>
-        <textarea id="sxDurations" placeholder="Only if both start & end times known; otherwise leave blank."></textarea>
+      <!-- Attachments for Surgery -->
+      <div class="attachments-card">
+        <div class="attachments-header">
+          <h3>Attachments (optional)</h3>
+          <span>Labs, rads, anesthesia sheet photos, other docs.</span>
+        </div>
+        <div class="attachments-actions">
+          <button id="sxTakePhotoBtn" class="secondary small">📷 Take photo</button>
+          <button id="sxUploadFileBtn" class="secondary small">🗂 Upload file</button>
+        </div>
+        <div id="sxAttachmentsList" class="attachments-list">
+          <!-- chips go here -->
+        </div>
+        <!-- hidden file inputs -->
+        <input type="file" id="sxPhotoInput" accept="image/*" capture="environment" style="display:none;">
+        <input type="file" id="sxFileInput" accept="image/*,application/pdf" multiple style="display:none;">
       </div>
 
       <button id="generateSurgeryBtn" class="primary">Generate Surgery SOAP</button>
