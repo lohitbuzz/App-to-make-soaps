@@ -34,6 +34,67 @@
   showTab("appointment");
 })();
 
+// ---------- SURGERY TEMPLATE HINTS + FLUIDS DISABLE ----------
+(function () {
+  var select = document.getElementById("sxTemplate");
+  var hintEl = document.getElementById("sxTemplateHint");
+  var fluidsDeclined = document.getElementById("sxFluidsDeclined");
+  var fluidsRate = document.getElementById("sxFluidsRate");
+
+  if (!select || !hintEl) return;
+
+  var hints = {
+    "canine-spay-standard":
+      "Canine spay – clinic: standard OVH, linea alba approach; 2–0 Monocryl for body wall/SQ, 3–0 intradermal skin unless overrides used.",
+    "canine-spay-rescue":
+      "Canine spay – rescue: as clinic spay, plus ensure rescue notes/tattoo documented in Avimark (no ID numbers in SOAP).",
+    "canine-neuter-standard":
+      "Canine neuter – clinic: prescrotal approach; default 2–0 Monocryl (<35 kg) or 0 Monocryl (>35 kg) unless overridden.",
+    "canine-neuter-rescue":
+      "Canine neuter – rescue: as standard neuter; mention tattoo/ear notch if performed; rescue identifiers only in Avimark.",
+    "feline-spay-standard":
+      "Feline spay – clinic: midline or flank per clinic preference; mention approach in Procedure notes if relevant.",
+    "feline-spay-rescue":
+      "Feline spay – rescue: often flank with ear tip; note ear tip and rescue status.",
+    "feline-neuter-standard":
+      "Feline neuter – clinic: scrotal castration; note if incisions left open vs closed.",
+    "feline-neuter-rescue":
+      "Feline neuter – rescue: similar to clinic; mention ear tip if done.",
+    "dental-cohat":
+      "Dental – COHAT: full-mouth rads unless declined, subgingival scaling, polishing, charting, nerve blocks, extractions as needed per AAHA/AVDC.",
+    "dental-cohat-no-rads":
+      "Dental – COHAT (no rads): chart thoroughly and document that radiographs were declined; extractions still per AAHA/AVDC.",
+    "mass-removal":
+      "Mass removal: include location, size, margins, closure pattern, drain use, and histopathology yes/no.",
+    "other":
+      "Custom procedure: be explicit in Procedure notes about approach, findings, closure, complications."
+  };
+
+  function updateHint() {
+    var key = select.value;
+    hintEl.textContent = hints[key] || "Custom procedure – fill in details below.";
+  }
+
+  select.addEventListener("change", updateHint);
+  updateHint();
+
+  // fluidsDeclined disables rate field
+  function updateFluidsState() {
+    if (!fluidsRate) return;
+    if (fluidsDeclined && fluidsDeclined.checked) {
+      fluidsRate.disabled = true;
+      fluidsRate.placeholder = "Fluids declined";
+    } else {
+      fluidsRate.disabled = false;
+      fluidsRate.placeholder = "e.g., 5 ml/kg/hr dogs, 3 ml/kg/hr cats";
+    }
+  }
+  if (fluidsDeclined) {
+    fluidsDeclined.addEventListener("change", updateFluidsState);
+    updateFluidsState();
+  }
+})();
+
 // ---------- COMMON HELPERS ----------
 var statusEl = document.getElementById("queryStatus");
 var lastSoapPayload = null;
@@ -48,20 +109,23 @@ function callBackend(mode, payload) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mode: mode, payload: payload })
-  }).then(function (resp) {
-    if (!resp.ok) {
+  })
+    .then(function (resp) {
+      if (!resp.ok) {
+        setStatus("Error from server.");
+        throw new Error("Server error");
+      }
+      return resp.json();
+    })
+    .then(function (data) {
+      setStatus("Ready.");
+      return data.result || "";
+    })
+    .catch(function (err) {
+      console.error(err);
       setStatus("Error from server.");
-      throw new Error("Server error");
-    }
-    return resp.json();
-  }).then(function (data) {
-    setStatus("Ready.");
-    return data.result || "";
-  })["catch"](function (err) {
-    console.error(err);
-    setStatus("Error from server.");
-    throw err;
-  });
+      throw err;
+    });
 }
 
 function splitSoapIntoSections(text) {
@@ -75,19 +139,36 @@ function splitSoapIntoSections(text) {
   };
 
   var current = null;
-  var lines = text.split(/\r?\n/);
+  var lines = (text || "").split(/\r?\n/);
+
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i];
     var trimmed = line.trim();
+
     if (/^Subjective:/i.test(trimmed)) { current = "Subjective"; continue; }
     if (/^Objective:/i.test(trimmed)) { current = "Objective"; continue; }
     if (/^Assessment:/i.test(trimmed)) { current = "Assessment"; continue; }
     if (/^Plan:/i.test(trimmed)) { current = "Plan"; continue; }
     if (/^Medications Dispensed:/i.test(trimmed)) { current = "Medications Dispensed"; continue; }
     if (/^Aftercare:/i.test(trimmed)) { current = "Aftercare"; continue; }
+
     if (!current) continue;
     sections[current] += (sections[current] ? "\n" : "") + line;
   }
+
+  // Fallback: if parsing failed, dump everything into Subjective
+  var anyContent = false;
+  for (var key in sections) {
+    if (!sections.hasOwnProperty(key)) continue;
+    if (sections[key] && sections[key].trim()) {
+      anyContent = true;
+      break;
+    }
+  }
+  if (!anyContent && text && text.trim()) {
+    sections["Subjective"] = text.trim();
+  }
+
   return sections;
 }
 
@@ -110,13 +191,51 @@ function renderSoapSections(sections) {
   var fb = document.getElementById("feedbackBar");
   if (card) card.style.display = "block";
   if (fb) fb.style.display = "block";
+
+  updateFeedbackBarText(lastSoapPayload);
 }
 
 function copyToClipboard(text) {
   if (!text) return;
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text)["catch"](function () { });
+    navigator.clipboard.writeText(text).catch(function () {});
   }
+}
+
+// ---------- FEEDBACK BAR HELPER ----------
+function updateFeedbackBarText(payload) {
+  var fbText = document.getElementById("feedbackText");
+  if (!fbText || !payload) return;
+
+  var missing = [];
+  if (payload.soapType === "surgery") {
+    var f = payload.fields || {};
+    if (!f.template) missing.push("choose template");
+    if (!f.asa) missing.push("ASA");
+    if (!f.ett) missing.push("ET tube size");
+    if (!f.catheter) missing.push("IV catheter");
+    if (!f.fluidsDeclined && !f.fluidsRate) missing.push("fluids rate");
+    if (!f.premeds) missing.push("premeds");
+    if (!f.induction) missing.push("induction/maintenance");
+    if (!f.procedureNotes) missing.push("procedure notes");
+  } else if (payload.soapType === "appointment") {
+    var a = payload.fields || {};
+    if (!a.reason) missing.push("reason for visit");
+    if (!a.history) missing.push("history");
+    if (!a.physicalExam) missing.push("PE data");
+    if (!a.diagnostics) missing.push("diagnostics");
+    if (!a.assessment) missing.push("assessment");
+    if (!a.plan) missing.push("plan");
+    // meds optional
+  }
+
+  if (!missing.length) {
+    fbText.textContent = " This looks pretty complete. Add any small details and hit Refine if you like.";
+    return;
+  }
+
+  var top = missing.slice(0, 4).join(", ");
+  fbText.textContent = " Most helpful extra details next: " + top + ".";
 }
 
 // ---------- APPOINTMENT ----------
@@ -354,11 +473,14 @@ document.addEventListener("focusin", function (e) {
 function initMicBubble() {
   if (!micBubble) return;
   var isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (isiOS || !SpeechRecognition) {
     micBubble.addEventListener("click", function () {
-      alert("On iPhone/iPad, use the keyboard mic to dictate into the focused box. Browser speech recognition is not supported.");
+      alert(
+        "On iPhone/iPad, use the keyboard mic to dictate into the focused box. Browser speech recognition is not supported."
+      );
     });
     return;
   }
@@ -377,7 +499,11 @@ function initMicBubble() {
     var end = el.selectionEnd || el.value.length;
     var before = el.value.slice(0, start);
     var after = el.value.slice(end);
-    el.value = before + (before ? " " : "") + transcript + (after ? " " + after : "");
+    el.value =
+      before +
+      (before ? " " : "") +
+      transcript +
+      (after ? " " + after : "");
   });
 
   recognition.addEventListener("end", function () {
@@ -397,3 +523,14 @@ function initMicBubble() {
 }
 
 initMicBubble();
+
+// ---------- QR CODE FOR APP URL ----------
+(function () {
+  var img = document.getElementById("qrImage");
+  if (!img) return;
+  var url = window.location.href.split("#")[0];
+  var qrUrl =
+    "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" +
+    encodeURIComponent(url);
+  img.src = qrUrl;
+})();
