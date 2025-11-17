@@ -1,597 +1,552 @@
 // app.js
 // Frontend logic for Lohit SOAP App v1.6
-// Works with server.js /api/run endpoint.
+// Uses /api/run backend endpoint defined in server.js
 
-// ====== Config ======
-const API_ENDPOINT = "/api/run";
+(function () {
+  // Tab elements
+  const tabAppointment = document.getElementById("tabAppointment");
+  const tabSurgery = document.getElementById("tabSurgery");
+  const tabConsult = document.getElementById("tabConsult");
+  const tabToolbox = document.getElementById("tabToolbox");
 
-// ====== DOM helpers ======
-const $ = (id) => document.getElementById(id);
+  const appointmentSection = document.getElementById("appointmentSection");
+  const surgerySection = document.getElementById("surgerySection");
+  const consultSection = document.getElementById("consultSection");
+  const toolboxSection = document.getElementById("toolboxSection");
 
-// Sections & tabs
-const sections = {
-  appointmentSection: $("appointmentSection"),
-  surgerySection: $("surgerySection"),
-  consultSection: $("consultSection"),
-  toolboxSection: $("toolboxSection"),
-};
+  const modeSelect = document.getElementById("modeSelect");
+  const caseLabelInput = document.getElementById("caseLabelInput");
+  const statusMessage = document.getElementById("statusMessage");
 
-const tabButtons = document.querySelectorAll(".tab");
+  // SOAP outputs
+  const soapSubjective = document.getElementById("soapSubjective");
+  const soapObjective = document.getElementById("soapObjective");
+  const soapAssessmentOut = document.getElementById("soapAssessment");
+  const soapPlanOut = document.getElementById("soapPlan");
+  const soapMedsOut = document.getElementById("soapMeds");
+  const soapAftercareOut = document.getElementById("soapAftercare");
 
-// Shared UI
-const statusText = $("statusText");
-const modeSelect = $("modeSelect");
-const caseLabelInput = $("caseLabel");
+  const copyButtons = document.querySelectorAll(".copy-button");
+  const copyFullSoapBtn = document.getElementById("copyFullSoapBtn");
+  const copyPlanMedsAftercareBtn = document.getElementById("copyPlanMedsAftercareBtn");
 
-// Appointment inputs
-const appointmentReason = $("appointmentReason");
-const appointmentTpr = $("appointmentTpr");
-const appointmentHistory = $("appointmentHistory");
-const appointmentPe = $("appointmentPe");
-const appointmentDiagnostics = $("appointmentDiagnostics");
-const appointmentAssessment = $("appointmentAssessment");
-const appointmentPlan = $("appointmentPlan");
-const appointmentMeds = $("appointmentMeds");
-const appointmentAttachments = $("appointmentAttachments");
-const generateAppointmentBtn = $("generateAppointmentBtn");
+  // Appointment elements
+  const appointmentReason = document.getElementById("appointmentReason");
+  const appointmentTpr = document.getElementById("appointmentTpr");
+  const appointmentQuick = document.getElementById("appointmentQuick");
+  const appointmentToggleFull = document.getElementById("appointmentToggleFull");
+  const appointmentFull = document.getElementById("appointmentFull");
 
-// Surgery inputs
-const surgeryTemplate = $("surgeryTemplate");
-const surgeryTemplateDescription = $("surgeryTemplateDescription");
-const asaStatus = $("asaStatus");
-const ivCatheter = $("ivCatheter");
-const etTube = $("etTube");
-const fluidRate = $("fluidRate");
-const fluidsDeclined = $("fluidsDeclined");
-const premedications = $("premedications");
-const induction = $("induction");
-const intraopMeds = $("intraopMeds");
-const procedureNotes = $("procedureNotes");
-const tprNotes = $("tprNotes");
-const durationNotes = $("durationNotes");
-const monocryl0 = $("monocryl0");
-const monocryl2_0 = $("monocryl2_0");
-const monocryl3_0 = $("monocryl3_0");
-const surgeryAttachments = $("surgeryAttachments");
-const generateSurgeryBtn = $("generateSurgeryBtn");
+  const appointmentHistory = document.getElementById("appointmentHistory");
+  const appointmentPe = document.getElementById("appointmentPe");
+  const appointmentDiagnostics = document.getElementById("appointmentDiagnostics");
+  const appointmentAssessment = document.getElementById("appointmentAssessment");
+  const appointmentPlan = document.getElementById("appointmentPlan");
+  const appointmentMeds = document.getElementById("appointmentMeds");
+  const appointmentAttachments = document.getElementById("appointmentAttachments");
+  const generateAppointmentBtn = document.getElementById("generateAppointmentBtn");
 
-// Consult
-const consultAttachments = $("consultAttachments");
-const consultInput = $("consultInput");
-const consultOutput = $("consultOutput");
-const runConsultBtn = $("runConsultBtn");
+  // Surgery elements
+  const surgeryTemplate = document.getElementById("surgeryTemplate");
+  const surgeryTemplateBanner = document.getElementById("surgeryTemplateBanner");
+  const surgeryAsa = document.getElementById("surgeryAsa");
+  const surgeryIvCath = document.getElementById("surgeryIvCath");
+  const surgeryEtt = document.getElementById("surgeryEtt");
+  const surgeryFluids = document.getElementById("surgeryFluids");
+  const surgeryFluidsDeclined = document.getElementById("surgeryFluidsDeclined");
+  const surgeryPremeds = document.getElementById("surgeryPremeds");
+  const surgeryInduction = document.getElementById("surgeryInduction");
+  const surgeryIntraop = document.getElementById("surgeryIntraop");
+  const surgeryProcedure = document.getElementById("surgeryProcedure");
+  const surgeryTpr = document.getElementById("surgeryTpr");
+  const surgeryDurations = document.getElementById("surgeryDurations");
+  const surgeryAttachments = document.getElementById("surgeryAttachments");
 
-// Toolbox Lite – bloodwork
-const toolboxAttachments = $("toolboxAttachments");
-const toolboxLabText = $("toolboxLabText");
-const toolboxDetailLevel = $("toolboxDetailLevel");
-const toolboxIncludeDifferentials = $("toolboxIncludeDifferentials");
-const toolboxClientSummary = $("toolboxClientSummary");
-const runBloodworkHelperBtn = $("runBloodworkHelperBtn");
-const toolboxBloodworkOutput = $("toolboxBloodworkOutput");
+  const dentalSection = document.getElementById("dentalSection");
+  const surgeryDentalRads = document.getElementById("surgeryDentalRads");
+  const surgeryDentalExtractions = document.getElementById("surgeryDentalExtractions");
 
-// SOAP output areas
-const subjectiveOutput = $("subjectiveOutput");
-const objectiveOutput = $("objectiveOutput");
-const assessmentOutput = $("assessmentOutput");
-const planOutput = $("planOutput");
-const medsOutput = $("medsOutput");
-const aftercareOutput = $("aftercareOutput");
+  const massSection = document.getElementById("massSection");
+  const surgeryMassDetails = document.getElementById("surgeryMassDetails");
+  const surgeryHistopath = document.getElementById("surgeryHistopath");
 
-// Copy buttons
-const copySubjectiveBtn = $("copySubjectiveBtn");
-const copyObjectiveBtn = $("copyObjectiveBtn");
-const copyAssessmentBtn = $("copyAssessmentBtn");
-const copyPlanBtn = $("copyPlanBtn");
-const copyMedsBtn = $("copyMedsBtn");
-const copyAftercareBtn = $("copyAftercareBtn");
-const copyFullSoapBtn = $("copyFullSoapBtn");
-const copyPlanMedsAftercareBtn = $("copyPlanMedsAftercareBtn");
+  const mono0Override = document.getElementById("mono0Override");
+  const mono2Override = document.getElementById("mono2Override");
+  const mono3Override = document.getElementById("mono3Override");
 
-// Mic + QR
-const micButton = $("micButton");
-const qrContainer = $("qrContainer");
+  const anesthesiaToggle = document.getElementById("anesthesiaToggle");
+  const anesthesiaPanel = document.getElementById("anesthesiaPanel");
+  const surgeryDetailsToggle = document.getElementById("surgeryDetailsToggle");
+  const surgeryDetailsPanel = document.getElementById("surgeryDetailsPanel");
+  const generateSurgeryBtn = document.getElementById("generateSurgeryBtn");
 
-// Track last-focused input for mic
-let lastFocusedEditable = null;
+  // Consult / Toolbox
+  const consultText = document.getElementById("consultText");
+  const consultAttachments = document.getElementById("consultAttachments");
+  const consultOutput = document.getElementById("consultOutput");
+  const runConsultBtn = document.getElementById("runConsultBtn");
 
-// ====== Utility helpers ======
+  const toolboxAttachments = document.getElementById("toolboxAttachments");
+  const toolboxLabText = document.getElementById("toolboxLabText");
+  const toolboxDetail = document.getElementById("toolboxDetail");
+  const toolboxIncludeDiffs = document.getElementById("toolboxIncludeDiffs");
+  const toolboxIncludeClient = document.getElementById("toolboxIncludeClient");
+  const toolboxOutput = document.getElementById("toolboxOutput");
+  const runBloodworkBtn = document.getElementById("runBloodworkBtn");
 
-function setStatus(msg) {
-  if (statusText) statusText.textContent = msg;
-}
+  // Mic + QR
+  const micButton = document.getElementById("micButton");
+  const qrCanvas = document.getElementById("qrCanvas");
 
-function getUiMode() {
-  // whatever values you used ("help", "strict", etc.)
-  return (modeSelect && modeSelect.value) || "help";
-}
-
-function isStrictMode() {
-  // treat any value literally equal to "strict" as strict mode
-  return getUiMode() === "strict";
-}
-
-function getCaseLabel() {
-  return (caseLabelInput && caseLabelInput.value) || "";
-}
-
-function getFileNames(inputEl) {
-  if (!inputEl || !inputEl.files) return [];
-  return Array.from(inputEl.files).map((f) => f.name);
-}
-
-// Call backend /api/run
-async function callBackend(mode, payload) {
-  const body = { mode, payload };
-  const res = await fetch(API_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Server error ${res.status}: ${text}`);
-  }
-
-  const data = await res.json();
-  return data.result || "";
-}
-
-// Parse SOAP text blob into 6 sections
-function parseSoapText(text) {
-  const sections = [
-    "Subjective",
-    "Objective",
-    "Assessment",
-    "Plan",
-    "Medications Dispensed",
-    "Aftercare",
-  ];
-
-  const map = {
-    subjective: "",
-    objective: "",
-    assessment: "",
-    plan: "",
-    meds: "",
-    aftercare: "",
+  // Surgery template descriptions (for banner/AI hinting)
+  const surgeryTemplateDescriptions = {
+    canine_neuter_clinic:
+      "Canine neuter – clinic: prescrotal approach, standard young healthy dog neuter. Default closure 2-0 Monocryl (<35 kg) or 0 Monocryl (>35 kg).",
+    canine_neuter_rescue:
+      "Canine neuter – rescue: prescrotal approach, often shelter / rescue dog with unknown history; default IV catheter, fluids, full monitoring.",
+    canine_spay_clinic:
+      "Canine spay – clinic: ovariohysterectomy via ventral midline, standard young healthy dog.",
+    canine_spay_rescue:
+      "Canine spay – rescue: ovariohysterectomy, often in-heat/uncertain heat history or multiparous, may have longer surgery time.",
+    feline_neuter:
+      "Feline neuter: scrotal approach, open or closed technique per clinic protocol.",
+    feline_spay:
+      "Feline spay: ovariohysterectomy via ventral midline or flank per clinic protocol.",
+    pyometra_spay:
+      "Pyometra spay: ovariohysterectomy for pyometra; septic risk, careful hemostasis, lavage and extended aftercare.",
+    cystotomy:
+      "Cystotomy: ventral cystotomy for removal of uroliths, bladder inspection, flushing of urethra.",
+    enterotomy:
+      "Enterotomy: small intestinal enterotomy for foreign body removal, leak test and omental wrap as indicated.",
+    gastrotomy:
+      "Gastrotomy: gastric foreign body removal with mucosal inspection and lavage.",
+    gastropexy:
+      "Gastropexy: prophylactic or post-GDV gastropexy (incisional or belt-loop) with standard closure.",
+    feline_unblock:
+      "Feline urethral unblock: stabilization, sedation/anesthesia, urethral catheter placement and bladder flushing.",
+    dental_cohat_rads:
+      "Dental COHAT with radiographs: full-mouth radiographs, scaling, polishing, charting, extractions as indicated under AAHA/AVDC standards.",
+    dental_cohat_norads:
+      "Dental COHAT (no radiographs): scaling, polishing and charting; no radiographs performed or radiographs declined.",
+    mass_removal:
+      "Mass removal / biopsy: skin or subcutaneous mass excision or incisional biopsy with histopathology as indicated.",
+    other:
+      "Other / custom surgery. Use free-text procedure notes to describe."
   };
 
-  if (!text || typeof text !== "string") {
-    return map;
-  }
+  // ---- Tab logic ---------------------------------------------------------
 
-  // Find positions of each heading
-  const markers = [];
-  sections.forEach((name) => {
-    const label = `${name}:`;
-    const idx = text.indexOf(label);
-    if (idx !== -1) {
-      markers.push({ name, idx, labelLen: label.length });
-    }
-  });
+  function setActiveTab(tab) {
+    [tabAppointment, tabSurgery, tabConsult, tabToolbox].forEach((btn) =>
+      btn.classList.remove("tab-active")
+    );
+    [appointmentSection, surgerySection, consultSection, toolboxSection].forEach(
+      (sec) => sec.classList.add("hidden")
+    );
 
-  if (!markers.length) {
-    // fallback: shove everything into Plan
-    map.plan = text.trim();
-    return map;
-  }
-
-  markers.sort((a, b) => a.idx - b.idx);
-
-  for (let i = 0; i < markers.length; i++) {
-    const current = markers[i];
-    const next = markers[i + 1];
-    const start = current.idx + current.labelLen;
-    const end = next ? next.idx : text.length;
-    const content = text.slice(start, end).trim();
-
-    switch (current.name) {
-      case "Subjective":
-        map.subjective = content;
-        break;
-      case "Objective":
-        map.objective = content;
-        break;
-      case "Assessment":
-        map.assessment = content;
-        break;
-      case "Plan":
-        map.plan = content;
-        break;
-      case "Medications Dispensed":
-        map.meds = content;
-        break;
-      case "Aftercare":
-        map.aftercare = content;
-        break;
-      default:
-        break;
+    if (tab === "appointment") {
+      tabAppointment.classList.add("tab-active");
+      appointmentSection.classList.remove("hidden");
+    } else if (tab === "surgery") {
+      tabSurgery.classList.add("tab-active");
+      surgerySection.classList.remove("hidden");
+    } else if (tab === "consult") {
+      tabConsult.classList.add("tab-active");
+      consultSection.classList.remove("hidden");
+    } else if (tab === "toolbox") {
+      tabToolbox.classList.add("tab-active");
+      toolboxSection.classList.remove("hidden");
     }
   }
 
-  return map;
-}
+  tabAppointment.addEventListener("click", () => setActiveTab("appointment"));
+  tabSurgery.addEventListener("click", () => setActiveTab("surgery"));
+  tabConsult.addEventListener("click", () => setActiveTab("consult"));
+  tabToolbox.addEventListener("click", () => setActiveTab("toolbox"));
 
-function fillSoapOutputsFromText(text) {
-  const parsed = parseSoapText(text);
-  subjectiveOutput.value = parsed.subjective || "";
-  objectiveOutput.value = parsed.objective || "";
-  assessmentOutput.value = parsed.assessment || "";
-  planOutput.value = parsed.plan || "";
-  medsOutput.value = parsed.meds || "";
-  aftercareOutput.value = parsed.aftercare || "";
-}
+  // Default tab
+  setActiveTab("appointment");
 
-async function handleCopy(text) {
-  try {
-    await navigator.clipboard.writeText(text || "");
-  } catch (err) {
-    console.error("Clipboard error:", err);
-  }
-}
+  // ---- Appointment minimal/full toggle ----------------------------------
 
-// ====== Tabs ======
-tabButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const targetId = btn.getAttribute("data-tab");
-    if (!targetId) return;
+  let appointmentFullVisible = false;
 
-    tabButtons.forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-
-    Object.entries(sections).forEach(([id, el]) => {
-      if (!el) return;
-      if (id === targetId) el.classList.remove("hidden");
-      else el.classList.add("hidden");
-    });
-  });
-});
-
-// ====== QR code ======
-function initQr() {
-  if (!qrContainer) return;
-  qrContainer.innerHTML = "";
-  // global QRCode from index.html script
-  // eslint-disable-next-line no-undef
-  new QRCode(qrContainer, {
-    text: window.location.href,
-    width: 180,
-    height: 180,
-  });
-}
-
-// ====== Surgery template descriptions & small logic ======
-
-const surgeryTemplateDescriptions = {
-  canine_neuter_clinic:
-    "Prescrotal canine neuter using clinic protocol; default 2-0 Monocryl (<35 kg) or 0 Monocryl (>35 kg) unless overridden.",
-  canine_neuter_rescue:
-    "Rescue canine neuter using clinic rescue protocol; default 2-0 Monocryl (<35 kg) or 0 Monocryl (>35 kg).",
-  canine_spay_clinic:
-    "Standard canine OHE per clinic protocol; 2-0 Monocryl for body wall, 3-0 for intradermal skin unless overridden.",
-  canine_spay_rescue:
-    "Rescue canine spay with clinic rescue analgesia and closure protocols.",
-  feline_neuter:
-    "Standard feline scrotal neuter; 3-0 or 4-0 absorbable ligatures per clinic protocol.",
-  feline_spay:
-    "Feline OHE per clinic protocol; typically 3-0 Monocryl, simple continuous fascia and intradermal skin.",
-  dental_cohat_rads:
-    "COHAT with full-mouth radiographs and local nerve blocks; mention AAHA/AVDC extraction standards if extractions performed.",
-  dental_cohat_no_rads:
-    "COHAT without radiographs; note radiographs declined/unavailable in SOAP.",
-  mass_removal_skin:
-    "Skin/SQ mass removal; document location, margins, closure, and histopath submission.",
-  pyometra_spay:
-    "OVH for pyometra; record stability, intra-op findings, and peri-op antibiotics.",
-  exploratory_laparotomy:
-    "Full exploratory laparotomy; list organs inspected and any biopsies obtained.",
-  enterotomy:
-    "Enterotomy for foreign body/lesion; record segment, contents, closure pattern, and lavage.",
-  gastrotomy:
-    "Gastrotomy for foreign body; note location, contents, and leak test.",
-  gastropexy:
-    "Gastropexy; record technique (incisional/belt-loop/etc.) and side.",
-  cystotomy:
-    "Cystotomy for uroliths/mass; record stones removed and culture status.",
-  feline_unblock:
-    "Feline urethral obstruction; document catheterization details and post-obstructive care.",
-  other_custom:
-    "Custom surgery; write key findings and closure details in Procedure notes.",
-};
-
-function updateSurgeryDescription() {
-  if (!surgeryTemplate || !surgeryTemplateDescription) return;
-  const key = surgeryTemplate.value;
-  const desc =
-    surgeryTemplateDescriptions[key] ||
-    surgeryTemplateDescriptions.canine_neuter_clinic;
-  surgeryTemplateDescription.textContent = desc;
-}
-
-if (surgeryTemplate) {
-  surgeryTemplate.addEventListener("change", updateSurgeryDescription);
-  updateSurgeryDescription();
-}
-
-// Fluids declined -> disable rate box
-if (fluidsDeclined && fluidRate) {
-  fluidsDeclined.addEventListener("change", () => {
-    if (fluidsDeclined.checked) {
-      fluidRate.value = "";
-      fluidRate.disabled = true;
+  appointmentToggleFull.addEventListener("click", () => {
+    appointmentFullVisible = !appointmentFullVisible;
+    if (appointmentFullVisible) {
+      appointmentFull.classList.remove("collapse");
+      appointmentFull.classList.add("collapse", "open");
+      appointmentToggleFull.textContent = "Hide full SOAP input fields";
     } else {
-      fluidRate.disabled = false;
+      appointmentFull.classList.remove("open");
+      appointmentToggleFull.textContent = "Show full SOAP input fields";
     }
   });
-}
 
-// ====== Appointment SOAP generation ======
-if (generateAppointmentBtn) {
+  // ---- Surgery template dynamic UI --------------------------------------
+
+  function updateSurgeryTemplateUI() {
+    const value = surgeryTemplate.value;
+    const desc = surgeryTemplateDescriptions[value] || "";
+    surgeryTemplateBanner.textContent = desc;
+
+    // Show dental section only for dental templates
+    if (value === "dental_cohat_rads" || value === "dental_cohat_norads") {
+      dentalSection.classList.remove("hidden");
+    } else {
+      dentalSection.classList.add("hidden");
+    }
+
+    // Show mass/cysto section for mass, cystotomy, etc.
+    if (value === "mass_removal" || value === "cystotomy") {
+      massSection.classList.remove("hidden");
+    } else {
+      massSection.classList.add("hidden");
+    }
+  }
+
+  surgeryTemplate.addEventListener("change", updateSurgeryTemplateUI);
+  updateSurgeryTemplateUI();
+
+  // Collapse toggles
+  function togglePanel(button, panel) {
+    button.addEventListener("click", () => {
+      if (panel.classList.contains("open")) {
+        panel.classList.remove("open");
+      } else {
+        panel.classList.add("open");
+      }
+    });
+  }
+
+  togglePanel(anesthesiaToggle, anesthesiaPanel);
+  togglePanel(surgeryDetailsToggle, surgeryDetailsPanel);
+
+  // ---- Helper: get filenames from file input ----------------------------
+
+  function getFileNames(inputEl) {
+    if (!inputEl || !inputEl.files) return [];
+    return Array.from(inputEl.files).map((f) => f.name);
+  }
+
+  // ---- API caller -------------------------------------------------------
+
+  async function callApi(mode, payload) {
+    statusMessage.textContent = "Working...";
+    try {
+      const response = await fetch("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode, payload })
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        statusMessage.textContent = `Error: ${response.status} ${response.statusText}`;
+        console.error("API error:", text);
+        return { ok: false, result: "" };
+      }
+
+      const data = await response.json();
+      statusMessage.textContent = "Done.";
+      return { ok: true, result: data.result || "" };
+    } catch (err) {
+      console.error("API call failed:", err);
+      statusMessage.textContent = "Error contacting server.";
+      return { ok: false, result: "" };
+    }
+  }
+
+  // ---- SOAP output parser -----------------------------------------------
+
+  function fillSoapOutputs(rawText) {
+    // Expect text in sections:
+    // Subjective:
+    // ...
+    // Objective:
+    // ...
+    // etc.
+    const sections = {
+      Subjective: "",
+      Objective: "",
+      Assessment: "",
+      Plan: "",
+      "Medications Dispensed": "",
+      Aftercare: ""
+    };
+
+    let current = null;
+    const lines = (rawText || "").split(/\r?\n/);
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (/^Subjective:/i.test(trimmed)) {
+        current = "Subjective";
+        sections[current] = trimmed.replace(/^Subjective:\s*/i, "");
+      } else if (/^Objective:/i.test(trimmed)) {
+        current = "Objective";
+        sections[current] = trimmed.replace(/^Objective:\s*/i, "");
+      } else if (/^Assessment:/i.test(trimmed)) {
+        current = "Assessment";
+        sections[current] = trimmed.replace(/^Assessment:\s*/i, "");
+      } else if (/^Plan:/i.test(trimmed)) {
+        current = "Plan";
+        sections[current] = trimmed.replace(/^Plan:\s*/i, "");
+      } else if (/^Medications Dispensed:/i.test(trimmed)) {
+        current = "Medications Dispensed";
+        sections[current] = trimmed.replace(/^Medications Dispensed:\s*/i, "");
+      } else if (/^Aftercare:/i.test(trimmed)) {
+        current = "Aftercare";
+        sections[current] = trimmed.replace(/^Aftercare:\s*/i, "");
+      } else if (current) {
+        sections[current] += "\n" + line;
+      }
+    }
+
+    soapSubjective.value = sections["Subjective"].trim();
+    soapObjective.value = sections["Objective"].trim();
+    soapAssessmentOut.value = sections["Assessment"].trim();
+    soapPlanOut.value = sections["Plan"].trim();
+    soapMedsOut.value = sections["Medications Dispensed"].trim();
+    soapAftercareOut.value = sections["Aftercare"].trim();
+  }
+
+  // ---- Appointment SOAP generation --------------------------------------
+
   generateAppointmentBtn.addEventListener("click", async () => {
-    setStatus("Generating appointment SOAP…");
-
+    const strictMode = modeSelect.value === "strict";
     const payload = {
       soapType: "appointment",
-      strictMode: isStrictMode(),
-      uiMode: getUiMode(),
-      caseLabel: getCaseLabel(),
-      reason: appointmentReason.value,
-      tpr: appointmentTpr.value,
-      history: appointmentHistory.value,
-      physicalExam: appointmentPe.value,
-      diagnostics: appointmentDiagnostics.value,
-      assessment: appointmentAssessment.value,
-      plan: appointmentPlan.value,
-      medsDispensed: appointmentMeds.value,
-      attachments: getFileNames(appointmentAttachments),
+      strictMode,
+      caseLabel: caseLabelInput.value || "",
+      uiMode: "appointment",
+      reason: appointmentReason.value || "",
+      tpr: appointmentTpr.value || "",
+      quickNotes: appointmentQuick.value || "",
+      history: appointmentHistory.value || "",
+      physicalExam: appointmentPe.value || "",
+      diagnostics: appointmentDiagnostics.value || "",
+      assessment: appointmentAssessment.value || "",
+      plan: appointmentPlan.value || "",
+      medsDispensed: appointmentMeds.value || "",
+      attachments: getFileNames(appointmentAttachments)
     };
 
-    try {
-      const text = await callBackend("soap", payload);
-      fillSoapOutputsFromText(text);
-      setStatus("Appointment SOAP ready.");
-    } catch (err) {
-      console.error(err);
-      setStatus(`Error generating appointment SOAP: ${err.message}`);
-    }
+    const { ok, result } = await callApi("soap", payload);
+    if (ok) fillSoapOutputs(result);
   });
-}
 
-// ====== Surgery SOAP generation ======
-if (generateSurgeryBtn) {
+  // ---- Surgery SOAP generation -----------------------------------------
+
   generateSurgeryBtn.addEventListener("click", async () => {
-    setStatus("Generating surgery SOAP…");
-
+    const strictMode = modeSelect.value === "strict";
     const payload = {
       soapType: "surgery",
-      strictMode: isStrictMode(),
-      uiMode: getUiMode(),
-      caseLabel: getCaseLabel(),
+      strictMode,
+      caseLabel: caseLabelInput.value || "",
+      uiMode: "surgery",
       surgeryTemplate: surgeryTemplate.value,
-      asaStatus: asaStatus.value,
-      ivCatheter: ivCatheter.value,
-      etTube: etTube.value,
-      fluidRate: fluidsDeclined.checked ? "" : fluidRate.value,
-      fluidsDeclined: fluidsDeclined.checked,
-      premedications: premedications.value,
-      induction: induction.value,
-      intraopMeds: intraopMeds.value,
-      procedureNotes: procedureNotes.value,
-      tprNotes: tprNotes.value,
-      durationNotes: durationNotes.value,
-      monocrylOverrides: {
-        monocryl0: monocryl0.checked,
-        monocryl2_0: monocryl2_0.checked,
-        monocryl3_0: monocryl3_0.checked,
+      surgeryTemplateDescription:
+        surgeryTemplateDescriptions[surgeryTemplate.value] || "",
+      asaStatus: surgeryAsa.value || "",
+      ivCatheter: surgeryIvCath.value || "",
+      ettSize: surgeryEtt.value || "",
+      fluidsRate: surgeryFluids.value || "",
+      fluidsDeclined: !!surgeryFluidsDeclined.checked,
+      premeds: surgeryPremeds.value || "",
+      inductionMaintenance: surgeryInduction.value || "",
+      intraOpMeds: surgeryIntraop.value || "",
+      procedureNotes: surgeryProcedure.value || "",
+      dentalRadsChoice: surgeryDentalRads.value || "",
+      dentalExtractionNotes: surgeryDentalExtractions.value || "",
+      massDetails: surgeryMassDetails.value || "",
+      histopathChoice: surgeryHistopath.value || "",
+      tprNotes: surgeryTpr.value || "",
+      durations: surgeryDurations.value || "",
+      monocrylOverride: {
+        zero: !!mono0Override.checked,
+        two: !!mono2Override.checked,
+        three: !!mono3Override.checked
       },
-      attachments: getFileNames(surgeryAttachments),
+      attachments: getFileNames(surgeryAttachments)
     };
 
-    try {
-      const text = await callBackend("soap", payload);
-      fillSoapOutputsFromText(text);
-      setStatus("Surgery SOAP ready.");
-    } catch (err) {
-      console.error(err);
-      setStatus(`Error generating surgery SOAP: ${err.message}`);
-    }
+    const { ok, result } = await callApi("soap", payload);
+    if (ok) fillSoapOutputs(result);
   });
-}
 
-// ====== Consult generator ======
-if (runConsultBtn) {
+  // ---- Consult ----------------------------------------------------------
+
   runConsultBtn.addEventListener("click", async () => {
-    setStatus("Running consult…");
-
     const payload = {
-      message: consultInput.value,
-      caseLabel: getCaseLabel(),
-      uiMode: getUiMode(),
-      attachments: getFileNames(consultAttachments),
+      message: consultText.value || "",
+      caseLabel: caseLabelInput.value || "",
+      attachments: getFileNames(consultAttachments)
     };
 
-    try {
-      const text = await callBackend("consult", payload);
-      consultOutput.value = text;
-      setStatus("Consult output ready.");
-    } catch (err) {
-      console.error(err);
-      setStatus(`Error running consult: ${err.message}`);
+    const { ok, result } = await callApi("consult", payload);
+    if (ok) {
+      consultOutput.value = result.trim();
     }
   });
-}
 
-// ====== Toolbox Lite – Bloodwork Helper ======
-if (runBloodworkHelperBtn) {
-  runBloodworkHelperBtn.addEventListener("click", async () => {
-    setStatus("Running Bloodwork Helper Lite…");
+  // ---- Toolbox: Bloodwork Helper ---------------------------------------
 
+  runBloodworkBtn.addEventListener("click", async () => {
     const payload = {
-      text: toolboxLabText.value,
-      detailLevel: toolboxDetailLevel.value,
-      includeDiffs: toolboxIncludeDifferentials.checked,
-      includeClientFriendly: toolboxClientSummary.checked,
-      caseLabel: getCaseLabel(),
-      attachments: getFileNames(toolboxAttachments),
+      text: toolboxLabText.value || "",
+      detailLevel: toolboxDetail.value || "short",
+      includeDiffs: !!toolboxIncludeDiffs.checked,
+      includeClientFriendly: !!toolboxIncludeClient.checked,
+      attachments: getFileNames(toolboxAttachments)
     };
 
-    try {
-      const text = await callBackend("toolbox-bloodwork", payload);
-      toolboxBloodworkOutput.value = text;
-      setStatus("Bloodwork Helper output ready.");
-    } catch (err) {
-      console.error(err);
-      setStatus(`Error running Bloodwork Helper: ${err.message}`);
+    const { ok, result } = await callApi("toolbox-bloodwork", payload);
+    if (ok) {
+      toolboxOutput.value = result.trim();
     }
   });
-}
 
-// ====== Copy handlers ======
-if (copySubjectiveBtn) {
-  copySubjectiveBtn.addEventListener("click", () =>
-    handleCopy(subjectiveOutput.value)
-  );
-}
-if (copyObjectiveBtn) {
-  copyObjectiveBtn.addEventListener("click", () =>
-    handleCopy(objectiveOutput.value)
-  );
-}
-if (copyAssessmentBtn) {
-  copyAssessmentBtn.addEventListener("click", () =>
-    handleCopy(assessmentOutput.value)
-  );
-}
-if (copyPlanBtn) {
-  copyPlanBtn.addEventListener("click", () =>
-    handleCopy(planOutput.value)
-  );
-}
-if (copyMedsBtn) {
-  copyMedsBtn.addEventListener("click", () =>
-    handleCopy(medsOutput.value)
-  );
-}
-if (copyAftercareBtn) {
-  copyAftercareBtn.addEventListener("click", () =>
-    handleCopy(aftercareOutput.value)
-  );
-}
+  // ---- Copy buttons -----------------------------------------------------
 
-if (copyFullSoapBtn) {
+  function copyToClipboard(text) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).catch((err) => {
+      console.error("Clipboard error", err);
+    });
+  }
+
+  copyButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.copyTarget;
+      const el = document.getElementById(id);
+      if (el) copyToClipboard(el.value);
+    });
+  });
+
   copyFullSoapBtn.addEventListener("click", () => {
-    const text = [
+    const full = [
       "Subjective:",
-      subjectiveOutput.value,
+      soapSubjective.value,
       "",
       "Objective:",
-      objectiveOutput.value,
+      soapObjective.value,
       "",
       "Assessment:",
-      assessmentOutput.value,
+      soapAssessmentOut.value,
       "",
       "Plan:",
-      planOutput.value,
+      soapPlanOut.value,
       "",
       "Medications Dispensed:",
-      medsOutput.value,
+      soapMedsOut.value,
       "",
       "Aftercare:",
-      aftercareOutput.value,
+      soapAftercareOut.value
     ].join("\n");
-    handleCopy(text);
+    copyToClipboard(full.trim());
   });
-}
 
-if (copyPlanMedsAftercareBtn) {
   copyPlanMedsAftercareBtn.addEventListener("click", () => {
     const text = [
       "Plan:",
-      planOutput.value,
+      soapPlanOut.value,
       "",
       "Medications Dispensed:",
-      medsOutput.value,
+      soapMedsOut.value,
       "",
       "Aftercare:",
-      aftercareOutput.value,
+      soapAftercareOut.value
     ].join("\n");
-    handleCopy(text);
+    copyToClipboard(text.trim());
   });
-}
 
-// ====== Mic / speech-to-text ======
-function initMic() {
-  if (!micButton) return;
+  // ---- Mic / Speech recognition ----------------------------------------
 
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    micButton.style.display = "none";
-    return;
+  let lastFocusedElement = null;
+
+  function trackFocus(el) {
+    if (!el) return;
+    el.addEventListener("focus", () => {
+      lastFocusedElement = el;
+    });
   }
 
-  const recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.lang = "en-US";
+  [
+    appointmentReason,
+    appointmentTpr,
+    appointmentQuick,
+    appointmentHistory,
+    appointmentPe,
+    appointmentDiagnostics,
+    appointmentAssessment,
+    appointmentPlan,
+    appointmentMeds,
+    surgeryAsa,
+    surgeryIvCath,
+    surgeryEtt,
+    surgeryFluids,
+    surgeryPremeds,
+    surgeryInduction,
+    surgeryIntraop,
+    surgeryProcedure,
+    surgeryDentalExtractions,
+    surgeryMassDetails,
+    surgeryTpr,
+    surgeryDurations,
+    consultText,
+    toolboxLabText
+  ].forEach(trackFocus);
 
-  let listening = false;
+  let recognition = null;
+  if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+    const SR =
+      window.SpeechRecognition || window.webkitSpeechRecognition || null;
+    if (SR) {
+      recognition = new SR();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (lastFocusedElement && typeof lastFocusedElement.value === "string") {
+          const sep = lastFocusedElement.value ? " " : "";
+          lastFocusedElement.value += sep + transcript;
+        }
+      };
+    }
+  }
 
   micButton.addEventListener("click", () => {
-    if (!listening) {
-      try {
-        recognition.start();
-        listening = true;
-        micButton.classList.add("listening");
-      } catch (err) {
-        console.error("Speech start error", err);
+    if (!recognition) {
+      alert("Speech recognition not supported in this browser.");
+      return;
+    }
+    try {
+      recognition.start();
+      statusMessage.textContent = "Listening...";
+    } catch (e) {
+      console.error("Speech start error:", e);
+    }
+  });
+
+  // ---- QR code ----------------------------------------------------------
+
+  function initQr() {
+    if (!qrCanvas || !window.QRCode) return;
+    const url = window.location.href;
+    QRCode.toCanvas(
+      qrCanvas,
+      url,
+      { width: 180, margin: 1 },
+      (error) => {
+        if (error) {
+          console.error("QR error:", error);
+        }
       }
-    } else {
-      recognition.stop();
-      listening = false;
-      micButton.classList.remove("listening");
-    }
-  });
+    );
+  }
 
-  recognition.addEventListener("result", (event) => {
-    const transcript = Array.from(event.results)
-      .map((r) => r[0].transcript)
-      .join(" ");
-
-    const target =
-      lastFocusedEditable ||
-      appointmentHistory ||
-      consultInput ||
-      toolboxLabText;
-
-    if (target) {
-      const current = target.value || "";
-      target.value = current ? current + " " + transcript : transcript;
-    }
-  });
-
-  recognition.addEventListener("end", () => {
-    listening = false;
-    micButton.classList.remove("listening");
-  });
-}
-
-// Track focus so mic knows where to type
-function initFocusTracking() {
-  const selectors = "textarea, input[type='text']";
-  document.querySelectorAll(selectors).forEach((el) => {
-    el.addEventListener("focus", () => {
-      lastFocusedEditable = el;
-    });
-  });
-}
-
-// ====== Init ======
-document.addEventListener("DOMContentLoaded", () => {
-  initQr();
-  initMic();
-  initFocusTracking();
-  setStatus("Ready.");
-});
+  window.addEventListener("load", initQr);
+})();
