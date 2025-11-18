@@ -1,4 +1,4 @@
-// Lohit SOAP App v1.6 backend (Assistant-integrated style)
+// Lohit SOAP App v1.6.2 backend (Assistant-integrated style)
 // Simple Express server + /api/run endpoint for SOAP + Toolbox Lite + Consult.
 
 const path = require("path");
@@ -21,7 +21,7 @@ if (!assistantId || assistantId === "NOT_SET") {
 
 const openai = new OpenAI({ apiKey });
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" })); // allow some room if we later send base64 images
 
 // Serve static files from project root (index.html, etc.)
 app.use(express.static(path.join(__dirname)));
@@ -36,8 +36,7 @@ async function callOpenAI(systemPrompt, userPrompt) {
     return "Error: OPENAI_API_KEY is not set on the server.";
   }
 
-  // NOTE: We conceptually "use" your Assistant by embedding its role and ID
-  // into the system prompt. This keeps behavior stable even if Assistants API changes.
+  // Conceptually "use" your Assistant by embedding its identity into the system prompt.
   const combinedSystemPrompt = `
 You are Dr. Lohit Busanelli's dedicated veterinary Assistant (ID: ${assistantId}).
 
@@ -71,7 +70,7 @@ app.post("/api/run", async (req, res) => {
     // 1) SOAP MODE (Appointment / Surgery)
     if (mode === "soap") {
       const systemPrompt = `
-You are the backend brain for Dr. Lohit Busanelli’s Lohit SOAP App v1.6.
+You are the backend brain for Dr. Lohit Busanelli’s Lohit SOAP App v1.6.2.
 
 Always output an Avimark-compatible SOAP with this exact section order and headings:
 
@@ -82,9 +81,16 @@ Plan:
 Medications Dispensed:
 Aftercare:
 
+The JSON payload may include:
+- "soapType": "appointment" or "surgery".
+- "strictMode": boolean.
+- "quickMode": boolean (for surgeries).
+- "freeText": a single combined narrative when Simple mode is used.
+  - When "freeText" is present and non-empty, treat it as the primary description and parse it, using any structured fields to refine/override.
+- Additional structured fields for weightKg, ageYears, tpr, visitType, surgeryType, asaStatus, IV catheter, ET tube size, fluidsMode, procedureNotes, etc.
+
 Rules:
-- "soapType" in JSON will be "appointment" or "surgery".
-- "strictMode" is a boolean:
+- strictMode:
   - strictMode = true  => do NOT invent new clinical data. If information is missing, say "Not recorded".
   - strictMode = false => you may use safe templated normals when needed but NEVER fabricate risky details (no made-up drugs, doses, or diagnostics). At the end of Assessment, add a short "Missing/Assumed:" line listing any assumptions.
 
@@ -102,7 +108,7 @@ For EVERY SOAP:
     - If user explicitly mentions different findings, follow that instead.
 - Assessment:
   - Problem list + interpretations of diagnostics.
-  - Include ASA class when soapType = "surgery" (use payload.asaStatus).
+  - Include ASA class when soapType = "surgery" (use payload.asaStatus if present).
   - For multi-problem cases, clearly separate major problems.
 - Plan:
   - Use numbered categories with ONE blank line between categories only (Avimark compatible):
@@ -168,12 +174,14 @@ Assume the user is an experienced small animal vet.
 
     // 3) TOOLBOX: BLOODWORK HELPER
     else if (mode === "toolbox-bloodwork") {
-      const { text, detailLevel, includeDiffs, includeClientFriendly } =
+      const { text, detailLevel, includeDiffs, includeClientFriendly, refineNote, previousOutput } =
         payload || {};
 
       const systemPrompt = `
 You are Bloodwork Helper Lite for a small-animal veterinary clinic.
-Input is pasted CBC/chem/UA text.
+Input is pasted CBC/chem/UA text or a refined re-run request.
+
+If "previousOutput" and "refineNote" are provided, adjust or expand the previous output based on the refineNote while keeping the same overall structure.
 
 Output format:
 1) "Clinical summary:" – 2–5 sentences.
@@ -188,17 +196,29 @@ Do NOT mention specific reference ranges unless they are explicitly in the text.
 Never include microchip numbers or client identifiers.
       `.trim();
 
-      const userPrompt = `detailLevel=${detailLevel}, includeDiffs=${includeDiffs}, includeClientFriendly=${includeClientFriendly}\n\nLab text:\n${text}`;
+      const userPrompt = `
+detailLevel=${detailLevel}, includeDiffs=${includeDiffs}, includeClientFriendly=${includeClientFriendly}
+refineNote=${refineNote || ""}
+
+Previous output (may be empty):
+${previousOutput || "(none)"}
+
+Lab text:
+${text}
+      `.trim();
+
       resultText = await callOpenAI(systemPrompt, userPrompt);
     }
 
     // 4) TOOLBOX: EMAIL / CLIENT COMMUNICATION
     else if (mode === "toolbox-email") {
-      const { emailType, petName, ownerName, timeframe, notes } = payload || {};
+      const { emailType, petName, ownerName, timeframe, notes, refineNote, previousOutput } = payload || {};
 
       const systemPrompt = `
 You are the Email / Client Communication Helper for a veterinary clinic.
 Generate a COMPLETE email body that staff can paste into their email client.
+
+If "previousOutput" and "refineNote" are provided, rewrite or refine the previous email based on the refineNote while preserving intent and key facts.
 
 Tone: warm, clear, not overly formal.
 
@@ -214,7 +234,18 @@ Always:
 - End with a line about calling the clinic with any questions.
       `.trim();
 
-      const userPrompt = `emailType=${emailType}\npetName=${petName}\nownerName=${ownerName}\ntimeframe=${timeframe}\nnotes=${notes}`;
+      const userPrompt = `
+emailType=${emailType}
+petName=${petName}
+ownerName=${ownerName}
+timeframe=${timeframe}
+notes=${notes}
+refineNote=${refineNote || ""}
+
+Previous output (may be empty):
+${previousOutput || "(none)"}
+      `.trim();
+
       resultText = await callOpenAI(systemPrompt, userPrompt);
     }
 
@@ -231,5 +262,5 @@ Always:
 });
 
 app.listen(PORT, () => {
-  console.log(`Lohit SOAP App v1.6 running on port ${PORT}`);
+  console.log(`Lohit SOAP App v1.6.2 running on port ${PORT}`);
 });
