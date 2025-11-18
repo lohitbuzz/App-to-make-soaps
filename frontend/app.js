@@ -238,7 +238,7 @@ const BACKEND_URL = "https://lohit-soap-app.onrender.com/api/soap";
   async function callApi(mode, payload) {
     statusMessage.textContent = "Working...";
     try {
-  const response = await fetch(BACKEND_URL, {
+      const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode, payload })
