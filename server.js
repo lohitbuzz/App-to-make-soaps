@@ -1,266 +1,316 @@
-// Lohit SOAP App v1.6.2 backend (Assistant-integrated style)
-// Simple Express server + /api/run endpoint for SOAP + Toolbox Lite + Consult.
+// server.js
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+import dotenv from "dotenv";
+import OpenAI from "openai";
 
-const path = require("path");
-const express = require("express");
-const OpenAI = require("openai");
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const port = process.env.PORT || 3000;
 
-// Environment: your own API key + Assistant ID
-const apiKey = process.env.OPENAI_API_KEY;
-const assistantId = process.env.OPENAI_ASSISTANT_ID || "NOT_SET";
+// IMPORTANT: set these in .env
+// OPENAI_API_KEY=sk-.....
+// OPENAI_ASSISTANT_ID=asst_......
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
 
-if (!apiKey) {
-  console.warn("WARNING: OPENAI_API_KEY not set. /api/run calls will fail.");
+if (!OPENAI_API_KEY || !OPENAI_ASSISTANT_ID) {
+  console.warn(
+    "[WARN] OPENAI_API_KEY or OPENAI_ASSISTANT_ID not set. /api/soap will fail until you configure them."
+  );
 }
-if (!assistantId || assistantId === "NOT_SET") {
-  console.warn("WARNING: OPENAI_ASSISTANT_ID not set. Using inline assistant rules only.");
-}
 
-const openai = new OpenAI({ apiKey });
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
-app.use(express.json({ limit: "10mb" })); // allow some room if we later send base64 images
+app.use(cors());
+app.use(bodyParser.json({ limit: "2mb" }));
 
-// Serve static files from project root (index.html, etc.)
-app.use(express.static(path.join(__dirname)));
+// Simple in-memory template store so Trainer works out of the box.
+// Later you can swap this for a DB without touching the front-end.
+let templates = [];
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
+// Utility: build a single intake string from frontend payload
+function buildIntake(reqBody) {
+  const { mode, detail, fields } = reqBody || {};
+  const {
+    caseLabel,
+    signalment,
+    weight,
+    // Appointment
+    apptReasonSimple,
+    apptTemplateSimple,
+    apptNotesSimple,
+    apptReason,
+    apptTemplate,
+    apptHistory,
+    apptPE,
+    apptDiagnostics,
+    apptAssessment,
+    apptPlan,
+    // Surgery
+    sxTypeSimple,
+    sxASA,
+    sxSummarySimple,
+    sxType,
+    sxASAadv,
+    sxETT,
+    sxCatheter,
+    sxFluids,
+    sxFluidsDeclined,
+    sxPremeds,
+    sxInduction,
+    sxIntraOp,
+    sxProcedureNotes,
+    sxPostOp,
+    sxTPR,
+    // Consult / toolbox
+    consultMode,
+    consultInput,
+  } = fields || {};
 
-// Helper: call OpenAI with a system + user prompt
-async function callOpenAI(systemPrompt, userPrompt) {
-  if (!apiKey) {
-    return "Error: OPENAI_API_KEY is not set on the server.";
+  const header = [
+    caseLabel ? `Case label: ${caseLabel}` : null,
+    signalment ? `Signalment: ${signalment}` : null,
+    weight ? `Weight: ${weight} kg` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  let core = "";
+
+  if (mode === "appointment") {
+    if (detail === "simple") {
+      core = `
+[MODE] Appointment – Simple
+
+Reason: ${apptReasonSimple || "(not provided)"}
+Template hint: ${apptTemplateSimple || "(none)"}
+Quick notes: ${apptNotesSimple || "(none)"}
+`;
+    } else {
+      core = `
+[MODE] Appointment – Advanced
+
+Reason: ${apptReason || "(not provided)"}
+Template hint: ${apptTemplate || "(none)"}
+
+History (subjective): 
+${apptHistory || "(none)"}
+
+Physical exam (Objective data-only):
+${apptPE || "(none)"}
+
+Diagnostics (Objective data-only, values only, no interpretation):
+${apptDiagnostics || "(none)"}
+
+Assessment (problem list, differentials, interpretation):
+${apptAssessment || "(none)"}
+
+Plan (treatment, diagnostics, recheck, client communication):
+${apptPlan || "(none)"}
+`;
+    }
+  } else if (mode === "surgery") {
+    if (detail === "simple") {
+      core = `
+[MODE] Surgery – Simple
+
+Surgery type: ${sxTypeSimple || "(not provided)"}
+ASA status: ${sxASA || "(not provided)"}
+
+Quick anesthesia/surgery summary: 
+${sxSummarySimple || "(none)"}
+`;
+    } else {
+      core = `
+[MODE] Surgery – Advanced
+
+Surgery type: ${sxType || "(not provided)"}
+ASA status: ${sxASAadv || "(not provided)"}
+ET tube: ${sxETT || "(not provided)"}
+IV catheter: ${sxCatheter || "(not provided)"}
+IV fluids: ${sxFluidsDeclined ? "DECLINED" : sxFluids || "(not provided)"}
+
+Premedications (names, doses, routes):
+${sxPremeds || "(none)"}
+
+Induction / Maintenance:
+${sxInduction || "(none)"}
+
+Intra-op medications:
+${sxIntraOp || "(none)"}
+
+Surgical procedure notes (approach, findings, closure details):
+${sxProcedureNotes || "(none)"}
+
+Post-op meds / recovery notes:
+${sxPostOp || "(none)"}
+
+Optional TPR (objective data-only):
+${sxTPR || "(none)"}
+`;
+    }
+  } else if (mode === "consult") {
+    core = `
+[MODE] Consult & Toolbox
+
+Consult type: ${consultMode || "freeform"}
+
+User request / raw notes:
+${consultInput || "(none)"}
+`;
+  } else {
+    core = `
+[MODE] Unknown – fallback
+
+Raw body:
+${JSON.stringify(reqBody, null, 2)}
+`;
   }
 
-  // Conceptually "use" your Assistant by embedding its identity into the system prompt.
-  const combinedSystemPrompt = `
-You are Dr. Lohit Busanelli's dedicated veterinary Assistant (ID: ${assistantId}).
+  // This prefix helps your Assistant align with your clinic rules.
+  const instructionsHint = `
+[CLINIC RULES HINT]
+- Output MUST be Avimark-compatible SOAP structure: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare (for SOAP cases).
+- Objective contains only data / findings; Assessment contains interpretation and problem list.
+- For anesthesia/surgery, include ASA status, anesthesia summary, and Plan subsections in this order:
+  1. IV Catheter / Fluids
+  2. Pre-medications
+  3. Induction / Maintenance
+  4. Surgical Prep
+  5. Surgical Procedure
+  6. Intra-op Medications
+  7. Recovery
+  8. Medications Dispensed
+  9. Aftercare
+- Respect privacy: do NOT include owner names, phone numbers, emails, addresses, or microchip numbers in output. If microchip implanted, only say: "Microchip implanted today."
+- For dental cases, follow the clinic's AAHA/AVDC-style wording and standard flap/closure descriptions as configured in this Assistant's instructions.
+`;
 
-Follow the clinic's rules, templates, and SOAP formatting exactly.
-If there is any conflict between older habits and the current instructions, always follow the current instructions below.
-
------ CURRENT INSTRUCTIONS -----
-${systemPrompt}
-  `.trim();
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    temperature: 0.4,
-    messages: [
-      { role: "system", content: combinedSystemPrompt },
-      { role: "user", content: userPrompt }
-    ]
-  });
-
-  const choice = response.choices && response.choices[0];
-  return (choice && choice.message && choice.message.content) || "";
+  return [header, instructionsHint, core].join("\n\n");
 }
 
-// Main endpoint the frontend calls
-app.post("/api/run", async (req, res) => {
-  const { mode, payload } = req.body || {};
-
+// --- SOAP endpoint: calls your Assistant ---
+app.post("/api/soap", async (req, res) => {
   try {
-    let resultText = "";
-
-    // 1) SOAP MODE (Appointment / Surgery)
-    if (mode === "soap") {
-      const systemPrompt = `
-You are the backend brain for Dr. Lohit Busanelli’s Lohit SOAP App v1.6.2.
-
-Always output an Avimark-compatible SOAP with this exact section order and headings:
-
-Subjective:
-Objective:
-Assessment:
-Plan:
-Medications Dispensed:
-Aftercare:
-
-The JSON payload may include:
-- "soapType": "appointment" or "surgery".
-- "strictMode": boolean.
-- "quickMode": boolean (for surgeries).
-- "freeText": a single combined narrative when Simple mode is used.
-  - When "freeText" is present and non-empty, treat it as the primary description and parse it, using any structured fields to refine/override.
-- Additional structured fields for weightKg, ageYears, tpr, visitType, surgeryType, asaStatus, IV catheter, ET tube size, fluidsMode, procedureNotes, etc.
-
-Rules:
-- strictMode:
-  - strictMode = true  => do NOT invent new clinical data. If information is missing, say "Not recorded".
-  - strictMode = false => you may use safe templated normals when needed but NEVER fabricate risky details (no made-up drugs, doses, or diagnostics). At the end of Assessment, add a short "Missing/Assumed:" line listing any assumptions.
-
-For EVERY SOAP:
-- Subjective:
-  - Concise case summary + owner concerns.
-  - Mention if this was a tech appointment vs doctor appointment if clear from payload.
-- Objective:
-  - Full PE list by system in this order:
-    General, Vitals, Eyes, Ears, Oral cavity, Nose, Respiratory, Cardiovascular, Abdomen, Urogenital, Musculoskeletal, Neurological, Integument, Lymphatic, Diagnostics.
-  - Bloodwork, imaging, and other tests here as data-only (no interpretation).
-  - Oral:
-    - If ageYears > 8 and no contradicting data: moderate tartar.
-    - If ageYears > 4 and <= 8: mild tartar.
-    - If user explicitly mentions different findings, follow that instead.
-- Assessment:
-  - Problem list + interpretations of diagnostics.
-  - Include ASA class when soapType = "surgery" (use payload.asaStatus if present).
-  - For multi-problem cases, clearly separate major problems.
-- Plan:
-  - Use numbered categories with ONE blank line between categories only (Avimark compatible):
-
-    1. IV Catheter / Fluids
-    2. Pre-medications
-    3. Induction / Maintenance
-    4. Surgical Prep
-    5. Surgical Procedure
-    6. Intra-op Medications
-    7. Recovery
-    8. Medications Dispensed
-    9. Aftercare
-
-  - Even for appointment SOAPs, keep this order but omit categories that truly do not apply (or mark "Not applicable").
-  - In Plan: every drug must include name + dose + route + concentration in [brackets], e.g.: "Meloxicam [5 mg/ml] 0.2 mg/kg SQ".
-  - Midazolam concentration is always written as [5 mg/ml] when used.
-  - Do NOT include administration times.
-
-- Surgery specifics (soapType = "surgery"):
-  - Use template (canine spay, neuter, dental COHAT, mass removal, cystotomy, etc.) as guidance for default procedure description.
-  - Always describe ET tube placement and IV catheter placement in Plan (not Objective).
-  - Mention fluids and rates or "Fluids declined" if fluidsMode = "declined" or fluidsDeclined = true.
-  - For standard dog neuters: use 2-0 Monocryl for most cases; use 0 Monocryl when weightKg > 35 unless override fields clearly say otherwise.
-  - For dentals:
-    - Mention monitoring (SpO2, ETCO2, blood pressure, ECG, IV fluids).
-    - Mention local oral nerve blocks with lidocaine (dogs up to 4 mg/kg total, cats up to 2 mg/kg total) when implied by payload.
-    - Say that extractions follow AAHA/AVDC standards when extractions are performed.
-    - For flaps: "tension-free flap, no denuded bone, suture line not over defect" with 4-0 Monocryl simple interrupted.
-
-- Formatting:
-  - Single spacing inside each section.
-  - No bullet symbols; use sentences or very short lines.
-  - No extra blank lines except:
-    - Between the six SOAP sections.
-    - ONE blank line between each Plan category (1–9).
-  - Never include microchip numbers, phone numbers, or client/owner names. If microchip is mentioned, say "microchip recorded in Avimark."
-
-Return ONLY the SOAP text with the six headings in that order and nothing else.
-      `.trim();
-
-      const userPrompt = `JSON payload from the Lohit SOAP front-end:\n${JSON.stringify(
-        payload,
-        null,
-        2
-      )}`;
-
-      resultText = await callOpenAI(systemPrompt, userPrompt);
+    if (!OPENAI_API_KEY || !OPENAI_ASSISTANT_ID) {
+      return res.status(500).json({
+        error:
+          "OPENAI_API_KEY or OPENAI_ASSISTANT_ID not configured on server.",
+      });
     }
 
-    // 2) CONSULT MODE
-    else if (mode === "consult") {
-      const systemPrompt = `
-You are a veterinary consult helper for Dr. Lohit Busanelli.
-Give practical, concise advice in plain text paragraphs or short lists.
-Do NOT include SOAP headings here.
-Assume the user is an experienced small animal vet.
-      `.trim();
+    const intake = buildIntake(req.body);
 
-      const userPrompt = String(payload.message || "");
-      resultText = await callOpenAI(systemPrompt, userPrompt);
+    // Create a fresh thread with a single user message = intake synthesis.
+    const thread = await openai.beta.threads.create({
+      messages: [
+        {
+          role: "user",
+          content: intake,
+        },
+      ],
+    });
+
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: OPENAI_ASSISTANT_ID,
+    });
+
+    let runStatus = run.status;
+    let lastRun = run;
+
+    // Poll until the run is completed (simple non-streaming version)
+    while (runStatus === "queued" || runStatus === "in_progress") {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      lastRun = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+      runStatus = lastRun.status;
     }
 
-    // 3) TOOLBOX: BLOODWORK HELPER
-    else if (mode === "toolbox-bloodwork") {
-      const { text, detailLevel, includeDiffs, includeClientFriendly, refineNote, previousOutput } =
-        payload || {};
-
-      const systemPrompt = `
-You are Bloodwork Helper Lite for a small-animal veterinary clinic.
-Input is pasted CBC/chem/UA text or a refined re-run request.
-
-If "previousOutput" and "refineNote" are provided, adjust or expand the previous output based on the refineNote while keeping the same overall structure.
-
-Output format:
-1) "Clinical summary:" – 2–5 sentences.
-2) If includeDiffs = true: "Key differentials:" – short numbered list.
-3) If includeClientFriendly = true: "Client-friendly explanation:" – 1 short paragraph in simple language.
-
-detailLevel:
-- "short"    => 2–3 key points only.
-- "standard" => more complete but still under about 250 words.
-
-Do NOT mention specific reference ranges unless they are explicitly in the text.
-Never include microchip numbers or client identifiers.
-      `.trim();
-
-      const userPrompt = `
-detailLevel=${detailLevel}, includeDiffs=${includeDiffs}, includeClientFriendly=${includeClientFriendly}
-refineNote=${refineNote || ""}
-
-Previous output (may be empty):
-${previousOutput || "(none)"}
-
-Lab text:
-${text}
-      `.trim();
-
-      resultText = await callOpenAI(systemPrompt, userPrompt);
+    if (runStatus !== "completed") {
+      console.error("Run did not complete:", lastRun);
+      return res
+        .status(500)
+        .json({ error: `Assistant run failed with status: ${runStatus}` });
     }
 
-    // 4) TOOLBOX: EMAIL / CLIENT COMMUNICATION
-    else if (mode === "toolbox-email") {
-      const { emailType, petName, ownerName, timeframe, notes, refineNote, previousOutput } = payload || {};
+    // Get the latest assistant message
+    const messages = await openai.beta.threads.messages.list(thread.id, {
+      order: "desc",
+      limit: 1,
+    });
 
-      const systemPrompt = `
-You are the Email / Client Communication Helper for a veterinary clinic.
-Generate a COMPLETE email body that staff can paste into their email client.
-
-If "previousOutput" and "refineNote" are provided, rewrite or refine the previous email based on the refineNote while preserving intent and key facts.
-
-Tone: warm, clear, not overly formal.
-
-Types:
-- "bloodwork-followup": summarize that results are back, main findings, next steps.
-- "dental-estimate": explain estimate ranges and that final cost depends on extractions etc.
-- "vaccine-reminder": friendly reminder that vaccines are due.
-- "general-update": generic medical update.
-
-Always:
-- Insert pet and owner names naturally if provided (use "your pet" or "you" if missing).
-- Mention timeframe / when to book (timeframe string, e.g. "within the next 1–2 weeks").
-- End with a line about calling the clinic with any questions.
-      `.trim();
-
-      const userPrompt = `
-emailType=${emailType}
-petName=${petName}
-ownerName=${ownerName}
-timeframe=${timeframe}
-notes=${notes}
-refineNote=${refineNote || ""}
-
-Previous output (may be empty):
-${previousOutput || "(none)"}
-      `.trim();
-
-      resultText = await callOpenAI(systemPrompt, userPrompt);
+    const latest = messages.data[0];
+    if (!latest) {
+      return res
+        .status(500)
+        .json({ error: "No messages returned from assistant." });
     }
 
-    // Unknown mode
-    else {
-      resultText = "Error: Unknown mode parameter.";
-    }
+    const textParts = latest.content
+      .filter((c) => c.type === "text")
+      .map((c) => c.text.value);
+    const responseText = textParts.join("\n\n").trim();
 
-    res.json({ result: resultText });
+    return res.json({ soap: responseText });
   } catch (err) {
-    console.error("Error in /api/run:", err);
-    res.status(500).json({ result: "Server error while calling OpenAI." });
+    console.error("Error in /api/soap:", err);
+    return res.status(500).json({ error: "Error generating SOAP." });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Lohit SOAP App v1.6.2 running on port ${PORT}`);
+// --- Template API for Brain Trainer ---
+// shape: { id, type, name, content, updatedAt }
+
+app.get("/api/templates", (req, res) => {
+  res.json({ templates });
+});
+
+app.post("/api/templates", (req, res) => {
+  const { type, name, content } = req.body || {};
+  if (!content) {
+    return res.status(400).json({ error: "content is required" });
+  }
+  const tpl = {
+    id: "tpl_" + Date.now(),
+    type: type || "other",
+    name: name || "(Untitled)",
+    content,
+    updatedAt: new Date().toISOString(),
+  };
+  templates.push(tpl);
+  res.json({ template: tpl });
+});
+
+app.put("/api/templates/:id", (req, res) => {
+  const id = req.params.id;
+  const idx = templates.findIndex((t) => t.id === id);
+  if (idx === -1) {
+    return res.status(404).json({ error: "template not found" });
+  }
+  const { type, name, content } = req.body || {};
+  templates[idx] = {
+    ...templates[idx],
+    type: type || templates[idx].type,
+    name: name || templates[idx].name,
+    content: content || templates[idx].content,
+    updatedAt: new Date().toISOString(),
+  };
+  res.json({ template: templates[idx] });
+});
+
+app.delete("/api/templates/:id", (req, res) => {
+  const id = req.params.id;
+  templates = templates.filter((t) => t.id !== id);
+  res.json({ ok: true });
+});
+
+// Healthcheck
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, version: "1.6.7" });
+});
+
+app.listen(port, () => {
+  console.log(`SOAP backend running on port ${port}`);
 });
