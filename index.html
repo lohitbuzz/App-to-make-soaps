@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lohit SOAP App v1.6.2 – Assistant-backed</title>
+  <title>Lohit SOAP App v1.6.3 – Assistant-backed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -283,12 +283,6 @@
       border: 1px solid #bae6fd;
       color: #0f172a;
       margin-top: 6px;
-      animation: feedbackPulse 1.2s ease-in-out 2;
-    }
-
-    @keyframes feedbackPulse {
-      0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.2); }
-      100% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
     }
 
     .hidden { display: none; }
@@ -333,99 +327,13 @@
       background: #dcfce7;
       color: #166534;
     }
-
-    .status-pill.review {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .hidden-input { display: none; }
-
-    /* Privacy editor modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.65);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 40;
-    }
-
-    .modal {
-      background: white;
-      max-width: 700px;
-      width: 100%;
-      max-height: 90vh;
-      border-radius: 16px;
-      padding: 12px 14px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-    }
-
-    .modal-body {
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      overflow: hidden;
-      background: #0f172a;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #privacyCanvas {
-      max-width: 100%;
-      max-height: 60vh;
-      display: block;
-      background: #020617;
-    }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .refine-row {
-      margin-top: 6px;
-      border-top: 1px dashed var(--border);
-      padding-top: 6px;
-    }
-
-    .refine-row label {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-bottom: 2px;
-      display: block;
-    }
-
-    .refine-row textarea {
-      font-size: 0.8rem;
-    }
-
-    .refine-row .btn-row {
-      margin-top: 4px;
-    }
   </style>
 </head>
 <body>
   <div class="app-shell">
     <header>
       <div class="app-title">
-        Lohit SOAP App <span>v1.6.2 – Assistant-backed</span>
+        Lohit SOAP App <span>v1.6.3 – Assistant-backed</span>
       </div>
       <div class="app-subtitle">
         Appointment / Surgery SOAPs + Toolbox Lite. Uses your /api/run endpoint and Assistant rules.
@@ -447,38 +355,27 @@
           <h3 class="card-title">Attachments (optional)</h3>
           <p class="card-subtitle">
             Attach lab PDFs, screenshots, or photos of printouts. Shared across SOAPs and Toolbox.
+            For now, redact private info manually before upload if needed.
           </p>
 
           <div class="attachment-row">
             <button id="takePhotoBtn" class="btn-secondary">Take photo</button>
             <button id="uploadFileBtn" class="btn-ghost">Upload file</button>
-            <input id="sharedFileInput" class="hidden-input" type="file" accept="image/*,.pdf" />
+            <input id="sharedFileInput" type="file" accept="image/*,.pdf" style="display:none;" />
             <span class="attachment-status" id="attachmentStatus">
               <span class="status-pill pending">No file</span>
-              <span>Clinic-safe mode: you can redact images locally before use.</span>
+              <span>Local preview only; Vision tools come later.</span>
             </span>
           </div>
 
           <div id="attachmentPreviewWrapper" class="hidden" style="margin-top:8px;">
-            <div class="grid-two">
-              <div>
-                <span class="field-label">Preview</span>
-                <div style="border-radius:12px;border:1px solid var(--border);overflow:hidden;max-height:200px;">
-                  <img id="attachmentPreviewImg" src="" alt="Preview"
-                       style="width:100%;display:block;object-fit:contain;background:#000;" />
-                </div>
-              </div>
-              <div>
-                <span class="field-label">Privacy</span>
-                <p class="muted" style="margin-bottom:6px;">
-                  Use the privacy editor to black-box names, microchips, phone numbers, etc.
-                  Only the redacted image is kept in memory for this session.
-                </p>
-                <div class="btn-row">
-                  <button id="openPrivacyEditorBtn" class="btn-ghost">Open privacy editor</button>
-                  <button id="clearAttachmentBtn" class="btn-ghost">Remove file</button>
-                </div>
-              </div>
+            <span class="field-label">Preview (images only)</span>
+            <div style="border-radius:12px;border:1px solid var(--border);overflow:hidden;max-height:200px;">
+              <img id="attachmentPreviewImg" src="" alt="Preview"
+                   style="width:100%;display:block;object-fit:contain;background:#000;" />
+            </div>
+            <div class="btn-row">
+              <button id="clearAttachmentBtn" class="btn-ghost">Remove file</button>
             </div>
           </div>
         </div>
@@ -557,7 +454,7 @@
                 Physical exam notes (data only)
               </label>
               <textarea id="apptPE" class="textarea" rows="3"
-                placeholder="Eg. BAR, MM pink, CRT &lt;2s, HR 120, no murmur, lungs clear, etc."></textarea>
+                placeholder="Eg. BAR, MM pink, CRT <2s, HR 120, no murmur, lungs clear, etc."></textarea>
 
               <label for="apptDiagnostics" class="field-label" style="margin-top:6px;">
                 Diagnostics (data only)
@@ -834,7 +731,7 @@
 
             <label for="bloodworkText" class="field-label">Lab text (paste here)</label>
             <textarea id="bloodworkText" class="textarea" rows="5"
-              placeholder="Paste lab text here. Future Vision tools can read attached images automatically."></textarea>
+              placeholder="Paste lab text here. Vision tools will come later for images."></textarea>
 
             <div class="grid-two" style="margin-top:6px;">
               <div>
@@ -866,8 +763,8 @@
             </label>
             <textarea id="bloodworkOutput" class="textarea" rows="8" readonly></textarea>
 
-            <div class="refine-row">
-              <label for="bloodworkRefineInput">Feedback / refine (optional)</label>
+            <div style="margin-top:6px;border-top:1px dashed var(--border);padding-top:6px;">
+              <label for="bloodworkRefineInput" class="field-label">Feedback / refine (optional)</label>
               <textarea id="bloodworkRefineInput" class="textarea" rows="2"
                 placeholder="Eg. Emphasize ALT more, mention CK is normal, shorten client explanation."></textarea>
               <div class="btn-row">
@@ -922,8 +819,8 @@
             </label>
             <textarea id="emailOutput" class="textarea" rows="8" readonly></textarea>
 
-            <div class="refine-row">
-              <label for="emailRefineInput">Feedback / refine (optional)</label>
+            <div style="margin-top:6px;border-top:1px dashed var(--border);padding-top:6px;">
+              <label for="emailRefineInput" class="field-label">Feedback / refine (optional)</label>
               <textarea id="emailRefineInput" class="textarea" rows="2"
                 placeholder="Eg. Make tone softer, mention pre-visit sedation option, shorten closing."></textarea>
               <div class="btn-row">
@@ -981,34 +878,12 @@
     </div>
   </div>
 
-  <!-- Privacy editor modal -->
-  <div id="privacyModalBackdrop" class="modal-backdrop hidden">
-    <div class="modal">
-      <div class="modal-header">
-        <div>
-          <div class="modal-title">Privacy editor – mark private info</div>
-          <div class="muted">Drag rectangles over client names, microchips, phone numbers, etc.</div>
-        </div>
-        <button id="closePrivacyEditorBtn" class="btn-ghost">Cancel</button>
-      </div>
-      <div class="modal-body">
-        <canvas id="privacyCanvas"></canvas>
-      </div>
-      <div class="modal-footer">
-        <button id="clearRectsBtn" class="btn-ghost">Clear boxes</button>
-        <button id="savePrivacyBtn" class="btn-primary">Save clinic-safe copy</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // small helpers
-    const $ = id => document.getElementById(id);
-    const getText = id => (($(id) || {}).value || "").trim();
-    const setText = (id, v) => { if ($(id)) $(id).value = v || ""; };
-
+    function $(id) { return document.getElementById(id); }
+    function getText(id) { return ($(id) && $(id).value || "").trim(); }
+    function setText(id, v) { if ($(id)) $(id).value = v || ""; }
     function showError(id, msg) {
-      const el = $(id);
+      var el = $(id);
       if (!el) return;
       if (msg) {
         el.textContent = msg;
@@ -1018,13 +893,12 @@
         el.classList.add("hidden");
       }
     }
-
     function copyToClipboard(text) {
       if (!text) return;
-      navigator.clipboard.writeText(text).catch(() => {});
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(function(){});
+      }
     }
-
-    // API helper
     async function callApiRun(body, errorId, onResult) {
       if (errorId) showError(errorId, "");
       try {
@@ -1043,17 +917,16 @@
       }
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", function () {
       // Tabs
-      const tabButtons = document.querySelectorAll(".tab-btn");
-      const tabPanels = document.querySelectorAll(".tab-panel");
-
-      tabButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-          const target = btn.dataset.tab;
-          tabButtons.forEach(b => b.classList.remove("active"));
+      var tabButtons = document.querySelectorAll(".tab-btn");
+      var tabPanels = document.querySelectorAll(".tab-panel");
+      tabButtons.forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          var target = btn.getAttribute("data-tab");
+          tabButtons.forEach(function(b){ b.classList.remove("active"); });
           btn.classList.add("active");
-          tabPanels.forEach(panel => {
+          tabPanels.forEach(function(panel){
             if (panel.id === target) panel.classList.remove("hidden");
             else panel.classList.add("hidden");
           });
@@ -1062,15 +935,15 @@
 
       // Chip groups
       function setupChipGroup(groupId, hiddenId) {
-        const group = $(groupId);
-        const hidden = $(hiddenId);
+        var group = $(groupId);
+        var hidden = $(hiddenId);
         if (!group) return;
-        group.addEventListener("click", e => {
-          const btn = e.target.closest("button[data-value]");
+        group.addEventListener("click", function(e) {
+          var btn = e.target.closest("button[data-value]");
           if (!btn) return;
-          group.querySelectorAll(".chip").forEach(c => c.classList.remove("chip-selected"));
+          group.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("chip-selected"); });
           btn.classList.add("chip-selected");
-          if (hidden) hidden.value = btn.dataset.value;
+          if (hidden) hidden.value = btn.getAttribute("data-value");
         });
       }
       setupChipGroup("asaChipGroup", "asaStatus");
@@ -1079,15 +952,15 @@
       setupChipGroup("recoveryGroup", "recoveryQuality");
 
       // Fluids chips
-      const fluidsGroup = $("fluidsModeGroup");
-      const fluidRateInput = $("fluidRate");
+      var fluidsGroup = $("fluidsModeGroup");
+      var fluidRateInput = $("fluidRate");
       if (fluidsGroup && fluidRateInput) {
-        fluidsGroup.addEventListener("click", e => {
-          const btn = e.target.closest("button[data-mode]");
+        fluidsGroup.addEventListener("click", function(e) {
+          var btn = e.target.closest("button[data-mode]");
           if (!btn) return;
-          fluidsGroup.querySelectorAll(".chip").forEach(c => c.classList.remove("chip-selected"));
+          fluidsGroup.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("chip-selected"); });
           btn.classList.add("chip-selected");
-          const mode = btn.dataset.mode;
+          var mode = btn.getAttribute("data-mode");
           fluidRateInput.dataset.mode = mode;
           if (mode === "custom") {
             fluidRateInput.disabled = false;
@@ -1105,25 +978,26 @@
       }
 
       // Simple vs Advanced toggles
-      function setupModeToggle(toggleId, simpleId, advancedId, extra = []) {
-        const toggle = $(toggleId);
-        const simple = $(simpleId);
-        const adv = $(advancedId);
+      function setupModeToggle(toggleId, simpleId, advancedId, extraIds) {
+        var toggle = $(toggleId);
+        var simple = $(simpleId);
+        var adv = $(advancedId);
+        var extra = extraIds || [];
         if (!toggle || !simple || !adv) return;
-        toggle.addEventListener("click", e => {
-          const opt = e.target.closest(".toggle-option");
+        toggle.addEventListener("click", function(e) {
+          var opt = e.target.closest(".toggle-option");
           if (!opt) return;
-          const mode = opt.dataset.mode;
-          toggle.querySelectorAll(".toggle-option").forEach(o => o.classList.remove("active"));
+          var mode = opt.getAttribute("data-mode");
+          toggle.querySelectorAll(".toggle-option").forEach(function(o){ o.classList.remove("active"); });
           opt.classList.add("active");
           if (mode === "simple") {
             simple.classList.remove("hidden");
             adv.classList.add("hidden");
-            extra.forEach(id => $(id)?.classList.add("hidden"));
+            extra.forEach(function(id){ var el=$(id); if(el) el.classList.add("hidden"); });
           } else {
             simple.classList.add("hidden");
             adv.classList.remove("hidden");
-            extra.forEach(id => $(id)?.classList.remove("hidden"));
+            extra.forEach(function(id){ var el=$(id); if(el) el.classList.remove("hidden"); });
           }
         });
       }
@@ -1132,9 +1006,9 @@
         ["surgAdvancedDetailCard", "surgAdvancedAnesthesiaCard"]);
 
       // Feedback bar
-      const feedbackBar = $("feedbackBar");
+      var feedbackBar = $("feedbackBar");
       function buildMissingSummary(payload) {
-        const missing = [];
+        var missing = [];
         if (payload.soapType === "appointment") {
           if (payload.modeDetail === "simple" && !payload.quickNotes) {
             missing.push("quick notes");
@@ -1175,13 +1049,12 @@
       }
 
       // Appointment SOAP
-      const runApptSoapBtn = $("runApptSoapBtn");
+      var runApptSoapBtn = $("runApptSoapBtn");
       if (runApptSoapBtn) {
-        runApptSoapBtn.addEventListener("click", () => {
-          const apptMode = document
-            .querySelector("#apptModeToggle .toggle-option.active")
-            ?.dataset.mode || "simple";
-          const payload = {
+        runApptSoapBtn.addEventListener("click", function() {
+          var apptModeEl = document.querySelector("#apptModeToggle .toggle-option.active");
+          var apptMode = apptModeEl ? apptModeEl.getAttribute("data-mode") : "simple";
+          var payload = {
             soapType: "appointment",
             strictMode: $("apptStrictMode").checked,
             modeDetail: apptMode
@@ -1205,20 +1078,19 @@
           clearFeedback();
           showFeedback(payload);
           setText("soapOutput", "Generating Appointment SOAP…");
-          callApiRun({ mode: "soap", payload }, "apptError", text => {
+          callApiRun({ mode: "soap", payload: payload }, "apptError", function(text) {
             setText("soapOutput", text);
           });
         });
       }
 
       // Surgery SOAP
-      const runSurgSoapBtn = $("runSurgSoapBtn");
+      var runSurgSoapBtn = $("runSurgSoapBtn");
       if (runSurgSoapBtn) {
-        runSurgSoapBtn.addEventListener("click", () => {
-          const surgMode = document
-            .querySelector("#surgModeToggle .toggle-option.active")
-            ?.dataset.mode || "simple";
-          const payload = {
+        runSurgSoapBtn.addEventListener("click", function() {
+          var surgModeEl = document.querySelector("#surgModeToggle .toggle-option.active");
+          var surgMode = surgModeEl ? surgModeEl.getAttribute("data-mode") : "simple";
+          var payload = {
             soapType: "surgery",
             strictMode: $("surgStrictMode").checked,
             modeDetail: surgMode
@@ -1255,69 +1127,69 @@
           clearFeedback();
           showFeedback(payload);
           setText("soapOutput", "Generating Surgery SOAP…");
-          callApiRun({ mode: "soap", payload }, "surgError", text => {
+          callApiRun({ mode: "soap", payload: payload }, "surgError", function(text) {
             setText("soapOutput", text);
           });
         });
       }
 
       // Copy SOAP
-      const copySoapBtn = $("copySoapBtn");
+      var copySoapBtn = $("copySoapBtn");
       if (copySoapBtn) {
-        copySoapBtn.addEventListener("click", () => {
+        copySoapBtn.addEventListener("click", function() {
           copyToClipboard(getText("soapOutput"));
         });
       }
 
       // Toolbox: bloodwork
-      const runBloodworkBtn = $("runBloodworkBtn");
+      var runBloodworkBtn = $("runBloodworkBtn");
       if (runBloodworkBtn) {
-        runBloodworkBtn.addEventListener("click", () => {
-          const payload = {
+        runBloodworkBtn.addEventListener("click", function() {
+          var payload = {
             text: getText("bloodworkText"),
             detailLevel: $("bloodworkDetail").value,
             includeDiffs: $("bloodworkIncludeDiffs").checked,
             includeClientFriendly: $("bloodworkClientFriendly").checked
           };
           setText("bloodworkOutput", "Thinking about the lab work…");
-          callApiRun({ mode: "toolbox-bloodwork", payload }, null, text => {
+          callApiRun({ mode: "toolbox-bloodwork", payload: payload }, null, function(text) {
             setText("bloodworkOutput", text);
           });
         });
       }
 
-      const copyBloodworkOutputBtn = $("copyBloodworkOutputBtn");
+      var copyBloodworkOutputBtn = $("copyBloodworkOutputBtn");
       if (copyBloodworkOutputBtn) {
-        copyBloodworkOutputBtn.addEventListener("click", () => {
+        copyBloodworkOutputBtn.addEventListener("click", function() {
           copyToClipboard(getText("bloodworkOutput"));
         });
       }
 
-      const refineBloodworkBtn = $("refineBloodworkBtn");
+      var refineBloodworkBtn = $("refineBloodworkBtn");
       if (refineBloodworkBtn) {
-        refineBloodworkBtn.addEventListener("click", () => {
-          const existing = getText("bloodworkOutput");
-          const refine = getText("bloodworkRefineInput");
+        refineBloodworkBtn.addEventListener("click", function() {
+          var existing = getText("bloodworkOutput");
+          var refine = getText("bloodworkRefineInput");
           if (!existing || !refine) return;
           setText("bloodworkOutput", "Refining bloodwork summary…");
-          const payload = {
+          var payload = {
             text: existing,
             detailLevel: $("bloodworkDetail").value,
             includeDiffs: $("bloodworkIncludeDiffs").checked,
             includeClientFriendly: $("bloodworkClientFriendly").checked,
             refineInstructions: refine
           };
-          callApiRun({ mode: "toolbox-bloodwork", payload }, null, text => {
+          callApiRun({ mode: "toolbox-bloodwork", payload: payload }, null, function(text) {
             setText("bloodworkOutput", text);
           });
         });
       }
 
       // Toolbox: email
-      const runEmailBtn = $("runEmailBtn");
+      var runEmailBtn = $("runEmailBtn");
       if (runEmailBtn) {
-        runEmailBtn.addEventListener("click", () => {
-          const payload = {
+        runEmailBtn.addEventListener("click", function() {
+          var payload = {
             emailType: $("emailType").value,
             petName: getText("emailPetName"),
             ownerName: getText("emailOwnerName"),
@@ -1325,27 +1197,27 @@
             notes: getText("emailNotes")
           };
           setText("emailOutput", "Drafting email…");
-          callApiRun({ mode: "toolbox-email", payload }, null, text => {
+          callApiRun({ mode: "toolbox-email", payload: payload }, null, function(text) {
             setText("emailOutput", text);
           });
         });
       }
 
-      const copyEmailOutputBtn = $("copyEmailOutputBtn");
+      var copyEmailOutputBtn = $("copyEmailOutputBtn");
       if (copyEmailOutputBtn) {
-        copyEmailOutputBtn.addEventListener("click", () => {
+        copyEmailOutputBtn.addEventListener("click", function() {
           copyToClipboard(getText("emailOutput"));
         });
       }
 
-      const refineEmailBtn = $("refineEmailBtn");
+      var refineEmailBtn = $("refineEmailBtn");
       if (refineEmailBtn) {
-        refineEmailBtn.addEventListener("click", () => {
-          const existing = getText("emailOutput");
-          const refine = getText("emailRefineInput");
+        refineEmailBtn.addEventListener("click", function() {
+          var existing = getText("emailOutput");
+          var refine = getText("emailRefineInput");
           if (!existing || !refine) return;
           setText("emailOutput", "Refining email…");
-          const payload = {
+          var payload = {
             emailType: $("emailType").value,
             petName: getText("emailPetName"),
             ownerName: getText("emailOwnerName"),
@@ -1354,55 +1226,47 @@
             refineInstructions: refine,
             existingDraft: existing
           };
-          callApiRun({ mode: "toolbox-email", payload }, null, text => {
+          callApiRun({ mode: "toolbox-email", payload: payload }, null, function(text) {
             setText("emailOutput", text);
           });
         });
       }
 
       // Consult
-      const runConsultBtn = $("runConsultBtn");
+      var runConsultBtn = $("runConsultBtn");
       if (runConsultBtn) {
-        runConsultBtn.addEventListener("click", () => {
-          const payload = { message: getText("consultMessage") };
+        runConsultBtn.addEventListener("click", function() {
+          var payload = { message: getText("consultMessage") };
           setText("consultOutput", "Thinking through the case…");
-          callApiRun({ mode: "consult", payload }, null, text => {
+          callApiRun({ mode: "consult", payload: payload }, null, function(text) {
             setText("consultOutput", text);
           });
         });
       }
 
-      // Shared attachments + privacy editor
-      let originalImage = null;
-      let sanitizedImage = null;
-      let currentImageIsSafe = false;
+      // Attachments
+      var fileInput = $("sharedFileInput");
+      var statusEl = $("attachmentStatus");
+      var previewWrapper = $("attachmentPreviewWrapper");
+      var previewImg = $("attachmentPreviewImg");
 
-      const fileInput = $("sharedFileInput");
-      const statusEl = $("attachmentStatus");
-      const previewWrapper = $("attachmentPreviewWrapper");
-      const previewImg = $("attachmentPreviewImg");
-
-      function updateAttachmentStatus() {
+      function updateAttachmentStatus(hasImage) {
         if (!statusEl) return;
-        if (!originalImage) {
+        if (!hasImage) {
           statusEl.innerHTML =
-            '<span class="status-pill pending">No file</span><span>Clinic-safe mode: you can redact images locally before use.</span>';
-          previewWrapper?.classList.add("hidden");
-          currentImageIsSafe = false;
-        } else if (!currentImageIsSafe) {
-          statusEl.innerHTML =
-            '<span class="status-pill review">Needs review</span><span>Open privacy editor and black-box private info.</span>';
-          previewWrapper?.classList.remove("hidden");
+            '<span class="status-pill pending">No file</span><span>Local preview only; Vision tools come later.</span>';
+          if (previewWrapper) previewWrapper.classList.add("hidden");
         } else {
           statusEl.innerHTML =
-            '<span class="status-pill safe">Clinic-Safe</span><span>Only redacted image is used in this session.</span>';
-          previewWrapper?.classList.remove("hidden");
+            '<span class="status-pill safe">Image loaded</span><span>Used only for this session.</span>';
+          if (previewWrapper) previewWrapper.classList.remove("hidden");
         }
       }
+      updateAttachmentStatus(false);
 
-      const takePhotoBtn = $("takePhotoBtn");
+      var takePhotoBtn = $("takePhotoBtn");
       if (takePhotoBtn && fileInput) {
-        takePhotoBtn.addEventListener("click", () => {
+        takePhotoBtn.addEventListener("click", function() {
           fileInput.removeAttribute("multiple");
           fileInput.setAttribute("accept", "image/*");
           fileInput.setAttribute("capture", "environment");
@@ -1410,9 +1274,9 @@
         });
       }
 
-      const uploadFileBtn = $("uploadFileBtn");
+      var uploadFileBtn = $("uploadFileBtn");
       if (uploadFileBtn && fileInput) {
-        uploadFileBtn.addEventListener("click", () => {
+        uploadFileBtn.addEventListener("click", function() {
           fileInput.removeAttribute("capture");
           fileInput.setAttribute("accept", "image/*,.pdf");
           fileInput.click();
@@ -1420,160 +1284,37 @@
       }
 
       if (fileInput) {
-        fileInput.addEventListener("change", e => {
-          const file = e.target.files && e.target.files[0];
+        fileInput.addEventListener("change", function(e) {
+          var file = e.target.files && e.target.files[0];
           if (!file) {
-            originalImage = null;
-            sanitizedImage = null;
-            currentImageIsSafe = false;
-            updateAttachmentStatus();
+            if (previewImg) previewImg.src = "";
+            updateAttachmentStatus(false);
             return;
           }
-          if (file.type.startsWith("image/")) {
-            const reader = new FileReader();
-            reader.onload = ev => {
-              originalImage = ev.target.result;
-              sanitizedImage = null;
-              currentImageIsSafe = false;
-              if (previewImg) previewImg.src = originalImage;
-              updateAttachmentStatus();
+          if (file.type && file.type.indexOf("image/") === 0) {
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+              if (previewImg) previewImg.src = ev.target.result;
+              updateAttachmentStatus(true);
             };
             reader.readAsDataURL(file);
           } else {
-            originalImage = null;
-            sanitizedImage = null;
-            currentImageIsSafe = false;
             if (previewImg) previewImg.src = "";
-            previewWrapper?.classList.add("hidden");
+            updateAttachmentStatus(false);
             statusEl.innerHTML =
-              '<span class="status-pill review">External redact</span><span>PDFs: please redact externally before upload if they contain PII.</span>';
+              '<span class="status-pill safe">File attached</span><span>PDF preview not shown; keep it local-only.</span>';
           }
         });
       }
 
-      const clearAttachmentBtn = $("clearAttachmentBtn");
+      var clearAttachmentBtn = $("clearAttachmentBtn");
       if (clearAttachmentBtn && fileInput) {
-        clearAttachmentBtn.addEventListener("click", () => {
+        clearAttachmentBtn.addEventListener("click", function() {
           fileInput.value = "";
-          originalImage = null;
-          sanitizedImage = null;
-          currentImageIsSafe = false;
-          updateAttachmentStatus();
+          if (previewImg) previewImg.src = "";
+          updateAttachmentStatus(false);
         });
       }
-
-      // Privacy editor
-      const privacyBackdrop = $("privacyModalBackdrop");
-      const privacyCanvas = $("privacyCanvas");
-      const closePrivacyEditorBtn = $("closePrivacyEditorBtn");
-      const savePrivacyBtn = $("savePrivacyBtn");
-      const clearRectsBtn = $("clearRectsBtn");
-
-      let privacyCtx = null;
-      let imgObj = null;
-      let rects = [];
-      let isDrawing = false;
-      let startX = 0;
-      let startY = 0;
-      let currentRect = null;
-
-      function redrawCanvas() {
-        if (!privacyCtx || !imgObj || !privacyCanvas) return;
-        privacyCtx.clearRect(0, 0, privacyCanvas.width, privacyCanvas.height);
-        privacyCtx.drawImage(imgObj, 0, 0, privacyCanvas.width, privacyCanvas.height);
-        privacyCtx.fillStyle = "rgba(15,23,42,0.85)";
-        rects.forEach(r => privacyCtx.fillRect(r.x, r.y, r.w, r.h));
-        if (currentRect) {
-          privacyCtx.fillRect(currentRect.x, currentRect.y, currentRect.w, currentRect.h);
-        }
-      }
-
-      function openPrivacyEditor() {
-        if (!originalImage || !privacyBackdrop || !privacyCanvas) return;
-        privacyBackdrop.classList.remove("hidden");
-        rects = [];
-        currentRect = null;
-        const img = new Image();
-        img.onload = () => {
-          imgObj = img;
-          const maxW = 650, maxH = 500;
-          let w = img.width, h = img.height;
-          const ratio = Math.min(maxW / w, maxH / h, 1);
-          w *= ratio; h *= ratio;
-          privacyCanvas.width = w;
-          privacyCanvas.height = h;
-          privacyCtx = privacyCanvas.getContext("2d");
-          redrawCanvas();
-        };
-        img.src = originalImage;
-      }
-
-      const openPrivacyEditorBtn2 = $("openPrivacyEditorBtn");
-      if (openPrivacyEditorBtn2) {
-        openPrivacyEditorBtn2.addEventListener("click", () => {
-          openPrivacyEditor();
-        });
-      }
-
-      if (privacyCanvas) {
-        privacyCanvas.addEventListener("mousedown", e => {
-          if (!privacyCanvas) return;
-          isDrawing = true;
-          const rect = privacyCanvas.getBoundingClientRect();
-          startX = e.clientX - rect.left;
-          startY = e.clientY - rect.top;
-          currentRect = { x: startX, y: startY, w: 0, h: 0 };
-        });
-        privacyCanvas.addEventListener("mousemove", e => {
-          if (!isDrawing || !currentRect || !privacyCanvas) return;
-          const rect = privacyCanvas.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          currentRect.w = x - startX;
-          currentRect.h = y - startY;
-          redrawCanvas();
-        });
-        ["mouseup", "mouseleave"].forEach(evt => {
-          privacyCanvas.addEventListener(evt, () => {
-            if (!isDrawing) return;
-            isDrawing = false;
-            if (!currentRect) return;
-            let { x, y, w, h } = currentRect;
-            if (w < 0) { x += w; w = -w; }
-            if (h < 0) { y += h; h = -h; }
-            if (w > 4 && h > 4) rects.push({ x, y, w, h });
-            currentRect = null;
-            redrawCanvas();
-          });
-        });
-      }
-
-      if (closePrivacyEditorBtn && privacyBackdrop) {
-        closePrivacyEditorBtn.addEventListener("click", () => {
-          privacyBackdrop.classList.add("hidden");
-        });
-      }
-
-      if (clearRectsBtn) {
-        clearRectsBtn.addEventListener("click", () => {
-          rects = [];
-          currentRect = null;
-          redrawCanvas();
-        });
-      }
-
-      if (savePrivacyBtn && privacyCanvas && privacyBackdrop && previewImg) {
-        savePrivacyBtn.addEventListener("click", () => {
-          if (!privacyCanvas) return;
-          sanitizedImage = privacyCanvas.toDataURL("image/png");
-          currentImageIsSafe = true;
-          previewImg.src = sanitizedImage;
-          privacyBackdrop.classList.add("hidden");
-          updateAttachmentStatus();
-        });
-      }
-
-      updateAttachmentStatus();
     });
   </script>
 </body>
