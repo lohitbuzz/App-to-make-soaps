@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lohit SOAP App v1.6</title>
+  <title>Lohit SOAP App v1.6 – Stable</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -10,7 +10,6 @@
       --card-bg: #ffffff;
       --border: #e5e7eb;
       --primary: #0f766e;
-      --primary-soft: #ecfdf3;
       --primary-dark: #115e59;
       --text: #111827;
       --muted: #6b7280;
@@ -20,9 +19,7 @@
       --shadow-soft: 0 10px 25px rgba(15, 23, 42, 0.08);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -38,9 +35,7 @@
       padding: 16px;
     }
 
-    header {
-      margin-bottom: 12px;
-    }
+    header { margin-bottom: 12px; }
 
     .app-title {
       font-size: 1.5rem;
@@ -63,7 +58,6 @@
       color: var(--muted);
     }
 
-    /* Tabs */
     .tab-bar {
       display: flex;
       gap: 8px;
@@ -99,9 +93,7 @@
     }
 
     @media (max-width: 900px) {
-      .main-grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
+      .main-grid { grid-template-columns: minmax(0, 1fr); }
     }
 
     .card {
@@ -161,9 +153,7 @@
       background: #ffffff;
     }
 
-    .textarea {
-      resize: vertical;
-    }
+    .textarea { resize: vertical; }
 
     .btn-primary,
     .btn-secondary,
@@ -186,9 +176,7 @@
       color: white;
     }
 
-    .btn-primary:hover {
-      background: var(--primary-dark);
-    }
+    .btn-primary:hover { background: var(--primary-dark); }
 
     .btn-secondary {
       background: #eef2ff;
@@ -221,9 +209,7 @@
     }
 
     @media (max-width: 700px) {
-      .grid-two {
-        grid-template-columns: minmax(0, 1fr);
-      }
+      .grid-two { grid-template-columns: minmax(0, 1fr); }
     }
 
     .chip-group {
@@ -261,8 +247,28 @@
       gap: 6px;
     }
 
-    .checkbox-label input {
-      margin: 0;
+    .checkbox-label input { margin: 0; }
+
+    .output-box {
+      margin-bottom: 10px;
+    }
+
+    .feedback-bar {
+      font-size: 0.8rem;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      background: #ecfeff;
+      border: 1px solid #bae6fd;
+      color: #0f172a;
+      margin-top: 6px;
+    }
+
+    .hidden { display: none; }
+
+    .error-text {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 4px;
     }
 
     .attachment-row {
@@ -277,198 +283,31 @@
       color: var(--muted);
     }
 
-    .output-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-
-    .output-header h3 {
-      margin: 0;
-      font-size: 0.95rem;
-    }
-
-    .copy-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .output-box {
-      margin-bottom: 10px;
-    }
-
-    .output-box textarea {
-      font-size: 0.85rem;
-      background: #f9fafb;
-    }
-
-    .feedback-bar {
-      font-size: 0.8rem;
-      padding: 8px 10px;
-      border-radius: var(--radius-md);
-      background: #ecfeff;
-      border: 1px solid #bae6fd;
-      color: #0f172a;
-      margin-top: 6px;
-    }
-
-    .feedback-chips {
-      margin-top: 4px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .feedback-chip {
-      border-radius: 999px;
-      padding: 2px 8px;
-      background: #e5f3ff;
-      font-size: 0.75rem;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .hidden-input {
-      display: none;
-    }
-
-    /* Overlay */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-    }
-
-    .overlay.hidden {
-      display: none;
-    }
-
-    .overlay-inner {
-      background: #ffffff;
-      border-radius: var(--radius-lg);
-      padding: 14px 14px 16px;
-      max-width: 480px;
-      width: 100%;
-      max-height: 90vh;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      box-shadow: var(--shadow-soft);
-    }
-
-    @media (max-width: 768px) {
-      .overlay-inner {
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
-      }
-    }
-
-    .overlay-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .overlay-header h3 {
-      margin: 0;
-      font-size: 1rem;
-    }
-
-    .overlay-close {
-      border: none;
-      background: transparent;
-      font-size: 1.5rem;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .photo-preview {
-      flex: 1;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f3f4f6;
-    }
-
-    .photo-preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .overlay-privacy {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .privacy-chip {
-      border-radius: 999px;
-      padding: 6px 12px;
-      border: 1px solid #22c55e;
-      background: #ecfdf3;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-
-    .privacy-chip.active {
-      background: #22c55e;
-      color: white;
-    }
-
-    .privacy-text {
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-
-    .overlay-actions {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      margin-top: 6px;
-    }
-
-    .error-text {
-      color: var(--danger);
-      font-size: 0.8rem;
-      margin-top: 4px;
-    }
+    .hidden-input { display: none; }
   </style>
 </head>
 <body>
   <div class="app-shell">
     <header>
       <div class="app-title">
-        Lohit SOAP App <span>v1.6 – Stable</span>
+        Lohit SOAP App <span>v1.6 – Assistant-backed</span>
       </div>
       <div class="app-subtitle">
-        Appointment / Surgery SOAPs + Toolbox Lite. Mobile-friendly, clinic-safe, Avimark-compatible text.
+        Appointment / Surgery SOAPs + Toolbox Lite. Uses your backend /api/run and your Assistant rules.
       </div>
     </header>
 
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="appointmentTab">Appointment</button>
       <button class="tab-btn" data-tab="surgeryTab">Surgery</button>
-      <button class="tab-btn" data-tab="toolboxTab">Toolbox Lite</button>
+      <button class="tab-btn" data-tab="toolboxTab">Toolbox</button>
+      <button class="tab-btn" data-tab="consultTab">Consult</button>
     </div>
 
     <div class="main-grid">
-      <!-- LEFT: INPUT AREA -->
+      <!-- LEFT: INPUTS -->
       <div>
-        <!-- APPOINTMENT TAB -->
+        <!-- Appointment -->
         <section id="appointmentTab" class="tab-panel">
           <h2 class="section-title">Appointment mode</h2>
 
@@ -491,33 +330,20 @@
               </div>
             </div>
 
-            <div class="grid-two" style="margin-top: 8px;">
+            <div class="grid-two" style="margin-top:8px;">
               <div>
                 <label for="apptWeight" class="field-label">Weight (kg, optional)</label>
-                <input id="apptWeight" type="number" step="0.01" class="input" placeholder="Eg. 12.3" />
+                <input id="apptWeight" type="number" step="0.01" class="input" />
               </div>
               <div>
-                <label class="field-label">TPR (optional)</label>
-                <input id="apptTPR" class="input" placeholder="Eg. T 38.5, P 100, R 24" />
+                <label for="apptAgeYears" class="field-label">Age (years, optional)</label>
+                <input id="apptAgeYears" type="number" step="0.1" class="input" />
               </div>
             </div>
 
-            <div style="margin-top: 8px;">
-              <label class="field-label">Attachments (optional)</label>
-              <div class="attachment-row">
-                <label for="apptPhotoInput" class="btn-secondary">📷 Take photo</label>
-                <input
-                  id="apptPhotoInput"
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  class="hidden-input"
-                />
-                <span id="apptPhotoStatus" class="attachment-status">No photo selected</span>
-              </div>
-              <p class="muted" style="margin-top:4px;">
-                For now, attached images are just for your notes; SOAPs use your typed inputs.
-              </p>
+            <div style="margin-top:8px;">
+              <label for="apptTPR" class="field-label">TPR (optional)</label>
+              <input id="apptTPR" class="input" placeholder="Eg. T 38.5, P 100, R 24" />
             </div>
           </div>
 
@@ -526,23 +352,46 @@
             <label for="apptReason" class="field-label">Reason for visit / presenting complaint</label>
             <textarea id="apptReason" class="textarea" rows="2"></textarea>
 
-            <label for="apptHistory" class="field-label" style="margin-top:6px;">History (owner’s description, duration, meds)</label>
+            <label for="apptHistory" class="field-label" style="margin-top:6px;">
+              History (owner description, duration, meds)
+            </label>
             <textarea id="apptHistory" class="textarea" rows="3"></textarea>
 
-            <label for="apptPE" class="field-label" style="margin-top:6px;">Physical exam notes (data only)</label>
-            <textarea id="apptPE" class="textarea" rows="3" placeholder="Eg. BAR, MM pink, CRT &lt;2s, HR 120, no murmur, lungs clear, etc."></textarea>
+            <label for="apptPE" class="field-label" style="margin-top:6px;">
+              Physical exam notes (data only)
+            </label>
+            <textarea id="apptPE" class="textarea" rows="3"
+              placeholder="Eg. BAR, MM pink, CRT &lt;2s, HR 120, no murmur, lungs clear, etc."></textarea>
 
-            <label for="apptDiagnostics" class="field-label" style="margin-top:6px;">Diagnostics performed / results (data only)</label>
-            <textarea id="apptDiagnostics" class="textarea" rows="3" placeholder="Eg. SNAP 4Dx negative, ear cytology 2+ cocci, 1+ yeast."></textarea>
+            <label for="apptDiagnostics" class="field-label" style="margin-top:6px;">
+              Diagnostics (data only)
+            </label>
+            <textarea id="apptDiagnostics" class="textarea" rows="3"
+              placeholder="Eg. SNAP 4Dx negative, ear cytology 2+ cocci, 1+ yeast."></textarea>
 
-            <label for="apptAssessment" class="field-label" style="margin-top:6px;">Assessment notes (optional)</label>
-            <textarea id="apptAssessment" class="textarea" rows="2" placeholder="Eg. Otitis externa (R), likely allergic."></textarea>
+            <label for="apptAssessment" class="field-label" style="margin-top:6px;">
+              Assessment notes (optional)
+            </label>
+            <textarea id="apptAssessment" class="textarea" rows="2"
+              placeholder="Eg. Otitis externa (R), likely allergic."></textarea>
 
-            <label for="apptPlan" class="field-label" style="margin-top:6px;">Plan notes (drugs / treatments you know you want)</label>
+            <label for="apptPlan" class="field-label" style="margin-top:6px;">
+              Plan notes (treatments you know you want)
+            </label>
             <textarea id="apptPlan" class="textarea" rows="3"></textarea>
 
-            <label for="apptMeds" class="field-label" style="margin-top:6px;">Medications dispensed (optional list)</label>
-            <textarea id="apptMeds" class="textarea" rows="2" placeholder="Eg. Apoquel 5.4mg PO SID x14d; Mometamax 4 gtt BID x10d."></textarea>
+            <label for="apptMeds" class="field-label" style="margin-top:6px;">
+              Medications dispensed (optional list)
+            </label>
+            <textarea id="apptMeds" class="textarea" rows="2"
+              placeholder="Eg. Apoquel 5.4mg PO SID x14d; Mometamax 4 gtt BID x10d."></textarea>
+
+            <div class="checkbox-group" style="margin-top:8px;">
+              <label class="checkbox-label">
+                <input id="apptStrictMode" type="checkbox" />
+                <span>Strict mode (no assumed normals)</span>
+              </label>
+            </div>
           </div>
 
           <div class="card">
@@ -554,7 +403,7 @@
           </div>
         </section>
 
-        <!-- SURGERY TAB -->
+        <!-- Surgery -->
         <section id="surgeryTab" class="tab-panel hidden">
           <h2 class="section-title">Surgery mode</h2>
 
@@ -581,24 +430,25 @@
                 <input id="surgWeight" type="number" step="0.01" class="input" />
               </div>
               <div>
-                <label class="field-label">TPR (optional)</label>
-                <input id="surgTPR" class="input" placeholder="Eg. T 38.4, P 90, R 20" />
+                <label for="surgAgeYears" class="field-label">Age (years, optional)</label>
+                <input id="surgAgeYears" type="number" step="0.1" class="input" />
               </div>
             </div>
 
             <div style="margin-top:8px;">
-              <label class="field-label">Attachments (optional)</label>
-              <div class="attachment-row">
-                <label for="surgPhotoInput" class="btn-secondary">📷 Take photo</label>
-                <input
-                  id="surgPhotoInput"
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  class="hidden-input"
-                />
-                <span id="surgPhotoStatus" class="attachment-status">No photo selected</span>
-              </div>
+              <label for="surgTPR" class="field-label">TPR (optional)</label>
+              <input id="surgTPR" class="input" placeholder="Eg. T 38.4, P 90, R 20" />
+            </div>
+
+            <div class="checkbox-group" style="margin-top:8px;">
+              <label class="checkbox-label">
+                <input id="surgQuickMode" type="checkbox" />
+                <span>Quick mode (tech-friendly, minimal required fields)</span>
+              </label>
+              <label class="checkbox-label">
+                <input id="surgStrictMode" type="checkbox" />
+                <span>Strict mode (no assumed normals)</span>
+              </label>
             </div>
           </div>
 
@@ -626,11 +476,11 @@
 
             <label class="field-label" style="margin-top:6px;">ASA status</label>
             <div id="asaChipGroup" class="chip-group">
-              <button type="button" data-value="1" class="chip chip-selected">ASA I</button>
-              <button type="button" data-value="2" class="chip">ASA II</button>
-              <button type="button" data-value="3" class="chip">ASA III</button>
-              <button type="button" data-value="4" class="chip">ASA IV</button>
-              <button type="button" data-value="5" class="chip">ASA V</button>
+              <button type="button" class="chip chip-selected" data-value="1">ASA I</button>
+              <button type="button" class="chip" data-value="2">ASA II</button>
+              <button type="button" class="chip" data-value="3">ASA III</button>
+              <button type="button" class="chip" data-value="4">ASA IV</button>
+              <button type="button" class="chip" data-value="5">ASA V</button>
             </div>
             <input type="hidden" id="asaStatus" value="1" />
 
@@ -658,26 +508,36 @@
               </div>
             </div>
 
-            <label for="ettSize" class="field-label" style="margin-top:6px;">ET tube size (mm)</label>
+            <label for="ettSize" class="field-label" style="margin-top:6px;">
+              ET tube size (mm)
+            </label>
             <input id="ettSize" class="input" placeholder="Eg. 8.0 cuffed" />
 
             <label class="field-label" style="margin-top:8px;">IV fluids</label>
-            <div class="chip-group" id="fluidsModeGroup">
-              <button type="button" class="chip chip-selected" data-mode="dog_default">Dog default (5 mL/kg/hr)</button>
-              <button type="button" class="chip" data-mode="cat_default">Cat default (3 mL/kg/hr)</button>
-              <button type="button" class="chip" data-mode="custom">Custom rate</button>
-              <button type="button" class="chip" data-mode="declined">Declined</button>
+            <div id="fluidsModeGroup" class="chip-group">
+              <button type="button" class="chip chip-selected" data-mode="dog_default">
+                Dog default (5 mL/kg/hr)
+              </button>
+              <button type="button" class="chip" data-mode="cat_default">
+                Cat default (3 mL/kg/hr)
+              </button>
+              <button type="button" class="chip" data-mode="custom">
+                Custom rate
+              </button>
+              <button type="button" class="chip" data-mode="declined">
+                Declined
+              </button>
             </div>
 
             <div class="grid-two" style="margin-top:8px;">
               <div>
                 <label for="fluidRate" class="field-label">Custom rate (mL/kg/hr)</label>
-                <input id="fluidRate" type="number" step="0.1" class="input" placeholder="Eg. 5" disabled />
+                <input id="fluidRate" type="number" step="0.1" class="input" disabled />
               </div>
               <div class="checkbox-group">
                 <label class="checkbox-label">
                   <input id="bolusGiven" type="checkbox" />
-                  <span>Bolus given (will describe in SOAP)</span>
+                  <span>Bolus given (describe in Plan)</span>
                 </label>
               </div>
             </div>
@@ -688,19 +548,25 @@
 
             <label for="premeds" class="field-label">Premedications (drug, dose, route)</label>
             <textarea id="premeds" class="textarea" rows="2"
-              placeholder="Eg. Dexmedetomidine, Hydromorphone, Midazolam 5 mg/ml, etc."></textarea>
+              placeholder="Eg. Dexmedetomidine, Hydromorphone, Midazolam [5 mg/ml] ..."></textarea>
 
-            <label for="induction" class="field-label" style="margin-top:6px;">Induction / maintenance</label>
+            <label for="induction" class="field-label" style="margin-top:6px;">
+              Induction / maintenance
+            </label>
             <textarea id="induction" class="textarea" rows="2"
-              placeholder="Eg. Propofol to effect, Isoflurane/O2, Locoregional blocks."></textarea>
+              placeholder="Eg. Propofol to effect, Isoflurane/O2, local blocks."></textarea>
 
-            <label for="intraOpMeds" class="field-label" style="margin-top:6px;">Intra-op medications</label>
+            <label for="intraOpMeds" class="field-label" style="margin-top:6px;">
+              Intra-op medications
+            </label>
             <textarea id="intraOpMeds" class="textarea" rows="2"
-              placeholder="Eg. Fentanyl CRI, lidocaine block (list sites), meloxicam, etc."></textarea>
+              placeholder="Eg. Fentanyl CRI, meloxicam, lidocaine blocks, etc."></textarea>
 
-            <label for="procedureNotes" class="field-label" style="margin-top:6px;">Surgical procedure notes</label>
+            <label for="procedureNotes" class="field-label" style="margin-top:6px;">
+              Surgical procedure notes
+            </label>
             <textarea id="procedureNotes" class="textarea" rows="3"
-              placeholder="Key details: approach, findings, closures, drains, samples sent."></textarea>
+              placeholder="Approach, key findings, closure details, samples."></textarea>
 
             <div class="grid-two" style="margin-top:6px;">
               <div>
@@ -722,10 +588,14 @@
             </div>
             <input type="hidden" id="recoveryQuality" value="smooth" />
 
-            <label for="recoveryNotes" class="field-label">Recovery notes</label>
+            <label for="recoveryNotes" class="field-label">
+              Recovery notes
+            </label>
             <textarea id="recoveryNotes" class="textarea" rows="2"></textarea>
 
-            <label for="postOpMeds" class="field-label" style="margin-top:6px;">Post-op medications dispensed</label>
+            <label for="postOpMeds" class="field-label" style="margin-top:6px;">
+              Post-op meds dispensed
+            </label>
             <textarea id="postOpMeds" class="textarea" rows="2"
               placeholder="Eg. Robenacoxib, Gabapentin, Trazodone, etc."></textarea>
           </div>
@@ -739,40 +609,16 @@
           </div>
         </section>
 
-        <!-- TOOLBOX TAB -->
+        <!-- Toolbox -->
         <section id="toolboxTab" class="tab-panel hidden">
           <h2 class="section-title">Toolbox Lite</h2>
 
           <div class="card">
-            <h3 class="card-title">Attachments (optional)</h3>
-            <p class="card-subtitle">
-              Attach lab PDFs, screenshots, or photos of printouts. For now, helpers use pasted text; photos are future Vision.
-            </p>
-
-            <div class="attachment-row">
-              <label for="toolboxPhotoInput" class="btn-secondary">📷 Take photo</label>
-              <input
-                id="toolboxPhotoInput"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                class="hidden-input"
-              />
-              <span id="toolboxPhotoStatus" class="attachment-status">No photo selected</span>
-            </div>
-          </div>
-
-          <!-- BLOODWORK HELPER -->
-          <div class="card">
             <h3 class="card-title">Bloodwork Helper Lite</h3>
-            <p class="card-subtitle">Paste CBC/chem/UA text (optional if photos attached).</p>
+            <p class="card-subtitle">Paste CBC/chem/UA text.</p>
 
-            <textarea
-              id="bloodworkText"
-              class="textarea"
-              rows="5"
-              placeholder="Copy/paste the lab report text or values here."
-            ></textarea>
+            <textarea id="bloodworkText" class="textarea" rows="5"
+              placeholder="Paste lab text here."></textarea>
 
             <div class="grid-two" style="margin-top:6px;">
               <div>
@@ -780,178 +626,116 @@
                 <select id="bloodworkDetail" class="select">
                   <option value="short">Short</option>
                   <option value="standard">Standard</option>
-                  <option value="expanded">Expanded</option>
                 </select>
               </div>
               <div class="checkbox-group">
                 <label class="checkbox-label">
-                  <input id="bloodworkIncludeDiff" type="checkbox" checked />
-                  <span>Include differential list</span>
+                  <input id="bloodworkIncludeDiffs" type="checkbox" checked />
+                  <span>Include differentials</span>
                 </label>
                 <label class="checkbox-label">
-                  <input id="bloodworkClientSummary" type="checkbox" />
-                  <span>Add client-friendly summary</span>
+                  <input id="bloodworkClientFriendly" type="checkbox" />
+                  <span>Include client-friendly explanation</span>
                 </label>
               </div>
             </div>
 
             <div class="btn-row" style="margin-top:8px;">
-              <button id="runBloodworkHelperBtn" class="btn-primary">Run Bloodwork Helper</button>
+              <button id="runBloodworkBtn" class="btn-primary">Run Bloodwork Helper</button>
             </div>
 
-            <label for="bloodworkOutput" class="field-label" style="margin-top:6px;">Bloodwork Helper output</label>
+            <label for="bloodworkOutput" class="field-label" style="margin-top:6px;">
+              Bloodwork Helper output
+            </label>
             <textarea id="bloodworkOutput" class="textarea" rows="8" readonly></textarea>
           </div>
 
-          <!-- EMAIL / CLIENT COMMUNICATION HELPER -->
           <div class="card">
             <h3 class="card-title">Email / Client Communication Helper</h3>
-            <p class="card-subtitle">Draft owner emails or written call summaries.</p>
 
             <div class="grid-two">
               <div>
-                <label for="emailScenario" class="field-label">Template type</label>
-                <select id="emailScenario" class="select">
-                  <option value="bloodwork_followup">Bloodwork follow-up</option>
-                  <option value="dental_estimate">Dental estimate + pre-op sedation</option>
-                  <option value="post_op_checkin">Post-op check-in</option>
-                  <option value="general_update">General medical update</option>
-                  <option value="medication_change">Medication change / refill</option>
-                  <option value="custom">Custom / other</option>
+                <label for="emailType" class="field-label">Template type</label>
+                <select id="emailType" class="select">
+                  <option value="bloodwork-followup">Bloodwork follow-up</option>
+                  <option value="dental-estimate">Dental estimate</option>
+                  <option value="general-update">General update</option>
+                  <option value="vaccine-reminder">Vaccine reminder</option>
                 </select>
               </div>
               <div>
-                <label for="emailTone" class="field-label">Tone</label>
-                <select id="emailTone" class="select">
-                  <option value="standard">Standard professional</option>
-                  <option value="warm">Warm & reassuring</option>
-                  <option value="concise">Very concise</option>
-                </select>
+                <label for="emailTimeframe" class="field-label">Timeframe</label>
+                <input id="emailTimeframe" class="input" placeholder="Eg. within 1–2 weeks" />
               </div>
             </div>
-
-            <label for="emailContext" class="field-label" style="margin-top:6px;">
-              What do you want to say? (brief notes)
-            </label>
-            <textarea
-              id="emailContext"
-              class="textarea"
-              rows="4"
-              placeholder="Eg. CBC normal, mild ALT elevation, dog bright and eating, recommend recheck in 1 month."
-            ></textarea>
-
-            <div class="btn-row" style="margin-top:8px;">
-              <button id="runEmailHelperBtn" class="btn-primary">Generate email text</button>
-            </div>
-
-            <label for="emailOutput" class="field-label" style="margin-top:6px;">Email / message output</label>
-            <textarea id="emailOutput" class="textarea" rows="8" readonly></textarea>
-          </div>
-
-          <!-- QUICK CALL NOTE HELPER -->
-          <div class="card">
-            <h3 class="card-title">Quick Call Note Helper</h3>
-            <p class="card-subtitle">
-              One-paragraph “spoke with owner” notes that paste nicely into Avimark.
-            </p>
-
-            <label for="callContext" class="field-label">Call details</label>
-            <textarea
-              id="callContext"
-              class="textarea"
-              rows="4"
-              placeholder="Eg. Discussed bloodwork results, dog is eating/drinking, mild cough, owner okay to monitor..."
-            ></textarea>
 
             <div class="grid-two" style="margin-top:6px;">
               <div>
-                <label for="callStyle" class="field-label">Style</label>
-                <select id="callStyle" class="select">
-                  <option value="standard">Standard SOAP-style</option>
-                  <option value="very_brief">Very brief</option>
-                  <option value="detailed">More detailed</option>
-                </select>
+                <label for="emailPetName" class="field-label">Pet name (optional)</label>
+                <input id="emailPetName" class="input" />
               </div>
-              <div class="checkbox-group">
-                <label class="checkbox-label">
-                  <input id="callFollowupFlag" type="checkbox" />
-                  <span>Include reminder for follow-up</span>
-                </label>
+              <div>
+                <label for="emailOwnerName" class="field-label">Owner name (optional)</label>
+                <input id="emailOwnerName" class="input" />
               </div>
             </div>
+
+            <label for="emailNotes" class="field-label" style="margin-top:6px;">
+              Notes / key points to include
+            </label>
+            <textarea id="emailNotes" class="textarea" rows="4"></textarea>
 
             <div class="btn-row" style="margin-top:8px;">
-              <button id="runCallHelperBtn" class="btn-primary">Generate call note</button>
+              <button id="runEmailBtn" class="btn-primary">Generate email text</button>
             </div>
 
-            <label for="callOutput" class="field-label" style="margin-top:6px;">Call note output</label>
-            <textarea id="callOutput" class="textarea" rows="6" readonly></textarea>
+            <label for="emailOutput" class="field-label" style="margin-top:6px;">
+              Email output
+            </label>
+            <textarea id="emailOutput" class="textarea" rows="8" readonly></textarea>
+          </div>
+        </section>
+
+        <!-- Consult -->
+        <section id="consultTab" class="tab-panel hidden">
+          <h2 class="section-title">Consult helper</h2>
+
+          <div class="card">
+            <h3 class="card-title">Free-text consult</h3>
+            <p class="card-subtitle">
+              For your own notes / brainstorming; does NOT output SOAP headings.
+            </p>
+
+            <label for="consultMessage" class="field-label">Consult question / case summary</label>
+            <textarea id="consultMessage" class="textarea" rows="6"
+              placeholder="Describe the case or ask your question."></textarea>
+
+            <div class="btn-row" style="margin-top:8px;">
+              <button id="runConsultBtn" class="btn-primary">Run consult</button>
+            </div>
+
+            <label for="consultOutput" class="field-label" style="margin-top:6px;">
+              Consult output
+            </label>
+            <textarea id="consultOutput" class="textarea" rows="10" readonly></textarea>
           </div>
         </section>
       </div>
 
-      <!-- RIGHT: OUTPUT AREA -->
+      <!-- RIGHT: SOAP OUTPUT -->
       <div>
         <div class="card">
-          <div class="output-header">
-            <h3>SOAP output</h3>
-            <div class="copy-group">
-              <button id="copyFullBtn" class="btn-secondary">Copy full SOAP</button>
-            </div>
+          <h3 class="card-title">SOAP output</h3>
+          <p class="card-subtitle">
+            Output from /api/run (mode "soap") using your Assistant rules. Paste directly into Avimark.
+          </p>
+
+          <div class="btn-row" style="margin-bottom:6px;">
+            <button id="copySoapBtn" class="btn-secondary">Copy full SOAP</button>
           </div>
 
           <div class="output-box">
-            <div class="output-header">
-              <h3>Subjective</h3>
-              <button id="copySubjBtn" class="btn-ghost">Copy</button>
-            </div>
-            <textarea id="subjectiveOutput" class="textarea" rows="3" readonly></textarea>
-          </div>
-
-          <div class="output-box">
-            <div class="output-header">
-              <h3>Objective</h3>
-              <button id="copyObjBtn" class="btn-ghost">Copy</button>
-            </div>
-            <textarea id="objectiveOutput" class="textarea" rows="4" readonly></textarea>
-          </div>
-
-          <div class="output-box">
-            <div class="output-header">
-              <h3>Assessment</h3>
-              <button id="copyAssessBtn" class="btn-ghost">Copy</button>
-            </div>
-            <textarea id="assessmentOutput" class="textarea" rows="3" readonly></textarea>
-          </div>
-
-          <div class="output-box">
-            <div class="output-header">
-              <h3>Plan</h3>
-              <button id="copyPlanBtn" class="btn-ghost">Copy</button>
-            </div>
-            <textarea id="planOutput" class="textarea" rows="4" readonly></textarea>
-          </div>
-
-          <div class="output-box">
-            <div class="output-header">
-              <h3>Medications dispensed</h3>
-              <button id="copyMedsBtn" class="btn-ghost">Copy</button>
-            </div>
-            <textarea id="medsOutput" class="textarea" rows="2" readonly></textarea>
-          </div>
-
-          <div class="output-box">
-            <div class="output-header">
-              <h3>Aftercare</h3>
-              <button id="copyAftercareBtn" class="btn-ghost">Copy</button>
-            </div>
-            <textarea id="aftercareOutput" class="textarea" rows="3" readonly></textarea>
-          </div>
-
-          <div class="btn-row">
-            <button id="copyPlanMedsAftercareBtn" class="btn-secondary">
-              Copy Plan + Meds + Aftercare
-            </button>
+            <textarea id="soapOutput" class="textarea" rows="22" readonly></textarea>
           </div>
 
           <div id="feedbackBar" class="feedback-bar hidden"></div>
@@ -960,63 +744,14 @@
     </div>
   </div>
 
-  <!-- PHOTO / PRIVACY OVERLAY -->
-  <div id="photoOverlay" class="overlay hidden">
-    <div class="overlay-inner">
-      <div class="overlay-header">
-        <h3>Photo capture</h3>
-        <button type="button" id="photoOverlayClose" class="overlay-close">✕</button>
-      </div>
-
-      <div id="photoPreviewContainer" class="photo-preview">
-        <p class="muted">No photo loaded yet.</p>
-      </div>
-
-      <div class="overlay-privacy">
-        <button type="button" id="privacyToggle" class="privacy-chip active">
-          ✅ Tap for Privacy – Clinic-Safe
-        </button>
-        <p class="privacy-text">
-          v1.6: privacy is manual only. For anything with owner/pet names, microchip, or IDs,
-          blur/crop before sharing outside the clinic.
-        </p>
-      </div>
-
-      <label for="photoNote" class="field-label">Optional note about this image</label>
-      <textarea
-        id="photoNote"
-        class="textarea"
-        rows="3"
-        placeholder="Eg. Pre-op bloodwork screenshot, values checked."
-      ></textarea>
-
-      <div class="overlay-actions">
-        <button type="button" id="photoAttachBtn" class="btn-primary">Attach</button>
-        <button type="button" id="photoDiscardBtn" class="btn-secondary">Discard</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // ================== CONFIG ==================
-    // If your backend uses different URLs, change these three:
-    const SOAP_API_URL = "/api/generate-soap";
-    const TOOLBOX_BLOODWORK_URL = "/api/toolbox/bloodwork-lite";
-    const TOOLBOX_EMAIL_URL = "/api/toolbox/email-helper-lite"; // reused for email + call note
-
-    // ================== UTILS ==================
-    function setText(id, value) {
-      const el = document.getElementById(id);
-      if (el) el.value = value ?? "";
-    }
-
-    function getText(id) {
-      const el = document.getElementById(id);
-      return el ? el.value.trim() : "";
-    }
+    // =============== UTILITIES ===============
+    function $(id) { return document.getElementById(id); }
+    function getText(id) { return ($(id)?.value || "").trim(); }
+    function setText(id, value) { if ($(id)) $(id).value = value || ""; }
 
     function showError(id, msg) {
-      const el = document.getElementById(id);
+      const el = $(id);
       if (!el) return;
       if (msg) {
         el.textContent = msg;
@@ -1029,37 +764,34 @@
 
     function copyToClipboard(text) {
       if (!text) return;
-      navigator.clipboard.writeText(text).catch((err) =>
-        console.error("Copy failed", err)
-      );
+      navigator.clipboard.writeText(text).catch(err => console.error("Copy failed", err));
     }
 
-    // ================== TABS ==================
+    // =============== TABS ===============
     const tabButtons = document.querySelectorAll(".tab-btn");
     const tabPanels = document.querySelectorAll(".tab-panel");
 
-    tabButtons.forEach((btn) => {
+    tabButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         const target = btn.dataset.tab;
-        tabButtons.forEach((b) => b.classList.remove("active"));
+        tabButtons.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        tabPanels.forEach((panel) => {
+        tabPanels.forEach(panel => {
           if (panel.id === target) panel.classList.remove("hidden");
           else panel.classList.add("hidden");
         });
       });
     });
 
-    // ================== CHIP GROUP HELPERS ==================
+    // =============== CHIP GROUP HELPERS ===============
     function setupSingleSelectChipGroup(groupId, hiddenInputId) {
-      const group = document.getElementById(groupId);
-      const hidden = hiddenInputId ? document.getElementById(hiddenInputId) : null;
+      const group = $(groupId);
+      const hidden = hiddenInputId ? $(hiddenInputId) : null;
       if (!group) return;
-
-      group.addEventListener("click", (e) => {
+      group.addEventListener("click", e => {
         const btn = e.target.closest("button");
         if (!btn || !btn.dataset.value) return;
-        group.querySelectorAll(".chip").forEach((c) => c.classList.remove("chip-selected"));
+        group.querySelectorAll(".chip").forEach(c => c.classList.remove("chip-selected"));
         btn.classList.add("chip-selected");
         if (hidden) hidden.value = btn.dataset.value;
       });
@@ -1070,16 +802,17 @@
     setupSingleSelectChipGroup("ivSiteGroup", "ivSite");
     setupSingleSelectChipGroup("recoveryGroup", "recoveryQuality");
 
-    // Fluids chips
-    const fluidsGroup = document.getElementById("fluidsModeGroup");
-    const fluidRateInput = document.getElementById("fluidRate");
+    // Fluids chip group
+    const fluidsGroup = $("fluidsModeGroup");
+    const fluidRateInput = $("fluidRate");
     if (fluidsGroup && fluidRateInput) {
-      fluidsGroup.addEventListener("click", (e) => {
+      fluidsGroup.addEventListener("click", e => {
         const btn = e.target.closest("button[data-mode]");
         if (!btn) return;
-        fluidsGroup.querySelectorAll(".chip").forEach((c) => c.classList.remove("chip-selected"));
+        fluidsGroup.querySelectorAll(".chip").forEach(c => c.classList.remove("chip-selected"));
         btn.classList.add("chip-selected");
         const mode = btn.dataset.mode;
+        fluidRateInput.dataset.mode = mode;
         if (mode === "custom") {
           fluidRateInput.disabled = false;
           fluidRateInput.value = "";
@@ -1090,156 +823,84 @@
           if (mode === "cat_default") fluidRateInput.value = "3";
           if (mode === "declined") fluidRateInput.value = "";
         }
-        fluidRateInput.dataset.mode = mode;
       });
       // default
       fluidRateInput.dataset.mode = "dog_default";
       fluidRateInput.value = "5";
     }
 
-    // ================== PHOTO OVERLAY ==================
-    let lastSelectedFile = null;
-    let currentPhotoContext = null;
+    // =============== FEEDBACK BAR (local heuristic) ===============
+    function buildMissingFieldsSummary(payload) {
+      const missing = [];
 
-    const overlay = document.getElementById("photoOverlay");
-    const previewContainer = document.getElementById("photoPreviewContainer");
-    const privacyChip = document.getElementById("privacyToggle");
-    const photoNote = document.getElementById("photoNote");
-
-    function openPhotoOverlay(file, context) {
-      currentPhotoContext = context;
-      lastSelectedFile = file;
-      photoNote.value = "";
-      privacyChip.classList.add("active");
-      privacyChip.textContent = "✅ Tap for Privacy – Clinic-Safe";
-
-      previewContainer.innerHTML = "";
-      if (file) {
-        const img = document.createElement("img");
-        img.src = URL.createObjectURL(file);
-        previewContainer.appendChild(img);
-      } else {
-        previewContainer.innerHTML =
-          "<p class='muted'>No photo loaded yet.</p>";
+      if (payload.soapType === "appointment") {
+        if (!payload.reason) missing.push("Reason for visit");
+        if (!payload.pe) missing.push("PE summary");
+        if (!payload.diagnostics) missing.push("Diagnostics data");
       }
-      overlay.classList.remove("hidden");
-    }
 
-    function closePhotoOverlay() {
-      overlay.classList.add("hidden");
-    }
-
-    document
-      .getElementById("photoOverlayClose")
-      .addEventListener("click", closePhotoOverlay);
-
-    document.getElementById("photoDiscardBtn").addEventListener("click", () => {
-      // reset relevant input & status
-      if (currentPhotoContext === "appt") {
-        document.getElementById("apptPhotoInput").value = "";
-        document.getElementById("apptPhotoStatus").textContent = "No photo selected";
-      } else if (currentPhotoContext === "surg") {
-        document.getElementById("surgPhotoInput").value = "";
-        document.getElementById("surgPhotoStatus").textContent = "No photo selected";
-      } else if (currentPhotoContext === "toolbox") {
-        document.getElementById("toolboxPhotoInput").value = "";
-        document.getElementById("toolboxPhotoStatus").textContent = "No photo selected";
-      }
-      lastSelectedFile = null;
-      currentPhotoContext = null;
-      closePhotoOverlay();
-    });
-
-    document.getElementById("photoAttachBtn").addEventListener("click", () => {
-      const note = photoNote.value.trim();
-      let label = "Photo attached (Clinic-Safe)";
-      if (note) label += " – " + note;
-      if (currentPhotoContext === "appt") {
-        document.getElementById("apptPhotoStatus").textContent = label;
-      } else if (currentPhotoContext === "surg") {
-        document.getElementById("surgPhotoStatus").textContent = label;
-      } else if (currentPhotoContext === "toolbox") {
-        document.getElementById("toolboxPhotoStatus").textContent = label;
-      }
-      closePhotoOverlay();
-    });
-
-    privacyChip.addEventListener("click", () => {
-      const active = privacyChip.classList.toggle("active");
-      privacyChip.textContent = active
-        ? "✅ Tap for Privacy – Clinic-Safe"
-        : "⚠️ Privacy off (not for sharing)";
-    });
-
-    function hookPhotoInput(inputId, context) {
-      const input = document.getElementById(inputId);
-      if (!input) return;
-      input.addEventListener("change", () => {
-        if (input.files && input.files.length > 0) {
-          openPhotoOverlay(input.files[0], context);
+      if (payload.soapType === "surgery") {
+        const quick = !!payload.quickMode;
+        if (!payload.surgeryType) missing.push("Surgery template");
+        if (!payload.weightKg) missing.push("Weight (kg)");
+        if (!payload.asaStatus) missing.push("ASA status");
+        if (!payload.ivGauge) missing.push("IV catheter gauge");
+        if (!payload.ivSite) missing.push("IV catheter site");
+        if (!payload.ettSize) missing.push("ET tube size");
+        if (!quick) {
+          if (!payload.premeds) missing.push("Premeds");
+          if (!payload.induction) missing.push("Induction/maintenance");
         }
-      });
-    }
-
-    hookPhotoInput("apptPhotoInput", "appt");
-    hookPhotoInput("surgPhotoInput", "surg");
-    hookPhotoInput("toolboxPhotoInput", "toolbox");
-
-    // ================== SOAP GENERATION ==================
-    const feedbackBar = document.getElementById("feedbackBar");
-
-    function setSoapOutputs(data) {
-      setText("subjectiveOutput", data.subjective || "");
-      setText("objectiveOutput", data.objective || "");
-      setText("assessmentOutput", data.assessment || "");
-      setText("planOutput", data.plan || "");
-      setText("medsOutput", data.medsDispensed || data.meds || "");
-      setText("aftercareOutput", data.aftercare || "");
-      if (data.feedback) {
-        feedbackBar.textContent = data.feedback;
-        feedbackBar.classList.remove("hidden");
-      } else {
-        feedbackBar.classList.add("hidden");
       }
+
+      if (!missing.length) {
+        return "Looks good. You can refine details any time or re-run after adding more specifics.";
+      }
+
+      return "You can improve this SOAP by adding: " + missing.join(", ") + ".";
     }
 
-    async function callSoapApi(payload, errorId) {
+    function showFeedback(payload) {
+      const bar = $("feedbackBar");
+      const msg = buildMissingFieldsSummary(payload);
+      bar.textContent = msg;
+      bar.classList.remove("hidden");
+    }
+
+    function clearFeedback() {
+      const bar = $("feedbackBar");
+      bar.classList.add("hidden");
+      bar.textContent = "";
+    }
+
+    // =============== /api/run CALL ===============
+    async function callApiRun(body, errorId, onResult) {
       showError(errorId, "");
-      feedbackBar.classList.add("hidden");
       try {
-        const res = await fetch(SOAP_API_URL, {
+        const res = await fetch("/api/run", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(body)
         });
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
-        // support both structured and simple text response
-        if (data.subjective || data.plan || data.aftercare) {
-          setSoapOutputs(data);
-        } else if (data.soap) {
-          setText("subjectiveOutput", data.soap);
-          setText("objectiveOutput", "");
-          setText("assessmentOutput", "");
-          setText("planOutput", "");
-          setText("medsOutput", "");
-          setText("aftercareOutput", "");
-          feedbackBar.classList.add("hidden");
-        } else {
-          setSoapOutputs({});
-        }
+        onResult(data.result || "");
       } catch (err) {
         console.error(err);
-        showError(errorId, "Sorry, something went wrong generating the SOAP.");
+        onResult("");
+        showError(errorId, "Error: backend call failed.");
       }
     }
 
-    document.getElementById("runApptSoapBtn").addEventListener("click", () => {
+    // =============== APPOINTMENT SOAP ===============
+    $("runApptSoapBtn").addEventListener("click", () => {
       const payload = {
-        mode: "appointment",
+        soapType: "appointment",
+        strictMode: $("apptStrictMode").checked,
         caseLabel: getText("apptCaseLabel"),
-        visitType: document.getElementById("apptVisitType").value,
+        visitType: $("apptVisitType").value,
         weightKg: getText("apptWeight"),
+        ageYears: getText("apptAgeYears"),
         tpr: getText("apptTPR"),
         reason: getText("apptReason"),
         history: getText("apptHistory"),
@@ -1247,176 +908,107 @@
         diagnostics: getText("apptDiagnostics"),
         assessmentNotes: getText("apptAssessment"),
         planNotes: getText("apptPlan"),
-        medsNotes: getText("apptMeds"),
+        medsNotes: getText("apptMeds")
       };
-      callSoapApi(payload, "apptError");
+
+      clearFeedback();
+      showFeedback(payload);
+
+      $("soapOutput").value = "Generating Appointment SOAP…";
+
+      callApiRun({ mode: "soap", payload }, "apptError", text => {
+        $("soapOutput").value = text;
+      });
     });
 
-    document.getElementById("runSurgSoapBtn").addEventListener("click", () => {
+    // =============== SURGERY SOAP ===============
+    $("runSurgSoapBtn").addEventListener("click", () => {
       const payload = {
-        mode: "surgery",
+        soapType: "surgery",
+        strictMode: $("surgStrictMode").checked,
+        quickMode: $("surgQuickMode").checked,
         caseLabel: getText("surgCaseLabel"),
-        species: document.getElementById("surgSpecies").value,
+        species: $("surgSpecies").value,
         weightKg: getText("surgWeight"),
+        ageYears: getText("surgAgeYears"),
         tpr: getText("surgTPR"),
-        surgeryType: document.getElementById("surgeryType").value,
-        asaStatus: document.getElementById("asaStatus").value,
-        ivGauge: document.getElementById("ivGauge").value,
-        ivSite: document.getElementById("ivSite").value,
+        surgeryType: $("surgeryType").value,
+        asaStatus: $("asaStatus").value,
+        ivGauge: $("ivGauge").value,
+        ivSite: $("ivSite").value,
         ettSize: getText("ettSize"),
         fluidsMode: fluidRateInput.dataset.mode,
         fluidRate: getText("fluidRate"),
-        bolusGiven: document.getElementById("bolusGiven").checked,
+        bolusGiven: $("bolusGiven").checked,
         premeds: getText("premeds"),
         induction: getText("induction"),
         intraOpMeds: getText("intraOpMeds"),
         procedureNotes: getText("procedureNotes"),
         anesthesiaDuration: getText("anesthesiaDuration"),
         surgeryDuration: getText("surgeryDuration"),
-        recoveryQuality: document.getElementById("recoveryQuality").value,
+        recoveryQuality: $("recoveryQuality").value,
         recoveryNotes: getText("recoveryNotes"),
-        postOpMeds: getText("postOpMeds"),
+        postOpMeds: getText("postOpMeds")
       };
-      callSoapApi(payload, "surgError");
-    });
 
-    // ================== TOOLBOX: BLOODWORK ==================
-    document
-      .getElementById("runBloodworkHelperBtn")
-      .addEventListener("click", async () => {
-        const text = getText("bloodworkText");
-        const detail = document.getElementById("bloodworkDetail").value;
-        const includeDiff = document.getElementById("bloodworkIncludeDiff").checked;
-        const clientSummary =
-          document.getElementById("bloodworkClientSummary").checked;
-        const output = document.getElementById("bloodworkOutput");
-        output.value = "Thinking about the lab work…";
-        try {
-          const res = await fetch(TOOLBOX_BLOODWORK_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: "bloodwork_lite",
-              text,
-              detail,
-              includeDifferentials: includeDiff,
-              clientSummary,
-            }),
-          });
-          if (!res.ok) throw new Error("Network");
-          const data = await res.json();
-          output.value = data.result || data.text || "(No response text)";
-        } catch (err) {
-          console.error(err);
-          output.value = "Sorry, something went wrong running the Bloodwork Helper.";
-        }
+      clearFeedback();
+      showFeedback(payload);
+
+      $("soapOutput").value = "Generating Surgery SOAP…";
+
+      callApiRun({ mode: "soap", payload }, "surgError", text => {
+        $("soapOutput").value = text;
       });
+    });
 
-    // ================== TOOLBOX: EMAIL HELPER ==================
-    async function callEmailHelper(payload, outputElementId) {
-      const output = document.getElementById(outputElementId);
-      output.value = "Drafting text…";
-      try {
-        const res = await fetch(TOOLBOX_EMAIL_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("Network");
-        const data = await res.json();
-        output.value = data.result || data.text || "(No response text)";
-      } catch (err) {
-        console.error(err);
-        output.value = "Sorry, something went wrong generating this text.";
-      }
-    }
+    // =============== TOOLBOX: BLOODWORK ===============
+    $("runBloodworkBtn").addEventListener("click", () => {
+      const payload = {
+        text: getText("bloodworkText"),
+        detailLevel: $("bloodworkDetail").value,
+        includeDiffs: $("bloodworkIncludeDiffs").checked,
+        includeClientFriendly: $("bloodworkClientFriendly").checked
+      };
 
-    document
-      .getElementById("runEmailHelperBtn")
-      .addEventListener("click", () => {
-        const scenario = document.getElementById("emailScenario").value;
-        const tone = document.getElementById("emailTone").value;
-        const context = getText("emailContext");
-        callEmailHelper(
-          {
-            tool: "email_helper_lite",
-            scenario,
-            tone,
-            context,
-          },
-          "emailOutput"
-        );
+      $("bloodworkOutput").value = "Thinking about the lab work…";
+
+      callApiRun({ mode: "toolbox-bloodwork", payload }, null, text => {
+        $("bloodworkOutput").value = text;
       });
-
-    // Quick Call Note uses same endpoint, different tool flag
-    document.getElementById("runCallHelperBtn").addEventListener("click", () => {
-      const context = getText("callContext");
-      const style = document.getElementById("callStyle").value;
-      const includeFollowup =
-        document.getElementById("callFollowupFlag").checked;
-      callEmailHelper(
-        {
-          tool: "call_note_helper",
-          style,
-          includeFollowup,
-          context,
-        },
-        "callOutput"
-      );
     });
 
-    // ================== COPY BUTTONS ==================
-    function getFullSoapText() {
-      return (
-        "Subjective:\n" +
-        getText("subjectiveOutput") +
-        "\n\nObjective:\n" +
-        getText("objectiveOutput") +
-        "\n\nAssessment:\n" +
-        getText("assessmentOutput") +
-        "\n\nPlan:\n" +
-        getText("planOutput") +
-        "\n\nMedications Dispensed:\n" +
-        getText("medsOutput") +
-        "\n\nAftercare:\n" +
-        getText("aftercareOutput")
-      );
-    }
+    // =============== TOOLBOX: EMAIL ===============
+    $("runEmailBtn").addEventListener("click", () => {
+      const payload = {
+        emailType: $("emailType").value,
+        petName: getText("emailPetName"),
+        ownerName: getText("emailOwnerName"),
+        timeframe: getText("emailTimeframe"),
+        notes: getText("emailNotes")
+      };
 
-    document.getElementById("copyFullBtn").addEventListener("click", () => {
-      copyToClipboard(getFullSoapText());
-    });
-    document.getElementById("copySubjBtn").addEventListener("click", () => {
-      copyToClipboard(getText("subjectiveOutput"));
-    });
-    document.getElementById("copyObjBtn").addEventListener("click", () => {
-      copyToClipboard(getText("objectiveOutput"));
-    });
-    document.getElementById("copyAssessBtn").addEventListener("click", () => {
-      copyToClipboard(getText("assessmentOutput"));
-    });
-    document.getElementById("copyPlanBtn").addEventListener("click", () => {
-      copyToClipboard(getText("planOutput"));
-    });
-    document.getElementById("copyMedsBtn").addEventListener("click", () => {
-      copyToClipboard(getText("medsOutput"));
-    });
-    document.getElementById("copyAftercareBtn").addEventListener("click", () => {
-      copyToClipboard(getText("aftercareOutput"));
-    });
+      $("emailOutput").value = "Drafting email…";
 
-    document
-      .getElementById("copyPlanMedsAftercareBtn")
-      .addEventListener("click", () => {
-        const text =
-          "Plan:\n" +
-          getText("planOutput") +
-          "\n\nMedications Dispensed:\n" +
-          getText("medsOutput") +
-          "\n\nAftercare:\n" +
-          getText("aftercareOutput");
-        copyToClipboard(text);
+      callApiRun({ mode: "toolbox-email", payload }, null, text => {
+        $("emailOutput").value = text;
       });
+    });
+
+    // =============== CONSULT ===============
+    $("runConsultBtn").addEventListener("click", () => {
+      const payload = { message: getText("consultMessage") };
+
+      $("consultOutput").value = "Thinking through the case…";
+
+      callApiRun({ mode: "consult", payload }, null, text => {
+        $("consultOutput").value = text;
+      });
+    });
+
+    // =============== COPY SOAP ===============
+    $("copySoapBtn").addEventListener("click", () => {
+      copyToClipboard(getText("soapOutput"));
+    });
   </script>
 </body>
 </html>
