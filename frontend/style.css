@@ -1,1 +1,185 @@
+/* Global reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "SF Pro Text", Roboto, sans-serif;
+  background: #0f172a;
+  color: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* App Container */
+.app-container {
+  width: 100%;
+  max-width: 1100px;
+  background: #020617;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0px 25px 60px rgba(15, 23, 42, 0.8);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  padding: 18px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.header-title {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.header-subtitle {
+  font-size: 12px;
+  opacity: 0.55;
+  margin-top: 3px;
+}
+
+/* Toggle Buttons */
+.toggle-group {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.toggle-group button {
+  flex: 1;
+  background: #1e293b;
+  color: #cbd5e1;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.toggle-group button.active {
+  background: #22c55e;
+  color: #022c22;
+  font-weight: 700;
+}
+
+/* Input Panels */
+.panel {
+  padding: 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 14px;
+  display: block;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  font-size: 15px;
+  background: #1e293b;
+  border: none;
+  border-radius: 10px;
+  color: #f8fafc;
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Main Generate Button */
+.generate-btn {
+  width: 100%;
+  padding: 16px;
+  margin-top: 24px;
+  border: none;
+  background: #22c55e;
+  color: #022c22;
+  border-radius: 14px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* SOAP Output Panel */
+.output-panel {
+  padding: 16px;
+  background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), transparent 60%);
+}
+
+.soap-box {
+  background: #1e293b;
+  padding: 16px;
+  border-radius: 14px;
+  min-height: 220px;
+  white-space: pre-wrap;
+  font-size: 14px;
+}
+
+/* Desktop Layout Adjustment */
+@media (min-width: 900px) {
+  .body-columns {
+    display: flex;
+    gap: 0;
+    flex-direction: row;
+    min-height: 70vh;
+  }
+
+  .panel {
+    flex: 1.1;
+    padding-bottom: 40px;
+  }
+
+  .output-panel {
+    flex: 1;
+    border-left: 1px solid rgba(148, 163, 184, 0.25);
+    border-top: none;
+  }
+}
+
+/* Bottom Tab Navigation (future-ready, hidden for now) */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(2, 6, 23, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 16px;
+    padding: 6px 10px;
+    backdrop-filter: blur(14px);
+    gap: 12px;
+  }
+
+  .bottom-nav button {
+    flex: 1;
+    padding: 10px 14px;
+    background: #1e293b;
+    color: #cbd5e1;
+    border: none;
+    border-radius: 12px;
+  }
+
+  .bottom-nav button.active {
+    background: #22c55e;
+    color: #022c22;
+  }
+}
