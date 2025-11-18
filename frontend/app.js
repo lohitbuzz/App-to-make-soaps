@@ -1,4 +1,4 @@
-// ---- BACKEND URL ----
+#// ---- BACKEND URL ----
 // Netlify site (frontend)
 // Render backend (Node server)
 const BACKEND_URL = "https://lohit-soap-app.onrender.com/api/soap";
@@ -238,7 +238,7 @@ const BACKEND_URL = "https://lohit-soap-app.onrender.com/api/soap";
   async function callApi(mode, payload) {
     statusMessage.textContent = "Working...";
     try {
-      const response = await fetch("/api/run", {
+  const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode, payload })
