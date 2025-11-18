@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lohit SOAP App v1.6 – Stable</title>
+  <title>Lohit SOAP App v1.6.2 – Assistant-backed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -17,6 +17,7 @@
       --radius-lg: 18px;
       --radius-md: 12px;
       --shadow-soft: 0 10px 25px rgba(15, 23, 42, 0.08);
+      --accent: #22c55e;
     }
 
     * { box-sizing: border-box; }
@@ -234,6 +235,30 @@
       border-color: var(--primary);
     }
 
+    .toggle-group {
+      display: inline-flex;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      font-size: 0.8rem;
+    }
+
+    .toggle-option {
+      padding: 4px 10px;
+      cursor: pointer;
+      background: #f9fafb;
+      color: var(--muted);
+      border-right: 1px solid var(--border);
+    }
+
+    .toggle-option:last-child { border-right: none; }
+
+    .toggle-option.active {
+      background: #dcfce7;
+      color: #065f46;
+      font-weight: 600;
+    }
+
     .checkbox-group {
       display: flex;
       flex-direction: column;
@@ -261,6 +286,12 @@
       border: 1px solid #bae6fd;
       color: #0f172a;
       margin-top: 6px;
+      animation: feedbackPulse 1.2s ease-in-out 2;
+    }
+
+    @keyframes feedbackPulse {
+      0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.2); }
+      100% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
     }
 
     .hidden { display: none; }
@@ -281,19 +312,127 @@
     .attachment-status {
       font-size: 0.8rem;
       color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .status-pill.pending {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .status-pill.safe {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-pill.review {
+      background: #fef3c7;
+      color: #92400e;
     }
 
     .hidden-input { display: none; }
+
+    /* Privacy editor modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+    }
+
+    .modal {
+      background: white;
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      border-radius: 16px;
+      padding: 12px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #privacyCanvas {
+      max-width: 100%;
+      max-height: 60vh;
+      display: block;
+      background: #020617;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .refine-row {
+      margin-top: 6px;
+      border-top: 1px dashed var(--border);
+      padding-top: 6px;
+    }
+
+    .refine-row label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 2px;
+      display: block;
+    }
+
+    .refine-row textarea {
+      font-size: 0.8rem;
+    }
+
+    .refine-row .btn-row {
+      margin-top: 4px;
+    }
+
   </style>
 </head>
 <body>
   <div class="app-shell">
     <header>
       <div class="app-title">
-        Lohit SOAP App <span>v1.6 – Assistant-backed</span>
+        Lohit SOAP App <span>v1.6.2 – Assistant-backed</span>
       </div>
       <div class="app-subtitle">
-        Appointment / Surgery SOAPs + Toolbox Lite. Uses your backend /api/run and your Assistant rules.
+        Appointment / Surgery SOAPs + Toolbox Lite. Uses your /api/run endpoint and Assistant rules.
       </div>
     </header>
 
@@ -312,79 +451,98 @@
           <h2 class="section-title">Appointment mode</h2>
 
           <div class="card">
-            <h3 class="card-title">Basic info</h3>
-            <div class="grid-two">
-              <div>
-                <label for="apptCaseLabel" class="field-label">Case label / patient name (optional)</label>
-                <input id="apptCaseLabel" class="input" placeholder="Eg. Milo – itchy ears" />
-              </div>
-              <div>
-                <label for="apptVisitType" class="field-label">Visit type</label>
-                <select id="apptVisitType" class="select">
-                  <option value="sick">Sick visit</option>
-                  <option value="wellness">Wellness / vaccine</option>
-                  <option value="recheck">Recheck</option>
-                  <option value="tech">Tech appointment</option>
-                  <option value="other">Other</option>
-                </select>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <h3 class="card-title">Input style</h3>
+              <div class="toggle-group" id="apptModeToggle">
+                <div class="toggle-option active" data-mode="simple">Simple</div>
+                <div class="toggle-option" data-mode="advanced">Advanced</div>
               </div>
             </div>
+            <p class="card-subtitle">
+              Simple = one big notes box (talk/type everything). Advanced = structured fields.
+            </p>
 
-            <div class="grid-two" style="margin-top:8px;">
-              <div>
-                <label for="apptWeight" class="field-label">Weight (kg, optional)</label>
-                <input id="apptWeight" type="number" step="0.01" class="input" />
-              </div>
-              <div>
-                <label for="apptAgeYears" class="field-label">Age (years, optional)</label>
-                <input id="apptAgeYears" type="number" step="0.1" class="input" />
-              </div>
+            <!-- Simple mode -->
+            <div id="apptSimpleBlock">
+              <label for="apptQuickNotes" class="field-label">Quick notes (I’ll parse this into SOAP)</label>
+              <textarea id="apptQuickNotes" class="textarea" rows="6"
+                placeholder="Eg. 6yo MN Lab, itchy ears 2 weeks, cytology 2+ cocci 1+ yeast, treated with Mometamax, Apoquel, recheck in 2 weeks."></textarea>
             </div>
 
-            <div style="margin-top:8px;">
-              <label for="apptTPR" class="field-label">TPR (optional)</label>
-              <input id="apptTPR" class="input" placeholder="Eg. T 38.5, P 100, R 24" />
+            <!-- Advanced mode -->
+            <div id="apptAdvancedBlock" class="hidden">
+              <div class="grid-two">
+                <div>
+                  <label for="apptCaseLabel" class="field-label">Case label / patient name (optional)</label>
+                  <input id="apptCaseLabel" class="input" placeholder="Eg. Milo – itchy ears" />
+                </div>
+                <div>
+                  <label for="apptVisitType" class="field-label">Visit type</label>
+                  <select id="apptVisitType" class="select">
+                    <option value="sick">Sick visit</option>
+                    <option value="wellness">Wellness / vaccine</option>
+                    <option value="recheck">Recheck</option>
+                    <option value="tech">Tech appointment</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid-two" style="margin-top:8px;">
+                <div>
+                  <label for="apptWeight" class="field-label">Weight (kg, optional)</label>
+                  <input id="apptWeight" type="number" step="0.01" class="input" />
+                </div>
+                <div>
+                  <label for="apptAgeYears" class="field-label">Age (years, optional)</label>
+                  <input id="apptAgeYears" type="number" step="0.1" class="input" />
+                </div>
+              </div>
+
+              <div style="margin-top:8px;">
+                <label for="apptTPR" class="field-label">TPR (optional)</label>
+                <input id="apptTPR" class="input" placeholder="Eg. T 38.5, P 100, R 24" />
+              </div>
+
+              <hr style="margin:10px 0;border:none;border-top:1px dashed var(--border);" />
+
+              <label for="apptReason" class="field-label">Reason for visit / presenting complaint</label>
+              <textarea id="apptReason" class="textarea" rows="2"></textarea>
+
+              <label for="apptHistory" class="field-label" style="margin-top:6px;">
+                History (owner description, duration, meds)
+              </label>
+              <textarea id="apptHistory" class="textarea" rows="3"></textarea>
+
+              <label for="apptPE" class="field-label" style="margin-top:6px;">
+                Physical exam notes (data only)
+              </label>
+              <textarea id="apptPE" class="textarea" rows="3"
+                placeholder="Eg. BAR, MM pink, CRT &lt;2s, HR 120, no murmur, lungs clear, etc."></textarea>
+
+              <label for="apptDiagnostics" class="field-label" style="margin-top:6px;">
+                Diagnostics (data only)
+              </label>
+              <textarea id="apptDiagnostics" class="textarea" rows="3"
+                placeholder="Eg. SNAP 4Dx negative, ear cytology 2+ cocci, 1+ yeast."></textarea>
+
+              <label for="apptAssessment" class="field-label" style="margin-top:6px;">
+                Assessment notes (optional)
+              </label>
+              <textarea id="apptAssessment" class="textarea" rows="2"
+                placeholder="Eg. Otitis externa (R), likely allergic."></textarea>
+
+              <label for="apptPlan" class="field-label" style="margin-top:6px;">
+                Plan notes (treatments you know you want)
+              </label>
+              <textarea id="apptPlan" class="textarea" rows="3"></textarea>
+
+              <label for="apptMeds" class="field-label" style="margin-top:6px;">
+                Medications dispensed (optional list)
+              </label>
+              <textarea id="apptMeds" class="textarea" rows="2"
+                placeholder="Eg. Apoquel 5.4mg PO SID x14d; Mometamax 4 gtt BID x10d."></textarea>
             </div>
-          </div>
-
-          <div class="card">
-            <h3 class="card-title">SOAP inputs</h3>
-            <label for="apptReason" class="field-label">Reason for visit / presenting complaint</label>
-            <textarea id="apptReason" class="textarea" rows="2"></textarea>
-
-            <label for="apptHistory" class="field-label" style="margin-top:6px;">
-              History (owner description, duration, meds)
-            </label>
-            <textarea id="apptHistory" class="textarea" rows="3"></textarea>
-
-            <label for="apptPE" class="field-label" style="margin-top:6px;">
-              Physical exam notes (data only)
-            </label>
-            <textarea id="apptPE" class="textarea" rows="3"
-              placeholder="Eg. BAR, MM pink, CRT &lt;2s, HR 120, no murmur, lungs clear, etc."></textarea>
-
-            <label for="apptDiagnostics" class="field-label" style="margin-top:6px;">
-              Diagnostics (data only)
-            </label>
-            <textarea id="apptDiagnostics" class="textarea" rows="3"
-              placeholder="Eg. SNAP 4Dx negative, ear cytology 2+ cocci, 1+ yeast."></textarea>
-
-            <label for="apptAssessment" class="field-label" style="margin-top:6px;">
-              Assessment notes (optional)
-            </label>
-            <textarea id="apptAssessment" class="textarea" rows="2"
-              placeholder="Eg. Otitis externa (R), likely allergic."></textarea>
-
-            <label for="apptPlan" class="field-label" style="margin-top:6px;">
-              Plan notes (treatments you know you want)
-            </label>
-            <textarea id="apptPlan" class="textarea" rows="3"></textarea>
-
-            <label for="apptMeds" class="field-label" style="margin-top:6px;">
-              Medications dispensed (optional list)
-            </label>
-            <textarea id="apptMeds" class="textarea" rows="2"
-              placeholder="Eg. Apoquel 5.4mg PO SID x14d; Mometamax 4 gtt BID x10d."></textarea>
 
             <div class="checkbox-group" style="margin-top:8px;">
               <label class="checkbox-label">
@@ -408,51 +566,71 @@
           <h2 class="section-title">Surgery mode</h2>
 
           <div class="card">
-            <h3 class="card-title">Basic info</h3>
-            <div class="grid-two">
-              <div>
-                <label for="surgCaseLabel" class="field-label">Case label / patient name (optional)</label>
-                <input id="surgCaseLabel" class="input" placeholder="Eg. Bella – spay" />
-              </div>
-              <div>
-                <label for="surgSpecies" class="field-label">Species</label>
-                <select id="surgSpecies" class="select">
-                  <option value="dog">Dog</option>
-                  <option value="cat">Cat</option>
-                  <option value="other">Other</option>
-                </select>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <h3 class="card-title">Input style</h3>
+              <div class="toggle-group" id="surgModeToggle">
+                <div class="toggle-option active" data-mode="simple">Simple</div>
+                <div class="toggle-option" data-mode="advanced">Advanced</div>
               </div>
             </div>
+            <p class="card-subtitle">
+              Simple = one big notes box (tech/rapid). Advanced = full structured surgery entry. Quick mode still available in Advanced.
+            </p>
 
-            <div class="grid-two" style="margin-top:8px;">
-              <div>
-                <label for="surgWeight" class="field-label">Weight (kg)</label>
-                <input id="surgWeight" type="number" step="0.01" class="input" />
-              </div>
-              <div>
-                <label for="surgAgeYears" class="field-label">Age (years, optional)</label>
-                <input id="surgAgeYears" type="number" step="0.1" class="input" />
-              </div>
+            <!-- Simple mode -->
+            <div id="surgSimpleBlock">
+              <label for="surgQuickNotes" class="field-label">Quick surgery notes (I’ll parse this into full SOAP)</label>
+              <textarea id="surgQuickNotes" class="textarea" rows="6"
+                placeholder="Eg. 2yo FS Lab, ASA II, 22g L cephalic, 8.0 ET tube, dog fluids default, ovariohysterectomy uneventful, closure standard 3-layer, recovery smooth with Dexmed redose on extubation."></textarea>
             </div>
 
-            <div style="margin-top:8px;">
-              <label for="surgTPR" class="field-label">TPR (optional)</label>
-              <input id="surgTPR" class="input" placeholder="Eg. T 38.4, P 90, R 20" />
-            </div>
+            <!-- Advanced mode -->
+            <div id="surgAdvancedBlock" class="hidden">
+              <div class="grid-two">
+                <div>
+                  <label for="surgCaseLabel" class="field-label">Case label / patient name (optional)</label>
+                  <input id="surgCaseLabel" class="input" placeholder="Eg. Bella – spay" />
+                </div>
+                <div>
+                  <label for="surgSpecies" class="field-label">Species</label>
+                  <select id="surgSpecies" class="select">
+                    <option value="dog">Dog</option>
+                    <option value="cat">Cat</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
 
-            <div class="checkbox-group" style="margin-top:8px;">
-              <label class="checkbox-label">
-                <input id="surgQuickMode" type="checkbox" />
-                <span>Quick mode (tech-friendly, minimal required fields)</span>
-              </label>
-              <label class="checkbox-label">
-                <input id="surgStrictMode" type="checkbox" />
-                <span>Strict mode (no assumed normals)</span>
-              </label>
+              <div class="grid-two" style="margin-top:8px;">
+                <div>
+                  <label for="surgWeight" class="field-label">Weight (kg)</label>
+                  <input id="surgWeight" type="number" step="0.01" class="input" />
+                </div>
+                <div>
+                  <label for="surgAgeYears" class="field-label">Age (years, optional)</label>
+                  <input id="surgAgeYears" type="number" step="0.1" class="input" />
+                </div>
+              </div>
+
+              <div style="margin-top:8px;">
+                <label for="surgTPR" class="field-label">TPR (optional)</label>
+                <input id="surgTPR" class="input" placeholder="Eg. T 38.4, P 90, R 20" />
+              </div>
+
+              <div class="checkbox-group" style="margin-top:8px;">
+                <label class="checkbox-label">
+                  <input id="surgQuickMode" type="checkbox" />
+                  <span>Quick mode (tech-friendly, minimal required fields)</span>
+                </label>
+                <label class="checkbox-label">
+                  <input id="surgStrictMode" type="checkbox" />
+                  <span>Strict mode (no assumed normals)</span>
+                </label>
+              </div>
             </div>
           </div>
 
-          <div class="card">
+          <div id="surgAdvancedDetailCard" class="card hidden">
             <h3 class="card-title">Surgery details</h3>
 
             <label for="surgeryType" class="field-label">Surgery template</label>
@@ -543,7 +721,7 @@
             </div>
           </div>
 
-          <div class="card">
+          <div id="surgAdvancedAnesthesiaCard" class="card hidden">
             <h3 class="card-title">Anesthesia & surgery notes</h3>
 
             <label for="premeds" class="field-label">Premedications (drug, dose, route)</label>
@@ -613,12 +791,47 @@
         <section id="toolboxTab" class="tab-panel hidden">
           <h2 class="section-title">Toolbox Lite</h2>
 
+          <!-- Bloodwork Helper -->
           <div class="card">
             <h3 class="card-title">Bloodwork Helper Lite</h3>
-            <p class="card-subtitle">Paste CBC/chem/UA text.</p>
+            <p class="card-subtitle">
+              Paste CBC/chem/UA text. In this version, photos are for local privacy prep only; still paste text below.
+            </p>
 
+            <div class="attachment-row">
+              <button id="bwTakePhotoBtn" class="btn-secondary">Take photo</button>
+              <button id="bwUploadBtn" class="btn-ghost">Upload file</button>
+              <input id="bwFileInput" class="hidden-input" type="file" accept="image/*,.pdf" />
+              <span class="attachment-status" id="bwAttachmentStatus">
+                <span class="status-pill pending">No file</span>
+                <span>Attach a lab screenshot or PDF (optional).</span>
+              </span>
+            </div>
+
+            <div id="bwPreviewWrapper" class="hidden" style="margin-top:8px;">
+              <div class="grid-two">
+                <div>
+                  <span class="field-label">Preview</span>
+                  <div style="border-radius:12px;border:1px solid var(--border);overflow:hidden;max-height:200px;">
+                    <img id="bwPreviewImg" src="" alt="Preview" style="width:100%;display:block;object-fit:contain;background:#000;" />
+                  </div>
+                </div>
+                <div>
+                  <span class="field-label">Privacy</span>
+                  <p class="muted" style="margin-bottom:6px;">
+                    Open the privacy editor to black-box names, microchips, etc. Only the redacted image is kept in memory.
+                  </p>
+                  <div class="btn-row">
+                    <button id="openPrivacyEditorBtn" class="btn-ghost">Open privacy editor</button>
+                    <button id="clearBwFileBtn" class="btn-ghost">Remove file</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <label for="bloodworkText" class="field-label" style="margin-top:10px;">Lab text (paste here)</label>
             <textarea id="bloodworkText" class="textarea" rows="5"
-              placeholder="Paste lab text here."></textarea>
+              placeholder="Paste lab text here. In future versions, photos will auto-extract; for now, this stays text-based."></textarea>
 
             <div class="grid-two" style="margin-top:6px;">
               <div>
@@ -642,14 +855,25 @@
 
             <div class="btn-row" style="margin-top:8px;">
               <button id="runBloodworkBtn" class="btn-primary">Run Bloodwork Helper</button>
+              <button id="copyBloodworkOutputBtn" class="btn-secondary">Copy output</button>
             </div>
 
             <label for="bloodworkOutput" class="field-label" style="margin-top:6px;">
               Bloodwork Helper output
             </label>
             <textarea id="bloodworkOutput" class="textarea" rows="8" readonly></textarea>
+
+            <div class="refine-row">
+              <label for="bloodworkRefineInput">Feedback / refine (optional)</label>
+              <textarea id="bloodworkRefineInput" class="textarea" rows="2"
+                placeholder="Eg. Emphasize ALT more, mention CK is normal, shorten client explanation."></textarea>
+              <div class="btn-row">
+                <button id="refineBloodworkBtn" class="btn-ghost">Refine output</button>
+              </div>
+            </div>
           </div>
 
+          <!-- Email Helper -->
           <div class="card">
             <h3 class="card-title">Email / Client Communication Helper</h3>
 
@@ -687,12 +911,22 @@
 
             <div class="btn-row" style="margin-top:8px;">
               <button id="runEmailBtn" class="btn-primary">Generate email text</button>
+              <button id="copyEmailOutputBtn" class="btn-secondary">Copy email</button>
             </div>
 
             <label for="emailOutput" class="field-label" style="margin-top:6px;">
               Email output
             </label>
             <textarea id="emailOutput" class="textarea" rows="8" readonly></textarea>
+
+            <div class="refine-row">
+              <label for="emailRefineInput">Feedback / refine (optional)</label>
+              <textarea id="emailRefineInput" class="textarea" rows="2"
+                placeholder="Eg. Make tone softer, mention pre-visit sedation option, shorten closing."></textarea>
+              <div class="btn-row">
+                <button id="refineEmailBtn" class="btn-ghost">Refine email</button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -744,11 +978,31 @@
     </div>
   </div>
 
+  <!-- Privacy editor modal -->
+  <div id="privacyModalBackdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Privacy editor – mark private info</div>
+          <div class="muted">Drag rectangles over client names, microchips, phone numbers, etc.</div>
+        </div>
+        <button id="closePrivacyEditorBtn" class="btn-ghost">Cancel</button>
+      </div>
+      <div class="modal-body">
+        <canvas id="privacyCanvas"></canvas>
+      </div>
+      <div class="modal-footer">
+        <button id="clearRectsBtn" class="btn-ghost">Clear boxes</button>
+        <button id="savePrivacyBtn" class="btn-primary">Save clinic-safe copy</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // =============== UTILITIES ===============
+    // ---------- UTILITIES ----------
     function $(id) { return document.getElementById(id); }
     function getText(id) { return ($(id)?.value || "").trim(); }
-    function setText(id, value) { if ($(id)) $(id).value = value || ""; }
+    function setText(id, v) { if ($(id)) $(id).value = v || ""; }
 
     function showError(id, msg) {
       const el = $(id);
@@ -767,7 +1021,7 @@
       navigator.clipboard.writeText(text).catch(err => console.error("Copy failed", err));
     }
 
-    // =============== TABS ===============
+    // ---------- TABS ----------
     const tabButtons = document.querySelectorAll(".tab-btn");
     const tabPanels = document.querySelectorAll(".tab-panel");
 
@@ -783,7 +1037,7 @@
       });
     });
 
-    // =============== CHIP GROUP HELPERS ===============
+    // ---------- CHIP GROUP HELPERS ----------
     function setupSingleSelectChipGroup(groupId, hiddenInputId) {
       const group = $(groupId);
       const hidden = hiddenInputId ? $(hiddenInputId) : null;
@@ -829,27 +1083,71 @@
       fluidRateInput.value = "5";
     }
 
-    // =============== FEEDBACK BAR (local heuristic) ===============
+    // ---------- SIMPLE vs ADVANCED toggles ----------
+    function setupModeToggle(toggleId, simpleBlockId, advancedBlockId, extraSurgeryCards = []) {
+      const toggle = $(toggleId);
+      const simpleBlock = $(simpleBlockId);
+      const advBlock = $(advancedBlockId);
+      if (!toggle || !simpleBlock || !advBlock) return;
+
+      toggle.addEventListener("click", e => {
+        const opt = e.target.closest(".toggle-option");
+        if (!opt) return;
+        const mode = opt.dataset.mode;
+        toggle.querySelectorAll(".toggle-option").forEach(o => o.classList.remove("active"));
+        opt.classList.add("active");
+
+        if (mode === "simple") {
+          simpleBlock.classList.remove("hidden");
+          advBlock.classList.add("hidden");
+          extraSurgeryCards.forEach(id => $(id)?.classList.add("hidden"));
+        } else {
+          simpleBlock.classList.add("hidden");
+          advBlock.classList.remove("hidden");
+          extraSurgeryCards.forEach(id => $(id)?.classList.remove("hidden"));
+        }
+      });
+    }
+
+    setupModeToggle("apptModeToggle", "apptSimpleBlock", "apptAdvancedBlock");
+    setupModeToggle(
+      "surgModeToggle",
+      "surgSimpleBlock",
+      "surgAdvancedBlock",
+      ["surgAdvancedDetailCard", "surgAdvancedAnesthesiaCard"]
+    );
+
+    // ---------- FEEDBACK BAR ----------
     function buildMissingFieldsSummary(payload) {
       const missing = [];
 
       if (payload.soapType === "appointment") {
-        if (!payload.reason) missing.push("Reason for visit");
-        if (!payload.pe) missing.push("PE summary");
-        if (!payload.diagnostics) missing.push("Diagnostics data");
+        if (!payload.quickNotes && payload.modeDetail === "simple") {
+          missing.push("Quick notes");
+        }
+        if (payload.modeDetail === "advanced") {
+          if (!payload.reason) missing.push("Reason for visit");
+          if (!payload.pe) missing.push("PE summary");
+          if (!payload.diagnostics) missing.push("Diagnostics data");
+        }
       }
 
       if (payload.soapType === "surgery") {
-        const quick = !!payload.quickMode;
-        if (!payload.surgeryType) missing.push("Surgery template");
-        if (!payload.weightKg) missing.push("Weight (kg)");
-        if (!payload.asaStatus) missing.push("ASA status");
-        if (!payload.ivGauge) missing.push("IV catheter gauge");
-        if (!payload.ivSite) missing.push("IV catheter site");
-        if (!payload.ettSize) missing.push("ET tube size");
-        if (!quick) {
-          if (!payload.premeds) missing.push("Premeds");
-          if (!payload.induction) missing.push("Induction/maintenance");
+        if (!payload.quickNotes && payload.modeDetail === "simple") {
+          missing.push("Quick surgery notes");
+        }
+        if (payload.modeDetail === "advanced") {
+          const quick = !!payload.quickMode;
+          if (!payload.surgeryType) missing.push("Surgery template");
+          if (!payload.weightKg) missing.push("Weight (kg)");
+          if (!payload.asaStatus) missing.push("ASA status");
+          if (!payload.ivGauge) missing.push("IV catheter gauge");
+          if (!payload.ivSite) missing.push("IV catheter site");
+          if (!payload.ettSize) missing.push("ET tube size");
+          if (!quick) {
+            if (!payload.premeds) missing.push("Premeds");
+            if (!payload.induction) missing.push("Induction/maintenance");
+          }
         }
       }
 
@@ -873,9 +1171,9 @@
       bar.textContent = "";
     }
 
-    // =============== /api/run CALL ===============
+    // ---------- /api/run CALL ----------
     async function callApiRun(body, errorId, onResult) {
-      showError(errorId, "");
+      if (errorId) showError(errorId, "");
       try {
         const res = await fetch("/api/run", {
           method: "POST",
@@ -884,32 +1182,42 @@
         });
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
-        onResult(data.result || "");
+        if (typeof onResult === "function") onResult(data.result || "");
       } catch (err) {
         console.error(err);
-        onResult("");
-        showError(errorId, "Error: backend call failed.");
+        if (typeof onResult === "function") onResult("");
+        if (errorId) showError(errorId, "Error: backend call failed.");
       }
     }
 
-    // =============== APPOINTMENT SOAP ===============
+    // ---------- APPOINTMENT SOAP ----------
     $("runApptSoapBtn").addEventListener("click", () => {
+      const apptMode = document
+        .querySelector("#apptModeToggle .toggle-option.active")
+        ?.dataset.mode || "simple";
+
       const payload = {
         soapType: "appointment",
         strictMode: $("apptStrictMode").checked,
-        caseLabel: getText("apptCaseLabel"),
-        visitType: $("apptVisitType").value,
-        weightKg: getText("apptWeight"),
-        ageYears: getText("apptAgeYears"),
-        tpr: getText("apptTPR"),
-        reason: getText("apptReason"),
-        history: getText("apptHistory"),
-        pe: getText("apptPE"),
-        diagnostics: getText("apptDiagnostics"),
-        assessmentNotes: getText("apptAssessment"),
-        planNotes: getText("apptPlan"),
-        medsNotes: getText("apptMeds")
+        modeDetail: apptMode
       };
+
+      if (apptMode === "simple") {
+        payload.quickNotes = getText("apptQuickNotes");
+      } else {
+        payload.caseLabel = getText("apptCaseLabel");
+        payload.visitType = $("apptVisitType").value;
+        payload.weightKg = getText("apptWeight");
+        payload.ageYears = getText("apptAgeYears");
+        payload.tpr = getText("apptTPR");
+        payload.reason = getText("apptReason");
+        payload.history = getText("apptHistory");
+        payload.pe = getText("apptPE");
+        payload.diagnostics = getText("apptDiagnostics");
+        payload.assessmentNotes = getText("apptAssessment");
+        payload.planNotes = getText("apptPlan");
+        payload.medsNotes = getText("apptMeds");
+      }
 
       clearFeedback();
       showFeedback(payload);
@@ -921,35 +1229,45 @@
       });
     });
 
-    // =============== SURGERY SOAP ===============
+    // ---------- SURGERY SOAP ----------
     $("runSurgSoapBtn").addEventListener("click", () => {
+      const surgMode = document
+        .querySelector("#surgModeToggle .toggle-option.active")
+        ?.dataset.mode || "simple";
+
       const payload = {
         soapType: "surgery",
         strictMode: $("surgStrictMode").checked,
-        quickMode: $("surgQuickMode").checked,
-        caseLabel: getText("surgCaseLabel"),
-        species: $("surgSpecies").value,
-        weightKg: getText("surgWeight"),
-        ageYears: getText("surgAgeYears"),
-        tpr: getText("surgTPR"),
-        surgeryType: $("surgeryType").value,
-        asaStatus: $("asaStatus").value,
-        ivGauge: $("ivGauge").value,
-        ivSite: $("ivSite").value,
-        ettSize: getText("ettSize"),
-        fluidsMode: fluidRateInput.dataset.mode,
-        fluidRate: getText("fluidRate"),
-        bolusGiven: $("bolusGiven").checked,
-        premeds: getText("premeds"),
-        induction: getText("induction"),
-        intraOpMeds: getText("intraOpMeds"),
-        procedureNotes: getText("procedureNotes"),
-        anesthesiaDuration: getText("anesthesiaDuration"),
-        surgeryDuration: getText("surgeryDuration"),
-        recoveryQuality: $("recoveryQuality").value,
-        recoveryNotes: getText("recoveryNotes"),
-        postOpMeds: getText("postOpMeds")
+        modeDetail: surgMode
       };
+
+      if (surgMode === "simple") {
+        payload.quickNotes = getText("surgQuickNotes");
+      } else {
+        payload.quickMode = $("surgQuickMode").checked;
+        payload.caseLabel = getText("surgCaseLabel");
+        payload.species = $("surgSpecies").value;
+        payload.weightKg = getText("surgWeight");
+        payload.ageYears = getText("surgAgeYears");
+        payload.tpr = getText("surgTPR");
+        payload.surgeryType = $("surgeryType").value;
+        payload.asaStatus = $("asaStatus").value;
+        payload.ivGauge = $("ivGauge").value;
+        payload.ivSite = $("ivSite").value;
+        payload.ettSize = getText("ettSize");
+        payload.fluidsMode = fluidRateInput.dataset.mode;
+        payload.fluidRate = getText("fluidRate");
+        payload.bolusGiven = $("bolusGiven").checked;
+        payload.premeds = getText("premeds");
+        payload.induction = getText("induction");
+        payload.intraOpMeds = getText("intraOpMeds");
+        payload.procedureNotes = getText("procedureNotes");
+        payload.anesthesiaDuration = getText("anesthesiaDuration");
+        payload.surgeryDuration = getText("surgeryDuration");
+        payload.recoveryQuality = $("recoveryQuality").value;
+        payload.recoveryNotes = getText("recoveryNotes");
+        payload.postOpMeds = getText("postOpMeds");
+      }
 
       clearFeedback();
       showFeedback(payload);
@@ -961,13 +1279,223 @@
       });
     });
 
-    // =============== TOOLBOX: BLOODWORK ===============
+    // ---------- TOOLBOX: BLOODWORK ----------
+    let originalBwImage = null;
+    let sanitizedBwImage = null;
+    let currentImageIsSafe = false;
+
+    const bwFileInput = $("bwFileInput");
+    const bwAttachmentStatus = $("bwAttachmentStatus");
+    const bwPreviewWrapper = $("bwPreviewWrapper");
+    const bwPreviewImg = $("bwPreviewImg");
+
+    function updateBwStatus() {
+      if (!originalBwImage) {
+        bwAttachmentStatus.innerHTML =
+          '<span class="status-pill pending">No file</span><span>Attach a lab screenshot or PDF (optional).</span>';
+        bwPreviewWrapper.classList.add("hidden");
+        currentImageIsSafe = false;
+      } else if (!currentImageIsSafe) {
+        bwAttachmentStatus.innerHTML =
+          '<span class="status-pill review">Needs review</span><span>Open privacy editor and black-box private info.</span>';
+        bwPreviewWrapper.classList.remove("hidden");
+      } else {
+        bwAttachmentStatus.innerHTML =
+          '<span class="status-pill safe">Clinic-Safe</span><span>Only redacted image is used in this session.</span>';
+        bwPreviewWrapper.classList.remove("hidden");
+      }
+    }
+
+    $("bwTakePhotoBtn").addEventListener("click", () => {
+      // For iPhone, setting capture on click tends to open camera.
+      bwFileInput.removeAttribute("multiple");
+      bwFileInput.setAttribute("accept", "image/*");
+      bwFileInput.setAttribute("capture", "environment");
+      bwFileInput.click();
+    });
+
+    $("bwUploadBtn").addEventListener("click", () => {
+      bwFileInput.removeAttribute("capture");
+      bwFileInput.setAttribute("accept", "image/*,.pdf");
+      bwFileInput.click();
+    });
+
+    bwFileInput.addEventListener("change", e => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) {
+        originalBwImage = null;
+        sanitizedBwImage = null;
+        currentImageIsSafe = false;
+        updateBwStatus();
+        return;
+      }
+
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          originalBwImage = ev.target.result;
+          sanitizedBwImage = null;
+          currentImageIsSafe = false;
+          bwPreviewImg.src = originalBwImage;
+          updateBwStatus();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // PDF or other – show status but no in-app redaction (manual external redaction).
+        originalBwImage = null;
+        sanitizedBwImage = null;
+        currentImageIsSafe = false;
+        bwPreviewImg.src = "";
+        bwPreviewWrapper.classList.add("hidden");
+        bwAttachmentStatus.innerHTML =
+          '<span class="status-pill review">External redact</span><span>PDFs: please redact externally before upload in future versions. For now, avoid PDFs with PII.</span>';
+      }
+    });
+
+    $("clearBwFileBtn").addEventListener("click", () => {
+      bwFileInput.value = "";
+      originalBwImage = null;
+      sanitizedBwImage = null;
+      currentImageIsSafe = false;
+      updateBwStatus();
+    });
+
+    // Privacy editor – canvas
+    const privacyBackdrop = $("privacyModalBackdrop");
+    const privacyCanvas = $("privacyCanvas");
+    const closePrivacyEditorBtn = $("closePrivacyEditorBtn");
+    const savePrivacyBtn = $("savePrivacyBtn");
+    const clearRectsBtn = $("clearRectsBtn");
+
+    let privacyCtx = null;
+    let imgObj = null;
+    let rects = [];
+    let isDrawing = false;
+    let startX = 0;
+    let startY = 0;
+    let currentRect = null;
+
+    function openPrivacyEditor() {
+      if (!originalBwImage) return;
+      privacyBackdrop.classList.remove("hidden");
+      rects = [];
+      currentRect = null;
+      const img = new Image();
+      img.onload = () => {
+        imgObj = img;
+        const maxW = 650;
+        const maxH = 500;
+        let w = img.width;
+        let h = img.height;
+        const ratio = Math.min(maxW / w, maxH / h, 1);
+        w = w * ratio;
+        h = h * ratio;
+        privacyCanvas.width = w;
+        privacyCanvas.height = h;
+        privacyCtx = privacyCanvas.getContext("2d");
+        redrawPrivacyCanvas();
+      };
+      img.src = originalBwImage;
+    }
+
+    function redrawPrivacyCanvas() {
+      if (!privacyCtx || !imgObj) return;
+      privacyCtx.clearRect(0, 0, privacyCanvas.width, privacyCanvas.height);
+      privacyCtx.drawImage(imgObj, 0, 0, privacyCanvas.width, privacyCanvas.height);
+      // draw existing rects
+      privacyCtx.fillStyle = "rgba(15,23,42,0.85)";
+      rects.forEach(r => {
+        privacyCtx.fillRect(r.x, r.y, r.w, r.h);
+      });
+      if (currentRect) {
+        privacyCtx.fillRect(
+          currentRect.x,
+          currentRect.y,
+          currentRect.w,
+          currentRect.h
+        );
+      }
+    }
+
+    privacyCanvas.addEventListener("mousedown", e => {
+      if (!privacyCtx) return;
+      isDrawing = true;
+      const rect = privacyCanvas.getBoundingClientRect();
+      startX = e.clientX - rect.left;
+      startY = e.clientY - rect.top;
+      currentRect = { x: startX, y: startY, w: 0, h: 0 };
+    });
+
+    privacyCanvas.addEventListener("mousemove", e => {
+      if (!isDrawing || !currentRect) return;
+      const rect = privacyCanvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      currentRect.w = x - startX;
+      currentRect.h = y - startY;
+      redrawPrivacyCanvas();
+    });
+
+    function finishRect() {
+      if (currentRect) {
+        // normalize for negative widths/heights
+        let { x, y, w, h } = currentRect;
+        if (w < 0) { x = x + w; w = Math.abs(w); }
+        if (h < 0) { y = y + h; h = Math.abs(h); }
+        if (w > 4 && h > 4) {
+          rects.push({ x, y, w, h });
+        }
+      }
+      currentRect = null;
+      redrawPrivacyCanvas();
+    }
+
+    privacyCanvas.addEventListener("mouseup", () => {
+      if (!isDrawing) return;
+      isDrawing = false;
+      finishRect();
+    });
+
+    privacyCanvas.addEventListener("mouseleave", () => {
+      if (!isDrawing) return;
+      isDrawing = false;
+      finishRect();
+    });
+
+    $("openPrivacyEditorBtn").addEventListener("click", () => {
+      if (!originalBwImage) return;
+      openPrivacyEditor();
+    });
+
+    closePrivacyEditorBtn.addEventListener("click", () => {
+      privacyBackdrop.classList.add("hidden");
+    });
+
+    clearRectsBtn.addEventListener("click", () => {
+      rects = [];
+      currentRect = null;
+      redrawPrivacyCanvas();
+    });
+
+    savePrivacyBtn.addEventListener("click", () => {
+      if (!privacyCtx) return;
+      sanitizedBwImage = privacyCanvas.toDataURL("image/png");
+      currentImageIsSafe = true;
+      bwPreviewImg.src = sanitizedBwImage;
+      privacyBackdrop.classList.add("hidden");
+      updateBwStatus();
+    });
+
+    updateBwStatus();
+
     $("runBloodworkBtn").addEventListener("click", () => {
       const payload = {
         text: getText("bloodworkText"),
         detailLevel: $("bloodworkDetail").value,
         includeDiffs: $("bloodworkIncludeDiffs").checked,
-        includeClientFriendly: $("bloodworkClientFriendly").checked
+        includeClientFriendly: $("bloodworkClientFriendly").checked,
+        // For future Vision, we could include sanitizedBwImage here, but for now it's informational only.
+        hasClinicSafeImage: !!sanitizedBwImage
       };
 
       $("bloodworkOutput").value = "Thinking about the lab work…";
@@ -977,7 +1505,31 @@
       });
     });
 
-    // =============== TOOLBOX: EMAIL ===============
+    $("copyBloodworkOutputBtn").addEventListener("click", () => {
+      copyToClipboard(getText("bloodworkOutput"));
+    });
+
+    $("refineBloodworkBtn").addEventListener("click", () => {
+      const existing = getText("bloodworkOutput");
+      const refine = getText("bloodworkRefineInput");
+      if (!existing || !refine) return;
+
+      $("bloodworkOutput").value = "Refining bloodwork summary…";
+
+      const payload = {
+        text: existing,
+        detailLevel: $("bloodworkDetail").value,
+        includeDiffs: $("bloodworkIncludeDiffs").checked,
+        includeClientFriendly: $("bloodworkClientFriendly").checked,
+        refineInstructions: refine
+      };
+
+      callApiRun({ mode: "toolbox-bloodwork", payload }, null, text => {
+        $("bloodworkOutput").value = text;
+      });
+    });
+
+    // ---------- TOOLBOX: EMAIL ----------
     $("runEmailBtn").addEventListener("click", () => {
       const payload = {
         emailType: $("emailType").value,
@@ -994,7 +1546,33 @@
       });
     });
 
-    // =============== CONSULT ===============
+    $("copyEmailOutputBtn").addEventListener("click", () => {
+      copyToClipboard(getText("emailOutput"));
+    });
+
+    $("refineEmailBtn").addEventListener("click", () => {
+      const existing = getText("emailOutput");
+      const refine = getText("emailRefineInput");
+      if (!existing || !refine) return;
+
+      $("emailOutput").value = "Refining email…";
+
+      const payload = {
+        emailType: $("emailType").value,
+        petName: getText("emailPetName"),
+        ownerName: getText("emailOwnerName"),
+        timeframe: getText("emailTimeframe"),
+        notes: getText("emailNotes"),
+        refineInstructions: refine,
+        existingDraft: existing
+      };
+
+      callApiRun({ mode: "toolbox-email", payload }, null, text => {
+        $("emailOutput").value = text;
+      });
+    });
+
+    // ---------- CONSULT ----------
     $("runConsultBtn").addEventListener("click", () => {
       const payload = { message: getText("consultMessage") };
 
@@ -1005,7 +1583,7 @@
       });
     });
 
-    // =============== COPY SOAP ===============
+    // ---------- COPY SOAP ----------
     $("copySoapBtn").addEventListener("click", () => {
       copyToClipboard(getText("soapOutput"));
     });
