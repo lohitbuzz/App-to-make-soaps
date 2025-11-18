@@ -1,3 +1,7 @@
+// ---- BACKEND URL ----
+// Netlify site (frontend)
+// Render backend (Node server)
+const BACKEND_URL = "https://lohit-soap-app.onrender.com/api/soap";
 // app.js
 // Frontend logic for Lohit SOAP App v1.6
 // Uses /api/run backend endpoint defined in server.js
