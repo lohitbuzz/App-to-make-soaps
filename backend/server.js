@@ -1,18 +1,22 @@
+// server.js – Lohit SOAP backend (Render + OpenAI)
+
+// ----------------- Imports & env setup -----------------
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const OpenAI = require("openai");
 
-// Load .env from Render Secret File location
+// Load .env from Render Secret File (named ".env")
 dotenv.config({ path: "/etc/secrets/.env" });
 
-// Quick sanity log
+// Quick sanity log for API key
 if (!process.env.OPENAI_API_KEY) {
-  console.error("❌ OPENAI_API_KEY is missing!");
+  console.error("❌ OPENAI_API_KEY is missing.");
 } else {
   console.log("✅ OPENAI_API_KEY loaded.");
 }
 
+// ----------------- Express app -----------------
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -24,69 +28,38 @@ app.get("/", (req, res) => {
   res.send("Lohit SOAP backend is alive.");
 });
 
-// —————————————————————————————
-// SYSTEM BRAIN PROMPT
-// —————————————————————————————
+// ----------------- OpenAI client -----------------
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
+// ----------------- System brain prompt -----------------
 const SYSTEM_PROMPT = `
 You are the Lohit SOAP App Brain for Dr. Lohit Busanelli.
-Follow all Master Rules, surgery templates, dental templates,
-drug formatting, ASA handling, Avimark spacing rules, and
-clinic privacy rules from November 2024–2025.
 
-Never create client/pet names or microchip numbers.
-Always format SOAPs exactly as the clinic requires.
-Include Plan categories in correct order.
-Include drug concentrations in brackets.
-Never invent vitals in strict mode.
-Return Avimark-friendly plain text.
-`;
+Your job:
+- Turn intake JSON from the Lohit SOAP App into a single Avimark-compatible SOAP note.
+- Follow all clinic Master Rules for appointments, surgery, and dental cases (templates, ASA, Plan ordering, bloodwork handling, drug formatting, spacing).
+- Respect clinic privacy rules (no client names, no pet names, no microchip numbers, no phone/email/address).
 
-// Helper – stringify intake cleanly
-function buildIntakeText(body) {
-  return JSON.stringify(body, null, 2);
-}
-
-// Health check
-app.get("/", (req, res) => {
-  res.send("Lohit SOAP backend running.");
-});
-
-// —————————————————————————————
-// MAIN ROUTE — /api/soap
-// —————————————————————————————
-
-app.post("/api/soap", async (req, res) => {
-  try {
-    const { strictOrHelp = "help_me", ...rest } = req.body;
-    const intake = buildIntakeText(rest);
-
-    const completion = await client.chat.completions.create({
-      model: "gpt-5.1-thinking",
-      temperature: strictOrHelp === "strict" ? 0.1 : 0.4,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: `Incoming data from Lohit SOAP App.\nStrictness=${strictOrHelp}\n\n${intake}`
-        }
-      ]
-    });
-
-    const text =
-      completion.choices?.[0]?.message?.content?.trim() ||
-      "No response from model.";
-
-    return res.json({ ok: true, result: text });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      ok: false,
-      error: err.message || "Server error generating SOAP"
-    });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Backend running on port ${port}`);
-});
+Global formatting rules:
+- Output plain text only (no markdown, no bullets).
+- Use headings in this order:
+  Subjective:
+  Objective:
+  Assessment:
+  Plan:
+  Medications Dispensed:
+  Aftercare:
+- Objective: data-only; interpretations go in Assessment.
+- Plan categories for surgery/anesthesia in this order, separated by blank lines:
+  1. IV Catheter / Fluids
+  2. Pre-medications
+  3. Induction / Maintenance
+  4. Surgical Prep
+  5. Surgical Procedure
+  6. Intra-op Medications
+  7. Recovery
+  8. Medications Dispensed
+  9. Aftercare
+- Include drug concentrations in brackets after each drug name (e.g., Dexmed
