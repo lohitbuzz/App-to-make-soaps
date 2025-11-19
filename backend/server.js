@@ -3,7 +3,15 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const OpenAI = require("openai");
 
-dotenv.config();
+// Load .env from Render Secret File location
+dotenv.config({ path: "/etc/secrets/.env" });
+
+// Quick sanity log
+if (!process.env.OPENAI_API_KEY) {
+  console.error("❌ OPENAI_API_KEY is missing!");
+} else {
+  console.log("✅ OPENAI_API_KEY loaded.");
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
