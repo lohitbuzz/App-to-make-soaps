@@ -1,6 +1,7 @@
 {
-  "name": "soap-backend",
-  "version": "1.6.8",
+  "name": "lohit-soap-backend",
+  "version": "1.7.0",
+  "description": "Backend for Lohit SOAP App (Render)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -9,6 +10,6 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "openai": "^4.59.0"
+    "openai": "^4.56.0"
   }
 }
