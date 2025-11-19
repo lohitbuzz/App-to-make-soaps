@@ -1,43 +1,55 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Feedback HQ Lite</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./style.css" />
-  <script src="./feedback.js" defer></script>
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <title>Lohit SOAP Feedback</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <h1>Feedback / Dev Mode</h1>
+          <p class="subtitle">
+            Quick way to send thoughts to the brain (using /api/feedback).
+          </p>
+        </div>
+      </header>
 
-<body>
-  <header class="app-header">
-    <div>
-      <h1>Feedback HQ (Lite)</h1>
-      <p class="subtitle">Direct tunnel to brain • Developer Only</p>
+      <main class="main-layout">
+        <section class="left-column">
+          <section class="card">
+            <h2>Input</h2>
+            <label>
+              Text
+              <textarea
+                id="fbText"
+                placeholder="Paste an output or write what you want to improve..."
+              ></textarea>
+            </label>
+
+            <label>
+              Request
+              <textarea
+                id="fbRequest"
+                placeholder="e.g. 'Shorter', 'More formal', 'Better client-friendly wording'"
+              ></textarea>
+            </label>
+
+            <button id="fbSendBtn" class="primary-btn">Send</button>
+          </section>
+        </section>
+
+        <section class="right-column">
+          <section class="card">
+            <h2>Response</h2>
+            <textarea id="fbOutput" class="output large"></textarea>
+          </section>
+        </section>
+      </main>
     </div>
 
-    <div class="mode-select-wrap">
-      <label>Mode:</label>
-      <select id="feedbackMode">
-        <option value="help_me" selected>Help Me</option>
-        <option value="strict">Strict</option>
-      </select>
-    </div>
-  </header>
-
-  <main class="layout-single">
-    <section class="card">
-      <h2>Message to Brain</h2>
-      <textarea id="feedbackInput" rows="10"></textarea>
-
-      <div class="actions-row">
-        <button id="sendFeedbackBtn" class="btn-primary">Send</button>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="section-header"><h2>Response</h2></div>
-      <textarea id="feedbackOutput" class="soap-output"></textarea>
-    </section>
-  </main>
-</body>
+    <script src="feedback.js" defer></script>
+  </body>
 </html>
