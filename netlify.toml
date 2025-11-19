@@ -1,7 +1,11 @@
 [build]
+  # Work inside the /frontend folder
   base = "frontend"
-  publish = "frontend"
+  # Publish that folder itself (not frontend/frontend)
+  publish = "."
+  # No build step – just serve the static files
   command = ""
 
 [functions]
+  # No Netlify functions for this project
   directory = ""
