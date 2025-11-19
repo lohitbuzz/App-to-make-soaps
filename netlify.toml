@@ -1,0 +1,7 @@
+[build]
+  base = "frontend"
+  publish = "frontend"
+  command = ""
+
+[functions]
+  directory = ""
