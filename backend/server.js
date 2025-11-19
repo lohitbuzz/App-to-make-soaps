@@ -19,8 +19,9 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: "5mb" }));
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+// Simple health check
+app.get("/", (req, res) => {
+  res.send("Lohit SOAP backend is alive.");
 });
 
 // —————————————————————————————
