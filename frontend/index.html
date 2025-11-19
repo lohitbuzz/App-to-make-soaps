@@ -1,133 +1,203 @@
-<!doctype html>
+<!-- frontend/index.html -->
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <title>Lohit SOAP App v1.6.8</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./style.css" />
-  <script src="./app.js" defer></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <header class="app-header">
-    <div>
-      <h1>Lohit SOAP App <span class="badge">v1.6.8</span></h1>
-      <p class="subtitle">Appointment • Surgery • Toolbox • Consult</p>
-    </div>
-
-    <div class="mode-select-wrap">
-      <label>Mode:</label>
-      <select id="modeSelect">
-        <option value="help_me" selected>Help Me</option>
-        <option value="strict">Strict</option>
-      </select>
-    </div>
-  </header>
-
-  <!-- Tabs -->
-  <nav class="tab-nav">
-    <button id="tabAppointment" class="tab-button active">Appointment</button>
-    <button id="tabSurgery" class="tab-button">Surgery</button>
-    <button id="tabToolbox" class="tab-button">Toolbox</button>
-    <button id="tabConsult" class="tab-button">Consult</button>
-  </nav>
-
-  <!-- Layout -->
-  <main class="layout">
-
-    <!-- LEFT PANE -->
-    <section class="left-pane">
-
-      <!-- Attachments -->
-      <section class="card">
-        <h2>Attachments (Local Only)</h2>
-        <p class="help-text">Photos/files stay on your device. Redact microchip / Lab ID first.</p>
-        <div class="attachments-row">
-          <button class="btn-outline" disabled>Take Photo (soon)</button>
-          <button class="btn-outline" disabled>Upload (soon)</button>
-        </div>
-      </section>
-
-      <!-- Appointment -->
-      <section id="appointmentSection" class="card tab-section">
-        <h2>Appointment</h2>
-        <label class="field"><span>Reason</span><textarea id="appointmentReason"></textarea></label>
-        <label class="field"><span>History</span><textarea id="appointmentHistory"></textarea></label>
-        <label class="field"><span>PE (findings only)</span><textarea id="appointmentPe"></textarea></label>
-        <label class="field"><span>Diagnostics (data-only)</span><textarea id="appointmentDiagnostics"></textarea></label>
-        <label class="field"><span>Assessment</span><textarea id="appointmentAssessment"></textarea></label>
-        <label class="field"><span>Plan</span><textarea id="appointmentPlan"></textarea></label>
-        <label class="field"><span>Meds dispensed</span><textarea id="appointmentMeds"></textarea></label>
-
-        <div class="actions-row">
-          <button id="generateAppointmentBtn" class="btn-primary">Generate SOAP</button>
-        </div>
-      </section>
-
-      <!-- Surgery -->
-      <section id="surgerySection" class="card tab-section hidden">
-        <h2>Surgery</h2>
-
-        <div class="segmented">
-          <button id="surgerySimpleToggle" class="segmented-btn active">Simple</button>
-          <button id="surgeryAdvancedToggle" class="segmented-btn">Advanced</button>
-        </div>
-
-        <!-- SIMPLE -->
-        <div id="surgerySimplePanel">
-          <p class="help-text">One notes box. Brain expands with clinic defaults.</p>
-          <label class="field"><span>Notes</span><textarea id="surgerySimpleNotes"></textarea></label>
-        </div>
-
-        <!-- ADVANCED -->
-        <div id="surgeryAdvancedPanel" class="hidden">
-          <label class="field"><span>Template</span><input id="surgeryTemplate" type="text"></label>
-          <label class="field"><span>Signalment</span><textarea id="surgerySignalment"></textarea></label>
-          <label class="field"><span>IV + Fluids</span><textarea id="surgeryIvFluids"></textarea></label>
-          <label class="field"><span>Premeds / Induction / Intra-op</span><textarea id="surgeryDrugs"></textarea></label>
-          <label class="field"><span>Procedure Notes</span><textarea id="surgeryProcedure"></textarea></label>
-          <label class="field"><span>Recovery</span><textarea id="surgeryRecovery"></textarea></label>
-          <label class="field"><span>Meds dispensed</span><textarea id="surgeryMeds"></textarea></label>
-        </div>
-
-        <div class="actions-row">
-          <button id="generateSurgeryBtn" class="btn-primary">Generate SOAP</button>
-        </div>
-      </section>
-
-      <!-- Toolbox -->
-      <section id="toolboxSection" class="card tab-section hidden">
-        <h2>Toolbox Lite</h2>
-        <p class="help-text">Quick helper for bloodwork blurbs, client emails, notes.</p>
-        <label class="field"><span>Input</span><textarea id="toolboxText"></textarea></label>
-        <div class="actions-row"><button id="generateToolboxBtn" class="btn-primary">Generate</button></div>
-      </section>
-
-      <!-- Consult -->
-      <section id="consultSection" class="card tab-section hidden">
-        <h2>Consult</h2>
-        <p class="help-text">Speak freely — brain responds and may produce SOAP.</p>
-        <label class="field"><span>Message</span><textarea id="consultText"></textarea></label>
-        <div class="actions-row"><button id="generateConsultBtn" class="btn-primary">Ask</button></div>
-      </section>
-    </section>
-
-    <!-- RIGHT PANE -->
-    <section class="right-pane">
-      <section class="card">
-        <div class="section-header">
-          <h2>Output</h2>
-          <button id="copyFullSoapBtn" class="btn-secondary">Copy</button>
-        </div>
-        <p id="statusMessage" class="status-text">Ready.</p>
-        <textarea id="soapOutput" class="soap-output"></textarea>
-      </section>
-
-      <div class="developer-link">
-        <a href="./feedback.html">Developer Mode</a>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-title-block">
+        <h1>Lohit SOAP App</h1>
+        <p class="version">v1.6.8 – Appointment · Surgery · Toolbox · Consult</p>
       </div>
-    </section>
 
-  </main>
+      <div class="mode-block">
+        <label for="modeSelect">Mode:</label>
+        <select id="modeSelect">
+          <option value="Help Me" selected>Help Me (templates OK)</option>
+          <option value="Strict">Strict (no invention)</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="appointment">Appointment</button>
+      <button class="tab" data-tab="surgery">Surgery</button>
+      <button class="tab" data-tab="toolbox">Toolbox</button>
+      <button class="tab" data-tab="consult">Consult</button>
+    </nav>
+
+    <main class="layout">
+      <!-- Left column: inputs -->
+      <section class="input-panel">
+        <section class="attachments-card">
+          <h2>Attachments (Local Only)</h2>
+          <p class="hint">
+            Photos/files stay on your device. Redact microchip / Lab ID first.
+            (Camera & upload coming later.)
+          </p>
+          <div class="attachment-buttons">
+            <button class="btn btn-disabled" disabled>Take Photo (soon)</button>
+            <button class="btn btn-disabled" disabled>Upload (soon)</button>
+          </div>
+        </section>
+
+        <!-- Appointment tab -->
+        <section class="card tab-section active" id="appointmentSection">
+          <h2>Appointment</h2>
+
+          <label>
+            Reason
+            <textarea id="apptReason" rows="2"
+              placeholder="Eg. Ear infection recheck, annual wellness, vomiting dog, etc."></textarea>
+          </label>
+
+          <label>
+            History
+            <textarea id="apptHistory" rows="3"
+              placeholder="History, duration, home meds, response to treatment, etc."></textarea>
+          </label>
+
+          <label>
+            PE (findings only)
+            <textarea id="apptPE" rows="3"
+              placeholder="Abnormal findings only; leave normals out if you want the brain to fill by template."></textarea>
+          </label>
+
+          <label>
+            Diagnostics (data-only)
+            <textarea id="apptDiagnostics" rows="2"
+              placeholder="Eg. CBC/chem, ear cytology: 2+ cocci, 1+ yeast, few neutrophils."></textarea>
+          </label>
+
+          <label>
+            Assessment
+            <textarea id="apptAssessment" rows="2"
+              placeholder="Your problem list or working diagnosis if you want to steer the plan."></textarea>
+          </label>
+
+          <label>
+            Plan (your notes)
+            <textarea id="apptPlan" rows="2"
+              placeholder="Optional: anything specific you want in the Plan section."></textarea>
+          </label>
+
+          <label>
+            Meds dispensed
+            <textarea id="apptMeds" rows="2"
+              placeholder="Optional list of meds dispensed if you want to lock them in."></textarea>
+          </label>
+
+          <button id="btnAppt" class="btn btn-primary full-width">
+            Generate SOAP (Appointment)
+          </button>
+        </section>
+
+        <!-- Surgery tab -->
+        <section class="card tab-section" id="surgerySection">
+          <h2>Surgery</h2>
+
+          <label>
+            Case type / template
+            <input
+              id="sxType"
+              type="text"
+              placeholder="Eg. Canine OVH, canine neuter, COHAT, mass removal, cystotomy, etc."
+            />
+          </label>
+
+          <label>
+            ASA status
+            <input
+              id="sxASA"
+              type="text"
+              placeholder="Eg. ASA II routine, ASA III unstable, etc."
+            />
+          </label>
+
+          <label>
+            Notes (simple or full)
+            <textarea id="sxNotes" rows="6"
+              placeholder="Eg. 2y FS Lab, 22g L cephalic, 8.0 ETT, dog fluids default, routine OVH uneventful, closure standard 3-layer, recovery smooth."></textarea>
+          </label>
+
+          <label>
+            Meds dispensed / recovery notes
+            <textarea id="sxMeds" rows="3"
+              placeholder="Optional: meds dispensed, recovery comments, any special instructions."></textarea>
+          </label>
+
+          <button id="btnSx" class="btn btn-primary full-width">
+            Generate SOAP (Surgery)
+          </button>
+        </section>
+
+        <!-- Toolbox tab -->
+        <section class="card tab-section" id="toolboxSection">
+          <h2>Toolbox Lite</h2>
+          <p class="hint">
+            Use this for quick bloodwork blurbs, client emails, small notes. Output still follows Avimark-friendly text.
+          </p>
+
+          <label>
+            Input
+            <textarea id="toolboxInput" rows="6"
+              placeholder="Paste lab results, or describe what you want (eg. 'short email explaining mildly elevated liver enzymes')."></textarea>
+          </label>
+
+          <button id="btnToolbox" class="btn btn-primary full-width">
+            Generate Toolbox Output
+          </button>
+        </section>
+
+        <!-- Consult tab -->
+        <section class="card tab-section" id="consultSection">
+          <h2>Consult</h2>
+          <p class="hint">
+            Speak freely – brain responds like a quick consult with you. May or may not produce a full SOAP.
+          </p>
+
+          <label>
+            Message
+            <textarea id="consultMessage" rows="6"
+              placeholder="Eg. '12y DSH with weight loss and CKD. I’m debating benazepril vs amlodipine – thoughts?'"></textarea>
+          </label>
+
+          <button id="btnConsult" class="btn btn-primary full-width">
+            Ask
+          </button>
+        </section>
+      </section>
+
+      <!-- Right column: status + output -->
+      <section class="output-panel">
+        <div class="card status-card">
+          <h2>Status</h2>
+          <p id="statusMessage">Ready.</p>
+        </div>
+
+        <section class="card output-card">
+          <div class="output-header">
+            <h2>Output</h2>
+            <button id="btnCopyOutput" class="btn btn-secondary small">
+              Copy
+            </button>
+          </div>
+          <textarea
+            id="soapOutput"
+            rows="26"
+            placeholder="Generated SOAP or text will appear here. Paste directly into Avimark."
+          ></textarea>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
