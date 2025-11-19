@@ -5,16 +5,8 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const OpenAI = require("openai");
 
-// Load env for Render secret file (and fall back to local .env)
-dotenv.config({ path: "/etc/secrets/.env" });
+// Load environment variables (OPENAI_API_KEY from Render / local .env)
 dotenv.config();
-
-// Quick sanity log for API key
-if (!process.env.OPENAI_API_KEY) {
-  console.error("❌ OPENAI_API_KEY is missing. Check your Render secret file.");
-} else {
-  console.log("✅ OPENAI_API_KEY loaded.");
-}
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -22,276 +14,193 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: "5mb" }));
 
+// Simple sanity log for the API key (doesn't print the key itself)
+if (!process.env.OPENAI_API_KEY) {
+  console.error("❌ OPENAI_API_KEY is missing. Set it in Render or .env.");
+} else {
+  console.log("✅ OPENAI_API_KEY loaded.");
+}
+
+// OpenAI client
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// ----------------------------------------------------
-// Simple health check
-// ----------------------------------------------------
+// ---------------- SYSTEM BRAIN PROMPT ----------------
+
+const SYSTEM_PROMPT = `
+You are the Lohit SOAP App Brain for Dr. Lohit Busanelli.
+
+Your job is to turn raw intake JSON from the app into either:
+1) A high-quality SOAP note, or
+2) A toolbox output snippet (bloodwork summary, email text, client note, etc.),
+depending on what the JSON says.
+
+Global rules:
+- Follow the clinic's Master Rules, SOAP templates, dental/surgery rules, and Avimark spacing as much as possible.
+- Never invent client or pet names or microchip numbers.
+- When generating SOAPs:
+  - Use Subjective, Objective, Assessment, Plan.
+  - Keep formatting Avimark-friendly plain text (no markdown, no bullet symbols).
+  - Put bloodwork values/data in Objective; interpretation in Assessment.
+  - For surgery/dental cases, include ASA in Assessment when appropriate.
+- When generating toolbox content:
+  - Output only the requested text (e.g. bloodwork summary, client email), not a full SOAP.
+  - Be concise and clinically appropriate for small animal practice.
+
+If the JSON indicates "strict" mode, do NOT invent missing data; leave explicit gaps.
+If it indicates "help" or "help me" mode, you may fill in gentle templated normals, but clearly separate assumed material if the JSON asks for it.
+
+Always respond with plain text only – no JSON, no markdown.
+`;
+
+// Helper: stringify intake safely for the model
+function buildIntakeText(body) {
+  try {
+    return JSON.stringify(body, null, 2);
+  } catch (e) {
+    return String(body);
+  }
+}
+
+// ---------------- Health check ----------------
+
 app.get("/", (req, res) => {
   res.send("Lohit SOAP backend is alive.");
 });
 
-// ----------------------------------------------------
-// SYSTEM BRAIN PROMPT
-// ----------------------------------------------------
-const SYSTEM_PROMPT = `
-You are the Lohit SOAP App Brain for Dr. Lohit Busanelli.
+// ---------------- Main SOAP / Toolbox endpoint ----------------
+// NOTE: Frontend points to /api/soap for BOTH SOAP + toolbox.
 
-Your job:
-- Turn intake text into high-quality Avimark-friendly SOAPs and toolbox outputs.
-- Follow the clinic’s Master Rules for surgical, dental, and appointment SOAPs
-  (Plan categories order, drug formatting with concentrations in brackets, ASA,
-  bloodwork in Objective as data-only, interpretations in Assessment, etc.).
-- Follow privacy rules: never invent or echo client names, pet names, phone
-  numbers, email, addresses, or microchip numbers. If present in intake, ignore them.
-- Always output single-spaced, Avimark-compatible plain text with no weird bullets.
-- For toolbox outputs (bloodwork/email/etc.), be concise and clinically useful.
-
-Do NOT ask the user questions in the output. Just give the final text.
-`;
-
-// Helper: build intake string from body for SOAP
-function buildSoapIntake(body) {
-  try {
-    const {
-      mode,                // "appointment" | "surgery"
-      soapType,            // optional
-      appointment,         // object with fields
-      surgery,             // object with fields
-      accuracyMode,        // "Strict" | "Help Me"
-      notes,
-    } = body;
-
-    let parts = [];
-
-    if (mode) parts.push(`Mode: ${mode}`);
-    if (soapType) parts.push(`Template: ${soapType}`);
-    if (accuracyMode) parts.push(`Accuracy mode: ${accuracyMode}`);
-
-    if (appointment) {
-      parts.push("=== Appointment Intake ===");
-      if (appointment.reason) parts.push(`Reason: ${appointment.reason}`);
-      if (appointment.history) parts.push(`History: ${appointment.history}`);
-      if (appointment.pe) parts.push(`PE (findings only): ${appointment.pe}`);
-      if (appointment.diagnostics)
-        parts.push(`Diagnostics (data-only): ${appointment.diagnostics}`);
-      if (appointment.assessmentNotes)
-        parts.push(`Assessment notes: ${appointment.assessmentNotes}`);
-      if (appointment.planNotes)
-        parts.push(`Plan notes: ${appointment.planNotes}`);
-      if (appointment.medsDispensed)
-        parts.push(`Meds dispensed (notes): ${appointment.medsDispensed}`);
-    }
-
-    if (surgery) {
-      parts.push("=== Surgery Intake ===");
-      if (surgery.caseType) parts.push(`Surgery case type: ${surgery.caseType}`);
-      if (surgery.signalment) parts.push(`Signalment: ${surgery.signalment}`);
-      if (surgery.history) parts.push(`History: ${surgery.history}`);
-      if (surgery.pe) parts.push(`PE (findings only): ${surgery.pe}`);
-      if (surgery.diagnostics)
-        parts.push(`Diagnostics (data-only): ${surgery.diagnostics}`);
-      if (surgery.asa) parts.push(`ASA: ${surgery.asa}`);
-      if (surgery.procedureNotes)
-        parts.push(`Procedure notes: ${surgery.procedureNotes}`);
-      if (surgery.recoveryNotes)
-        parts.push(`Recovery notes: ${surgery.recoveryNotes}`);
-      if (surgery.medsDispensed)
-        parts.push(`Meds dispensed (notes): ${surgery.medsDispensed}`);
-      if (surgery.anesthesiaNotes)
-        parts.push(`Anesthesia notes: ${surgery.anesthesiaNotes}`);
-    }
-
-    if (notes) parts.push(`General notes: ${notes}`);
-
-    return parts.join("\n");
-  } catch (e) {
-    console.error("Error building SOAP intake:", e);
-    return JSON.stringify(body);
-  }
-}
-
-// ----------------------------------------------------
-// SOAP endpoint
-// ----------------------------------------------------
 app.post("/api/soap", async (req, res) => {
-  try {
-    const intakeText = buildSoapIntake(req.body);
-    console.log("📨 /api/soap called. Mode:", req.body.mode);
+  const modeLabel = req.body?.mode || req.body?.accuracyMode || "unknown";
+  const sourceLabel = req.body?.source || req.body?.tab || "unknown";
 
+  console.log(
+    `🧠 /api/soap called. Mode: ${modeLabel}, Source: ${sourceLabel}`
+  );
+
+  const intakeText = buildIntakeText(req.body);
+
+  try {
     const completion = await client.chat.completions.create({
       model: "gpt-4.1-mini",
-      temperature: 0.3,
+      temperature: 0.4,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "system",
+          content: SYSTEM_PROMPT,
+        },
         {
           role: "user",
-          content: `
-You will generate a single Avimark-friendly SOAP (Subjective, Objective, Assessment, Plan).
-If the intake suggests a toolbox-style request instead of a SOAP, still produce a SOAP-like output.
-
-INTAKE:
-${intakeText}
-          `.trim(),
+          content:
+            "Here is the raw intake JSON from the Lohit SOAP app:\n\n" +
+            intakeText +
+            "\n\n" +
+            "Decide whether this is a SOAP note request or a toolbox request " +
+            "(e.g. bloodwork helper, email helper, etc.) based on the fields. " +
+            "Then generate the appropriate single plain-text output. " +
+            "Do not include any explanations or commentary.",
         },
       ],
     });
 
     const text =
-      completion.choices?.[0]?.message?.content?.trim() || "";
+      completion?.choices?.[0]?.message?.content?.trim() || "";
 
     if (!text) {
-      console.error("⚠️ /api/soap: completion returned empty content");
+      console.error("❌ OpenAI completion had no text.");
       return res
         .status(500)
-        .json({ error: "Model returned no text for SOAP." });
+        .json({ ok: false, error: "No text from model", text: "" });
     }
 
-    // IMPORTANT: always return { text: ... } for the frontend
-    return res.json({ text });
+    // 🔴 This is the crucial part the frontend expects:
+    // it needs a JSON with a "text" field.
+    res.json({ ok: true, text });
   } catch (err) {
     console.error("❌ Error in /api/soap:", err);
-    return res
+
+    const message =
+      err?.response?.data?.error?.message ||
+      err?.message ||
+      "Unknown error from OpenAI";
+
+    res
       .status(500)
-      .json({ error: "Server error in /api/soap: " + err.message });
+      .json({ ok: false, error: message, text: "" });
   }
 });
 
-// ----------------------------------------------------
-// Toolbox endpoint
-// ----------------------------------------------------
+// ---------------- (Optional) simple toolbox alias ----------------
+// If later your frontend calls /api/toolbox directly, this will still work.
+
 app.post("/api/toolbox", async (req, res) => {
+  // Just forward to the same logic as /api/soap
+  console.log("🔁 /api/toolbox alias hit, forwarding to /api/soap handler.");
+  // Reuse handler by making an internal fetch-like call
+  // but simpler: just call the same core logic again.
+  // To avoid code duplication, we could refactor, but for now we forward JSON.
+
+  // Attach a hint so the brain knows it's toolbox
+  const bodyWithHint = {
+    ...req.body,
+    source: req.body.source || "toolbox",
+  };
+
+  req.body = bodyWithHint;
+  // Call the main handler function manually
+  // (we can't literally "call" app.post, so we duplicate logic slightly)
+  const intakeText = buildIntakeText(req.body);
+
   try {
-    const { tool, subtype, toolboxInput, templatesSummary } = req.body;
-
-    console.log("📨 /api/toolbox called. Tool:", tool, "Subtype:", subtype);
-
-    const promptParts = [];
-
-    if (tool) promptParts.push(`Selected tool: ${tool}`);
-    if (subtype) promptParts.push(`Context/subtype: ${subtype}`);
-    if (templatesSummary)
-      promptParts.push(`Relevant saved templates:\n${templatesSummary}`);
-    if (toolboxInput) promptParts.push(`User input:\n${toolboxInput}`);
-
-    const toolboxPrompt = promptParts.join("\n\n");
-
     const completion = await client.chat.completions.create({
       model: "gpt-4.1-mini",
-      temperature: 0.35,
+      temperature: 0.4,
       messages: [
         {
           role: "system",
-          content: `
-You are the Toolbox Brain for the Lohit SOAP App.
-
-Tools may include:
-- Bloodwork helper (short/standard explanation of abnormalities, client-friendly if implied)
-- Email/Client communication helper
-- Note/paragraph generator for medical records
-
-General rules:
-- Be concise and clinically useful.
-- For bloodwork, clearly separate "Summary" and "Details" if appropriate.
-- Never include client or pet names.
-- Output plain text only.
-          `.trim(),
+          content: SYSTEM_PROMPT,
         },
         {
           role: "user",
-          content: toolboxPrompt,
+          content:
+            "This is a TOOLBOX request from the Lohit SOAP app.\n\nRaw intake JSON:\n\n" +
+            intakeText +
+            "\n\nGenerate ONLY the toolbox text requested (e.g., bloodwork summary, email body, note).",
         },
       ],
     });
 
     const text =
-      completion.choices?.[0]?.message?.content?.trim() || "";
+      completion?.choices?.[0]?.message?.content?.trim() || "";
 
     if (!text) {
-      console.error("⚠️ /api/toolbox: completion returned empty content");
+      console.error("❌ OpenAI completion had no text (toolbox).");
       return res
         .status(500)
-        .json({ error: "Model returned no text for toolbox." });
+        .json({ ok: false, error: "No text from model", text: "" });
     }
 
-    // IMPORTANT: always { text: ... }
-    return res.json({ text });
+    res.json({ ok: true, text });
   } catch (err) {
     console.error("❌ Error in /api/toolbox:", err);
-    return res
+
+    const message =
+      err?.response?.data?.error?.message ||
+      err?.message ||
+      "Unknown error from OpenAI";
+
+    res
       .status(500)
-      .json({ error: "Server error in /api/toolbox: " + err.message });
+      .json({ ok: false, error: message, text: "" });
   }
 });
 
-// ----------------------------------------------------
-// Feedback endpoint (for Toolbox / SOAP feedback box)
-// ----------------------------------------------------
-app.post("/api/feedback", async (req, res) => {
-  try {
-    const { originalText, feedbackText, toolContext } = req.body;
+// ---------------- Start server ----------------
 
-    console.log("📨 /api/feedback called. Context:", toolContext || "SOAP");
-
-    const description = toolContext || "output";
-
-    const completion = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
-      temperature: 0.2,
-      messages: [
-        {
-          role: "system",
-          content: `
-You refine previous outputs for the Lohit SOAP App.
-
-- Take the original text and the user's feedback.
-- Produce a **revised** version that respects the feedback but stays clinically accurate
-  and Avimark-friendly.
-- Do not explain the changes; just return the new version of the text.
-          `.trim(),
-        },
-        {
-          role: "user",
-          content: `
-Here is the current ${description}:
-
-${originalText || "(none)"}
-
-Here is the user's feedback / correction:
-
-${feedbackText || "(none)"}
-
-Please return a revised version only.
-          `.trim(),
-        },
-      ],
-    });
-
-    const text =
-      completion.choices?.[0]?.message?.content?.trim() || "";
-
-    if (!text) {
-      console.error("⚠️ /api/feedback: completion returned empty content");
-      return res
-        .status(500)
-        .json({ error: "Model returned no text for feedback." });
-    }
-
-    // Again: { text: ... } for the frontend
-    return res.json({ text });
-  } catch (err) {
-    console.error("❌ Error in /api/feedback:", err);
-    return res
-      .status(500)
-      .json({ error: "Server error in /api/feedback: " + err.message });
-  }
-});
-
-// ----------------------------------------------------
-// Start server
-// ----------------------------------------------------
 app.listen(port, () => {
-  console.log(`🚀 Lohit SOAP backend listening on port ${port}`);
+  console.log(
+    `🚀 Lohit SOAP backend listening on port ${port}`
+  );
 });
