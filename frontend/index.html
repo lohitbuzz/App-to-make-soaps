@@ -2,1146 +2,1163 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lohit SOAP App v1.7.0</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lohit SOAP App v1.6.8</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Basic reset + font -->
   <style>
-    /* ====== Base reset-ish ====== */
-    *, *::before, *::after {
+    * {
       box-sizing: border-box;
     }
+
     body {
       margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "Segoe UI", sans-serif;
-      background: #f3f4f6;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        system-ui, -webkit-system-font, "Segoe UI", sans-serif;
+      background: #f3f5f7;
       color: #111827;
     }
-    textarea, input, button, select {
+
+    h1, h2, h3, h4 {
+      margin: 0;
+      font-weight: 700;
+      color: #0b7350;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 5rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.75rem;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      resize: vertical;
+      background: #ffffff;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #0b7350;
+      box-shadow: 0 0 0 1px #0b7350;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 0.45rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      background: #ffffff;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #0b7350;
+      box-shadow: 0 0 0 1px #0b7350;
+    }
+
+    button {
       font-family: inherit;
     }
 
-    /* ====== Layout shell ====== */
-    .app-shell {
+    .page {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 16px;
+      padding: 1rem 0.8rem 2rem;
     }
 
-    /* Header */
-    .app-header {
+    .header-row {
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       justify-content: space-between;
-      align-items: flex-end;
-      gap: 12px;
-      margin-bottom: 16px;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
     }
-    .app-title-block h1 {
-      margin: 0;
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: #065f46;
+
+    .app-title {
+      font-size: 1.3rem;
+      line-height: 1.2;
     }
-    .app-title-block .subtitle {
-      margin: 4px 0 0;
-      font-size: 0.9rem;
-      color: #4b5563;
+
+    .app-version {
+      font-size: 0.8rem;
+      color: #6b7280;
     }
-    .mode-block {
+
+    .mode-select-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.9rem;
+      gap: 0.4rem;
+      font-size: 0.85rem;
     }
-    .mode-block select {
-      padding: 6px 10px;
+
+    .mode-select-row label {
+      font-weight: 500;
+    }
+
+    .pill-select {
       border-radius: 999px;
+      padding: 0.25rem 0.75rem;
       border: 1px solid #d1d5db;
       background: #ffffff;
+      font-size: 0.85rem;
     }
 
     /* Tabs */
-    .tabs {
+    .tabs-row {
       display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
       flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
     }
-    .tab {
+
+    .tab-button {
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
       border: 1px solid #d1d5db;
       background: #ffffff;
-      padding: 6px 14px;
-      border-radius: 999px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      color: #374151;
-    }
-    .tab.active {
-      background: #059669;
-      border-color: #059669;
-      color: #ffffff;
-    }
-
-    /* Main layout: inputs left, output right on desktop */
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-      gap: 16px;
-    }
-    @media (max-width: 900px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Cards */
-    .card {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 12px 14px;
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-      border: 1px solid #e5e7eb;
-      margin-bottom: 12px;
-    }
-    .card h2 {
-      margin: 0 0 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .hint {
-      font-size: 0.8rem;
-      color: #6b7280;
-      margin-top: 2px;
-      margin-bottom: 6px;
-    }
-
-    /* Attachments bar */
-    .attachments-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .attachments-bar-label {
       font-size: 0.85rem;
-      font-weight: 500;
-      color: #374151;
-    }
-    .attachments-input {
-      position: relative;
-      overflow: hidden;
-      display: inline-block;
-    }
-    .attachments-input input[type="file"] {
-      position: absolute;
-      left: 0;
-      top: 0;
-      opacity: 0;
-      width: 100%;
-      height: 100%;
       cursor: pointer;
     }
-    .attachments-preview {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 8px;
-    }
-    .attachment-chip {
-      font-size: 0.75rem;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: #e5f4ee;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
-      max-width: 200px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
 
-    /* Tab sections */
-    .tab-section {
-      display: none;
-    }
-    .tab-section.active {
-      display: block;
-    }
-
-    /* Form elements */
-    label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 8px;
-    }
-    label textarea,
-    label input,
-    label select {
-      width: 100%;
-      margin-top: 4px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      padding: 8px;
-      font-size: 0.9rem;
-      resize: vertical;
-    }
-    label textarea:focus,
-    label input:focus,
-    label select:focus,
-    .mode-block select:focus {
-      outline: none;
-      border-color: #059669;
-      box-shadow: 0 0 0 1px rgba(5, 150, 105, 0.1);
-    }
-
-    /* Buttons */
-    .btn {
-      border-radius: 999px;
-      border: none;
-      padding: 8px 16px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: transform 0.05s ease, box-shadow 0.05s ease,
-        background-color 0.15s ease;
-    }
-    .btn-primary {
-      background: #059669;
+    .tab-button.active {
+      background: #0b7350;
       color: #ffffff;
-      box-shadow: 0 1px 2px rgba(16, 185, 129, 0.35);
-    }
-    .btn-primary:hover {
-      background: #047857;
-    }
-    .btn-secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
-    .btn-secondary:hover {
-      background: #d1d5db;
-    }
-    .btn-ghost {
-      background: transparent;
-      color: #059669;
-      border: 1px solid #a7f3d0;
-    }
-    .btn-ghost:hover {
-      background: #ecfdf5;
-    }
-    .btn-disabled {
-      background: #e5e7eb;
-      color: #9ca3af;
-      cursor: not-allowed;
-    }
-    .btn.small {
-      padding: 4px 10px;
-      font-size: 0.8rem;
-    }
-    .btn:active:not(.btn-disabled) {
-      transform: translateY(1px);
-      box-shadow: none;
-    }
-    .full-width {
-      width: 100%;
-      margin-top: 8px;
+      border-color: #0b7350;
     }
 
-    /* Output panel */
-    .status-card p {
-      margin: 4px 0 0;
-      font-size: 0.88rem;
-      color: #111827;
-    }
-    .output-card {
+    /* Layout: main + output */
+    .main-layout {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 1rem;
     }
-    .output-header {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-    #outputModeToggle {
-      font-size: 0.8rem;
-      color: #374151;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .output-main,
-    .output-soap-split {
-      width: 100%;
-    }
-    #soapOutput {
-      width: 100%;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      padding: 8px;
-      font-size: 0.9rem;
-      resize: vertical;
-      min-height: 280px;
-    }
-    .soap-split-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 6px;
-    }
-    @media (min-width: 800px) {
-      .soap-split-grid {
-        grid-template-columns: 1fr 1fr;
+
+    @media (min-width: 960px) {
+      .main-layout {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+      .left-column {
+        flex: 3;
+        min-width: 0;
+      }
+      .right-column {
+        flex: 2;
+        min-width: 0;
       }
     }
-    .soap-split-grid label textarea {
-      min-height: 80px;
+
+    .card {
+      background: #ffffff;
+      border-radius: 1rem;
+      padding: 0.9rem 0.95rem;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+      border: 1px solid #e5e7eb;
     }
 
-    /* Feedback area */
-    .feedback-card label textarea {
-      min-height: 80px;
-    }
-    .feedback-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
+    .card + .card {
+      margin-top: 0.75rem;
     }
 
-    /* Toolbox templates */
-    .template-row {
+    .card-title-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
-      font-size: 0.85rem;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
     }
-    .template-row select {
-      min-width: 160px;
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .card-subtitle {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .field-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 0.2rem;
+      color: #374151;
+    }
+
+    .field-block {
+      margin-bottom: 0.6rem;
+    }
+
+    /* Generate buttons */
+    .primary-btn {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border-radius: 999px;
+      border: none;
+      background: #0b7350;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.4rem;
+    }
+
+    .primary-btn:hover {
+      background: #095b3e;
+    }
+
+    .primary-btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .small-btn {
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .small-btn:hover {
+      background: #eef2f7;
+    }
+
+    .small-btn.danger {
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    /* Status + output */
+    .status-text {
+      font-size: 0.85rem;
+      color: #374151;
+    }
+
+    .status-text.error {
+      color: #b91c1c;
+    }
+
+    .output-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .output-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .checkbox-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .copy-btn {
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid #0b7350;
+      background: #ffffff;
+      color: #0b7350;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      background: #e6f5f0;
+    }
+
+    /* Attachments / placeholder uploads */
+    .attachments-hint {
+      font-size: 0.8rem;
+      color: #4b5563;
+      margin-top: 0.15rem;
+    }
+
+    .attachments-btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.45rem;
+    }
+
+    .pill-disabled {
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      border: 1px dashed #d1d5db;
+      background: #f9fafb;
+      color: #9ca3af;
+      font-size: 0.8rem;
+    }
+
+    /* QR UI */
+    .qr-row {
+      margin: 0.35rem 0 0.6rem 0;
+    }
+
+    .qr-btn {
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid #0b7350;
+      background: #ffffff;
+      color: #0b7350;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .qr-btn:hover {
+      background: #e6f5f0;
+    }
+
+    .qr-modal.qr-hidden {
+      display: none;
+    }
+
+    .qr-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .qr-modal-content {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 1rem 1.25rem 1.25rem;
+      max-width: 320px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+      position: relative;
+    }
+
+    .qr-close {
+      border: none;
+      background: transparent;
+      font-size: 1.3rem;
+      line-height: 1;
+      cursor: pointer;
+      position: absolute;
+      top: 6px;
+      right: 10px;
+    }
+
+    .qr-hint {
+      font-size: 0.8rem;
+      color: #555;
+      margin-top: 0.75rem;
+    }
+
+    /* Hide/show sections */
+    .tool-section {
+      display: none;
+    }
+
+    .tool-section.active {
+      display: block;
+    }
+
+    /* Small text under fields */
+    .helper-text {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.1rem;
     }
   </style>
+
+  <!-- QR code library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
-  <div class="app-shell">
+  <div class="page">
     <!-- Header -->
-    <header class="app-header">
-      <div class="app-title-block">
-        <h1>Lohit SOAP App</h1>
-        <p class="subtitle">v1.7.0 – Appointment · Surgery · Toolbox · Consult</p>
+    <div class="header-row">
+      <div>
+        <div class="app-title">Lohit SOAP App</div>
+        <div class="app-version">v1.6.8 • Appointment · Surgery · Toolbox · Consult</div>
       </div>
-      <div class="mode-block">
+
+      <div class="mode-select-row">
         <label for="modeSelect">Mode:</label>
-        <select id="modeSelect">
-          <option value="Help Me" selected>Help Me (templates OK)</option>
-          <option value="Strict">Strict (no invention)</option>
+        <select id="modeSelect" class="pill-select">
+          <option value="Help Me" selected>Help Me</option>
+          <option value="Strict">Strict</option>
         </select>
       </div>
-    </header>
+    </div>
 
     <!-- Tabs -->
-    <nav class="tabs">
-      <button class="tab active" data-tab="appointment">Appointment</button>
-      <button class="tab" data-tab="surgery">Surgery</button>
-      <button class="tab" data-tab="toolbox">Toolbox</button>
-      <button class="tab" data-tab="consult">Consult</button>
-    </nav>
+    <div class="tabs-row">
+      <button id="tab-appointment" class="tab-button active">Appointment</button>
+      <button id="tab-surgery" class="tab-button">Surgery</button>
+      <button id="tab-toolbox" class="tab-button">Toolbox</button>
+      <button id="tab-consult" class="tab-button">Consult</button>
+    </div>
 
-    <!-- Main layout -->
-    <main class="layout">
-      <!-- Left: inputs -->
-      <section class="input-panel">
-        <!-- Attachments (shared style; per-tab logic) -->
-        <section class="card" id="attachmentsCard">
-          <h2>Attachments (local only)</h2>
-          <p class="hint">
-            Upload photos/docs from this device. These previews stay local in your browser in this session.
-            Vision + QR bridge will come later; for now, use them as visual reference while typing.
-          </p>
+    <!-- Attachments / local only -->
+    <div class="card" id="attachmentsCard">
+      <div class="card-title-row">
+        <div>
+          <div class="card-title">Attachments (Local only)</div>
+          <div class="card-subtitle">
+            Use your phone or desktop to add redacted photos / screenshots.
+          </div>
+        </div>
+      </div>
+      <div class="attachments-hint">
+        Always redact microchip / Lab ID / owner names before upload. For now, uploads stay
+        on your device; upcoming versions will add Vision parsing and privacy gate.
+      </div>
+      <div class="attachments-btn-row">
+        <div class="pill-disabled">Take photo (soon)</div>
+        <div class="pill-disabled">Upload file (soon)</div>
+      </div>
+    </div>
 
-          <div class="attachments-bar">
-            <span class="attachments-bar-label">Files for current tab:</span>
-
-            <div class="attachments-input btn btn-secondary small">
-              <span>Upload from this device</span>
-              <input type="file" multiple id="fileInputGlobal" />
+    <div class="main-layout">
+      <!-- LEFT COLUMN: tools -->
+      <div class="left-column">
+        <!-- Appointment -->
+        <div id="appointmentSection" class="card tool-section active">
+          <div class="card-title-row">
+            <div>
+              <div class="card-title">Appointment SOAP</div>
+              <div class="card-subtitle">
+                Minimal inputs; brain fills standard PE and structure.
+              </div>
             </div>
-
-            <button class="btn btn-ghost small" id="btnShowQR" type="button">
-              Show QR (open on phone)
-            </button>
           </div>
 
-          <div class="attachments-preview" id="attachmentsPreview"></div>
+          <div class="qr-row">
+            <button id="appointmentQrBtn" class="qr-btn">Open on phone (QR)</button>
+          </div>
 
-          <p class="hint">
-            QR button: scan with your phone to open this app on your phone's browser and use its camera directly
-            (for now, no auto-transfer; copy-paste or retype key info).
-          </p>
-        </section>
+          <div class="field-block">
+            <div class="field-label">Reason</div>
+            <input id="apptReason" type="text"
+              placeholder="e.g., Ear infection recheck, pruritus, vomiting, wellness exam" />
+          </div>
 
-        <!-- Appointment tab -->
-        <section class="card tab-section active" id="appointmentSection">
-          <h2>Appointment</h2>
+          <div class="field-block">
+            <div class="field-label">History</div>
+            <textarea id="apptHistory"
+              placeholder="Brief history, onset, medications, relevant background."></textarea>
+          </div>
 
-          <label>
-            Reason
-            <textarea id="apptReason" rows="2"
-              placeholder="Eg. Ear infection recheck, annual wellness, vomiting, diarrhea, lameness, etc."></textarea>
-          </label>
+          <div class="field-block">
+            <div class="field-label">PE (findings only)</div>
+            <textarea id="apptPE"
+              placeholder="Only abnormalities or notable findings. Leave blank for templated normal PE."></textarea>
+          </div>
 
-          <label>
-            History
-            <textarea id="apptHistory" rows="3"
-              placeholder="Duration, progression, prior treatments, response, home meds, diet, travel, etc."></textarea>
-          </label>
+          <div class="field-block">
+            <div class="field-label">Diagnostics (data-only)</div>
+            <textarea id="apptDiagnostics"
+              placeholder="CBC/chem/UA summaries, imaging impressions, cytology shorthand, etc. No interpretation here."></textarea>
+          </div>
 
-          <label>
-            PE (abnormal findings only)
-            <textarea id="apptPE" rows="3"
-              placeholder="Only the abnormal findings; the brain can add normal systems in Help Me mode."></textarea>
-          </label>
+          <div class="field-block">
+            <div class="field-label">Assessment (optional steering)</div>
+            <textarea id="apptAssessment"
+              placeholder="Optional: working diagnoses, problems, or differentials to steer the Plan."></textarea>
+          </div>
 
-          <label>
-            Diagnostics (data-only)
-            <textarea id="apptDiagnostics" rows="3"
-              placeholder="CBC/chem, ear cytology findings, urinalysis, radiology summary, SNAPs, etc. Data only."></textarea>
-          </label>
+          <div class="field-block">
+            <div class="field-label">Plan (your notes)</div>
+            <textarea id="apptPlan"
+              placeholder="Optional: specific items you want included in the Plan section (e.g., meds, recheck timing)."></textarea>
+          </div>
 
-          <label>
-            Assessment (your notes)
-            <textarea id="apptAssessment" rows="2"
-              placeholder="Optional: problem list or working diagnosis if you want to steer the plan."></textarea>
-          </label>
+          <div class="field-block">
+            <div class="field-label">Meds dispensed</div>
+            <textarea id="apptMeds"
+              placeholder="Optional: list meds dispensed if you want to lock these in."></textarea>
+          </div>
 
-          <label>
-            Plan (your notes)
-            <textarea id="apptPlan" rows="2"
-              placeholder="Optional: any specific items you want in the Plan section."></textarea>
-          </label>
-
-          <label>
-            Meds dispensed
-            <textarea id="apptMeds" rows="2"
-              placeholder="Optional: meds dispensed if you want to lock them in."></textarea>
-          </label>
-
-          <button id="btnAppt" class="btn btn-primary full-width" type="button">
+          <button id="generateApptBtn" class="primary-btn">
             Generate SOAP (Appointment)
           </button>
-        </section>
+        </div>
 
-        <!-- Surgery tab -->
-        <section class="card tab-section" id="surgerySection">
-          <h2>Surgery</h2>
+        <!-- Surgery -->
+        <div id="surgerySection" class="card tool-section">
+          <div class="card-title-row">
+            <div>
+              <div class="card-title">Surgery SOAP</div>
+              <div class="card-subtitle">
+                Choose template, then add minimal notes; brain builds full surgical SOAP.
+              </div>
+            </div>
+          </div>
 
-          <label>
-            Surgery type / template
-            <select id="sxType">
-              <option value="">Select or type custom…</option>
-              <option value="Canine OVH">Canine OVH (spay)</option>
-              <option value="Canine neuter">Canine neuter</option>
-              <option value="Feline spay">Feline spay</option>
-              <option value="Feline neuter">Feline neuter</option>
-              <option value="COHAT dental">COHAT dental</option>
-              <option value="Mass removal">Mass removal</option>
-              <option value="Cystotomy">Cystotomy</option>
-              <option value="Exploratory laparotomy">Exploratory laparotomy</option>
+          <div class="qr-row">
+            <button id="surgeryQrBtn" class="qr-btn">Open on phone (QR)</button>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Surgery template</div>
+            <select id="surgeryTemplate">
+              <option value="canine_spay_standard">Canine spay – standard</option>
+              <option value="canine_neuter_standard">Canine neuter – standard</option>
+              <option value="feline_spay_standard">Feline spay – standard</option>
+              <option value="feline_neuter_standard">Feline neuter – standard</option>
+              <option value="dental_cohat_no_rads">Dental – COHAT (no radiographs)</option>
+              <option value="dental_cohat_with_rads">Dental – COHAT (with radiographs)</option>
+              <option value="mass_removal">Mass removal</option>
+              <option value="cystotomy">Cystotomy</option>
+              <option value="pyometra_spay">Pyometra spay</option>
+              <option value="exploratory_laparotomy">Exploratory laparotomy</option>
+              <option value="enterotomy">Enterotomy</option>
+              <option value="gastrotomy">Gastrotomy</option>
+              <option value="gastropexy">Gastropexy</option>
+              <option value="feline_urethral_unblock">Feline urethral unblock</option>
+              <option value="other">Other / custom</option>
             </select>
-          </label>
+            <div class="helper-text">
+              This just steers the template. You can override anything with notes below.
+            </div>
+          </div>
 
-          <label>
-            ASA status
-            <input
-              id="sxASA"
-              type="text"
-              placeholder="Eg. ASA II, ASA III unstable, etc."
-            />
-          </label>
+          <div class="field-block">
+            <div class="field-label">Case label / notes</div>
+            <input id="surgeryLabel" type="text"
+              placeholder="e.g., Daisy – left TPLO, Max – dental with 308 extractions" />
+          </div>
 
-          <label>
-            Simple surgery notes
-            <textarea id="sxNotes" rows="6"
-              placeholder="Eg. 2y FS Lab, 22g L cephalic, 8.0 ETT, dog fluids default, routine OVH uneventful, closure standard 3-layer, recovery smooth."></textarea>
-          </label>
+          <div class="field-block">
+            <div class="field-label">Procedure notes</div>
+            <textarea id="surgeryNotes"
+              placeholder="Key intra-op details, complications, extra procedures, anything not in the standard template."></textarea>
+          </div>
 
-          <label>
-            Meds dispensed / recovery notes
-            <textarea id="sxMeds" rows="3"
-              placeholder="Optional: pain meds dispensed, NSAIDs, trazodone, e-collar instructions, recheck timing, etc."></textarea>
-          </label>
+          <div class="field-block">
+            <div class="field-label">Recovery</div>
+            <textarea id="surgeryRecovery"
+              placeholder="Recovery quality, dysphoria, extra sedation given, concerns, post-op instructions to emphasize."></textarea>
+          </div>
 
-          <button id="btnSx" class="btn btn-primary full-width" type="button">
+          <div class="field-block">
+            <div class="field-label">Meds dispensed</div>
+            <textarea id="surgeryMeds"
+              placeholder="Optional: list post-op meds dispensed if you want to lock them in."></textarea>
+          </div>
+
+          <button id="generateSurgeryBtn" class="primary-btn">
             Generate SOAP (Surgery)
           </button>
-        </section>
+        </div>
 
-        <!-- Toolbox tab -->
-        <section class="card tab-section" id="toolboxSection">
-          <h2>Toolbox</h2>
-          <p class="hint">
-            One tool at a time. Choose a tool, set context, paste or type, then generate.
-            Output goes to the main Output box on the right.
-          </p>
-
-          <!-- Tool selection -->
-          <label>
-            Tool
-            <select id="toolboxTool">
-              <option value="bw-helper">Bloodwork helper</option>
-              <option value="email-helper">Client email helper</option>
-              <option value="client-handout">Client handout generator</option>
-              <option value="soap-snippet">SOAP snippet / note helper</option>
-              <option value="generic-rewrite">Rewrite / simplify text</option>
-            </select>
-          </label>
-
-          <!-- Context subtype (changes depending on tool) -->
-          <label>
-            Context / subtype
-            <select id="toolboxContext">
-              <!-- options filled dynamically -->
-            </select>
-          </label>
-
-          <!-- Custom templates row -->
-          <div class="template-row">
-            <span>My templates:</span>
-            <select id="templateSelect">
-              <option value="">(none)</option>
-            </select>
-            <button id="btnLoadTemplate" class="btn btn-secondary small" type="button">
-              Load
-            </button>
-            <button id="btnSaveTemplate" class="btn btn-ghost small" type="button">
-              Save current as template
-            </button>
-            <button id="btnDeleteTemplate" class="btn btn-secondary small" type="button">
-              Delete selected
-            </button>
+        <!-- Toolbox -->
+        <div id="toolboxSection" class="card tool-section">
+          <div class="card-title-row">
+            <div>
+              <div class="card-title">Toolbox Lite</div>
+              <div class="card-subtitle">
+                Quick helper for bloodwork blurbs, client emails, and other small text.
+              </div>
+            </div>
           </div>
 
-          <!-- Toolbox input -->
-          <label>
-            Toolbox input
-            <textarea id="toolboxInput" rows="7"
-              placeholder="Paste labs, draft email, or text you want help with. Tool + context decide how the brain treats it."></textarea>
-          </label>
+          <div class="qr-row">
+            <button id="toolboxQrBtn" class="qr-btn">Open on phone (QR)</button>
+          </div>
 
-          <button id="btnToolbox" class="btn btn-primary full-width" type="button">
-            Generate (Toolbox)
-          </button>
-        </section>
+          <div class="field-block">
+            <div class="field-label">Tool</div>
+            <select id="toolboxTool">
+              <option value="bloodwork_helper">Bloodwork helper</option>
+              <option value="email_helper">Email / client communication</option>
+              <option value="handout_helper">Client handout helper</option>
+              <option value="freeform_helper">Free-form text helper</option>
+            </select>
+          </div>
 
-        <!-- Consult tab -->
-        <section class="card tab-section" id="consultSection">
-          <h2>Consult</h2>
-          <p class="hint">
-            Free-form consult with the SOAP brain. Not necessarily a full SOAP; more like “What would you do?” or “Help me think.”
-          </p>
+          <div class="field-block">
+            <div class="field-label">Context / subtype</div>
+            <select id="toolboxSubtype">
+              <option value="general_bloodwork">General bloodwork</option>
+              <option value="urinalysis">Urinalysis</option>
+              <option value="radiology_report">Radiology report</option>
+              <option value="endocrine_panel">Endocrine panel</option>
+              <option value="owner_email">Owner email</option>
+              <option value="brief_update">Brief update / text-style</option>
+              <option value="handout_general">General handout</option>
+              <option value="behavior">Behavior / anxiety</option>
+              <option value="freeform">Free-form</option>
+            </select>
+            <div class="helper-text">
+              This just tells the brain what kind of snippet you want.
+            </div>
+          </div>
 
-          <label>
-            Consult message
-            <textarea id="consultInput" rows="8"
-              placeholder="Eg. 12y DSH with CKD and weight loss; debating benazepril vs amlodipine, or need help with complex case reasoning."></textarea>
-          </label>
-
-          <button id="btnConsult" class="btn btn-primary full-width" type="button">
-            Ask Consult
-          </button>
-        </section>
-      </section>
-
-      <!-- Right: output & feedback -->
-      <section class="output-panel">
-        <!-- Status -->
-        <section class="card status-card">
-          <h2>Status</h2>
-          <p id="statusMessage">Ready.</p>
-        </section>
-
-        <!-- Output -->
-        <section class="card output-card">
-          <div class="output-header">
-            <h2>Output</h2>
-            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-              <label id="outputModeToggle">
-                <input type="checkbox" id="toggleSplitSoap" />
-                Split into S / O / A / P
-              </label>
-              <button id="btnCopyOutput" class="btn btn-secondary small" type="button">
-                Copy
+          <!-- Templates row -->
+          <div class="field-block">
+            <div class="field-label">My templates</div>
+            <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+              <select id="toolboxTemplateSelect" style="flex:1; min-width:140px;">
+                <option value="">(none)</option>
+              </select>
+              <button id="toolboxLoadTemplateBtn" class="small-btn">Load</button>
+            </div>
+            <div style="display:flex; gap:0.4rem; margin-top:0.35rem; flex-wrap:wrap;">
+              <button id="toolboxSaveTemplateBtn" class="small-btn">
+                Save current as template
+              </button>
+              <button id="toolboxDeleteTemplateBtn" class="small-btn danger">
+                Delete selected
               </button>
             </div>
-          </div>
-
-          <!-- Single big output -->
-          <div class="output-main" id="outputMainWrapper">
-            <textarea
-              id="soapOutput"
-              rows="20"
-              placeholder="Generated SOAP or toolbox text will appear here. Paste directly into Avimark."
-            ></textarea>
-          </div>
-
-          <!-- Split SOAP view -->
-          <div class="output-soap-split" id="outputSplitWrapper" style="display:none;">
-            <div class="soap-split-grid">
-              <label>
-                Subjective
-                <textarea id="splitS"></textarea>
-              </label>
-              <label>
-                Objective
-                <textarea id="splitO"></textarea>
-              </label>
-              <label>
-                Assessment
-                <textarea id="splitA"></textarea>
-              </label>
-              <label>
-                Plan
-                <textarea id="splitP"></textarea>
-              </label>
+            <div class="helper-text">
+              Templates are stored in this browser only. Great for reusable blurbs.
             </div>
           </div>
-        </section>
 
-        <!-- Feedback & refine -->
-        <section class="card feedback-card">
-          <h2>Feedback & refine</h2>
-          <label>
-            Feedback / refine notes
-            <textarea id="feedbackInput"
-              placeholder="Eg. 'Add more differentials', 'Tighten up Plan', 'Simplify wording for client', etc."></textarea>
-          </label>
-          <div class="feedback-buttons">
-            <button id="btnSoapFeedback" class="btn btn-secondary small" type="button">
-              Get SOAP feedback
-            </button>
-            <button id="btnRefineSoap" class="btn btn-primary small" type="button">
-              Refine SOAP with feedback
-            </button>
+          <div class="field-block">
+            <div class="field-label">Toolbox input</div>
+            <textarea id="toolboxInput"
+              placeholder="Paste lab text, write notes, or describe what you want (e.g., &quot;Short owner email explaining mildly elevated ALT&quot;)."></textarea>
           </div>
-          <p class="hint">
-            Feedback uses the same brain but asks it to critique or improve the SOAP, instead of writing from scratch.
-          </p>
-        </section>
-      </section>
-    </main>
+
+          <button id="generateToolboxBtn" class="primary-btn">
+            Generate (Toolbox)
+          </button>
+        </div>
+
+        <!-- Consult -->
+        <div id="consultSection" class="card tool-section">
+          <div class="card-title-row">
+            <div>
+              <div class="card-title">Consult</div>
+              <div class="card-subtitle">
+                Speak freely &mdash; brain responds and may produce SOAP-style text.
+              </div>
+            </div>
+          </div>
+
+          <div class="qr-row">
+            <button id="consultQrBtn" class="qr-btn">Open on phone (QR)</button>
+          </div>
+
+          <div class="field-block">
+            <div class="field-label">Message</div>
+            <textarea id="consultInput"
+              placeholder="Any question, case summary, or request. e.g., &quot;Help me explain these lab results to the owner.&quot;"></textarea>
+          </div>
+
+          <button id="generateConsultBtn" class="primary-btn">
+            Ask (Consult)
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Status + Output -->
+      <div class="right-column">
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title">Status</div>
+          </div>
+          <div id="statusText" class="status-text">
+            Ready.
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:0.75rem;">
+          <div class="output-header-row">
+            <div class="card-title">Output</div>
+            <div class="output-controls">
+              <label class="checkbox-row">
+                <input type="checkbox" id="splitSoapCheckbox" />
+                <span>Split into S / O / A / P</span>
+              </label>
+              <button id="copyOutputBtn" class="copy-btn">Copy</button>
+            </div>
+          </div>
+          <textarea id="outputTextarea"
+            placeholder="Generated SOAP or toolbox text will appear here. Paste directly into Avimark."></textarea>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <!-- Shared QR modal -->
+  <div id="qrModal" class="qr-modal qr-hidden">
+    <div class="qr-modal-content">
+      <button id="qrCloseBtn" class="qr-close" aria-label="Close QR dialog">×</button>
+      <h3 id="qrTitle">Open on your phone</h3>
+      <canvas id="qrCanvas"></canvas>
+      <p class="qr-hint">
+        Open the camera on your phone and point it at this code. It will open this app directly on that tool.
+      </p>
+    </div>
+  </div>
+
+  <!-- App JS -->
   <script>
-    // ========= CONFIG =========
-    const BACKEND_URL = "https://lohit-soap-app.onrender.com/api/soap";
+    // CHANGE ONLY IF YOUR BACKEND URL CHANGES
+    const BACKEND_URL = "https://lohit-soap-app.onrender.com";
 
-    // ========= ELEMENTS =========
-    const modeSelect = document.getElementById("modeSelect");
-    const statusMessage = document.getElementById("statusMessage");
-    const soapOutput = document.getElementById("soapOutput");
-    const btnCopyOutput = document.getElementById("btnCopyOutput");
-    const toggleSplitSoap = document.getElementById("toggleSplitSoap");
-    const outputMainWrapper = document.getElementById("outputMainWrapper");
-    const outputSplitWrapper = document.getElementById("outputSplitWrapper");
-    const splitS = document.getElementById("splitS");
-    const splitO = document.getElementById("splitO");
-    const splitA = document.getElementById("splitA");
-    const splitP = document.getElementById("splitP");
+    // --------------- Helpers ---------------
+    function setStatus(message, isError = false) {
+      const el = document.getElementById("statusText");
+      if (!el) return;
+      el.textContent = message;
+      el.classList.toggle("error", !!isError);
+    }
 
-    const tabs = Array.from(document.querySelectorAll(".tab"));
-    const tabSections = {
-      appointment: document.getElementById("appointmentSection"),
-      surgery: document.getElementById("surgerySection"),
-      toolbox: document.getElementById("toolboxSection"),
-      consult: document.getElementById("consultSection"),
-    };
-
-    // Attachments
-    const fileInputGlobal = document.getElementById("fileInputGlobal");
-    const attachmentsPreview = document.getElementById("attachmentsPreview");
-    const btnShowQR = document.getElementById("btnShowQR");
-
-    // Appointment
-    const apptReason = document.getElementById("apptReason");
-    const apptHistory = document.getElementById("apptHistory");
-    const apptPE = document.getElementById("apptPE");
-    const apptDiagnostics = document.getElementById("apptDiagnostics");
-    const apptAssessment = document.getElementById("apptAssessment");
-    const apptPlan = document.getElementById("apptPlan");
-    const apptMeds = document.getElementById("apptMeds");
-    const btnAppt = document.getElementById("btnAppt");
-
-    // Surgery
-    const sxType = document.getElementById("sxType");
-    const sxASA = document.getElementById("sxASA");
-    const sxNotes = document.getElementById("sxNotes");
-    const sxMeds = document.getElementById("sxMeds");
-    const btnSx = document.getElementById("btnSx");
-
-    // Toolbox
-    const toolboxTool = document.getElementById("toolboxTool");
-    const toolboxContext = document.getElementById("toolboxContext");
-    const toolboxInput = document.getElementById("toolboxInput");
-    const btnToolbox = document.getElementById("btnToolbox");
-    const templateSelect = document.getElementById("templateSelect");
-    const btnLoadTemplate = document.getElementById("btnLoadTemplate");
-    const btnSaveTemplate = document.getElementById("btnSaveTemplate");
-    const btnDeleteTemplate = document.getElementById("btnDeleteTemplate");
-
-    // Consult
-    const consultInput = document.getElementById("consultInput");
-    const btnConsult = document.getElementById("btnConsult");
-
-    // Feedback
-    const feedbackInput = document.getElementById("feedbackInput");
-    const btnSoapFeedback = document.getElementById("btnSoapFeedback");
-    const btnRefineSoap = document.getElementById("btnRefineSoap");
-
-    // ========= STATE =========
-    let currentTab = "appointment";
-    let attachmentsByTab = {
-      appointment: [],
-      surgery: [],
-      toolbox: [],
-      consult: [],
-    };
-
-    // ========= HELPERS =========
-    function setStatus(text) {
-      statusMessage.textContent = text;
+    function setOutput(text) {
+      const el = document.getElementById("outputTextarea");
+      if (el) el.value = text || "";
     }
 
     function getMode() {
-      return modeSelect.value || "Help Me";
+      const sel = document.getElementById("modeSelect");
+      return sel ? sel.value || "Help Me" : "Help Me";
     }
 
-    function getCurrentAttachments() {
-      return attachmentsByTab[currentTab] || [];
-    }
+    // --------------- Tabs ---------------
+    (function setupTabs() {
+      const tabs = [
+        { id: "tab-appointment", sectionId: "appointmentSection", key: "appointment" },
+        { id: "tab-surgery", sectionId: "surgerySection", key: "surgery" },
+        { id: "tab-toolbox", sectionId: "toolboxSection", key: "toolbox" },
+        { id: "tab-consult", sectionId: "consultSection", key: "consult" },
+      ];
 
-    function renderAttachments() {
-      const list = getCurrentAttachments();
-      attachmentsPreview.innerHTML = "";
-      list.forEach((file, idx) => {
-        const chip = document.createElement("div");
-        chip.className = "attachment-chip";
-        chip.textContent = file.name || `File ${idx + 1}`;
-        attachmentsPreview.appendChild(chip);
-      });
-    }
-
-    function handleFilesSelected(files) {
-      const arr = Array.from(files || []);
-      if (!attachmentsByTab[currentTab]) {
-        attachmentsByTab[currentTab] = [];
-      }
-      attachmentsByTab[currentTab] = attachmentsByTab[currentTab].concat(arr);
-      renderAttachments();
-    }
-
-    async function callBackend(mode, tab, intakeText) {
-      setStatus("Talking to SOAP brain…");
-      soapOutput.value = "";
-
-      try {
-        const res = await fetch(BACKEND_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode, tab, intakeText }),
+      function activateTab(key) {
+        tabs.forEach((tab) => {
+          const btn = document.getElementById(tab.id);
+          const sec = document.getElementById(tab.sectionId);
+          if (!btn || !sec) return;
+          const isActive = tab.key === key;
+          btn.classList.toggle("active", isActive);
+          sec.classList.toggle("active", isActive);
         });
 
-        if (!res.ok) {
-          const errData = await res.json().catch(() => null);
-          const message = errData?.error || `HTTP ${res.status}`;
-          setStatus(`Error: ${message}`);
-          return;
-        }
-
-        const data = await res.json();
-        if (!data || !data.ok || !data.text) {
-          setStatus("Error: no text returned from backend.");
-          return;
-        }
-
-        soapOutput.value = data.text;
-        if (toggleSplitSoap.checked) {
-          syncSplitFromMain();
-        }
-        setStatus("Done.");
-      } catch (err) {
-        console.error("Frontend error calling backend:", err);
-        setStatus("Error: could not reach backend.");
+        // Update hash so QR can point to this
+        const params = new URLSearchParams();
+        params.set("tool", key);
+        window.location.hash = params.toString();
       }
-    }
 
-    function buildAppointmentText() {
-      const attachmentsNames = getCurrentAttachments().map(f => f.name).join(", ") || "(none)";
-      return [
-        "APPOINTMENT CASE",
-        `Mode: ${getMode()}`,
-        `Attachments: ${attachmentsNames}`,
-        "",
-        `Reason: ${apptReason.value || "(not provided)"}`,
-        `History: ${apptHistory.value || "(not provided)"}`,
-        `PE (abnormal findings only): ${apptPE.value || "(not provided)"}`,
-        `Diagnostics (data-only): ${apptDiagnostics.value || "(not provided)"}`,
-        `Assessment (doctor notes): ${apptAssessment.value || "(not provided)"}`,
-        `Plan (doctor notes): ${apptPlan.value || "(not provided)"}`,
-        `Meds dispensed (doctor notes): ${apptMeds.value || "(not provided)"}`,
-      ].join("\n");
-    }
-
-    function buildSurgeryText() {
-      const attachmentsNames = getCurrentAttachments().map(f => f.name).join(", ") || "(none)";
-      return [
-        "SURGERY CASE",
-        `Mode: ${getMode()}`,
-        `Attachments: ${attachmentsNames}`,
-        "",
-        `Surgery type / template: ${sxType.value || "(not provided)"}`,
-        `ASA status: ${sxASA.value || "(not provided)"}`,
-        "",
-        "Surgery notes:",
-        sxNotes.value || "(not provided)",
-        "",
-        "Meds dispensed / recovery notes:",
-        sxMeds.value || "(not provided)",
-      ].join("\n");
-    }
-
-    function buildToolboxText() {
-      const tool = toolboxTool.value;
-      const ctx = toolboxContext.value;
-      const attachmentsNames = getCurrentAttachments().map(f => f.name).join(", ") || "(none)";
-
-      return [
-        "TOOLBOX REQUEST",
-        `Tool: ${tool}`,
-        `Context: ${ctx}`,
-        `Mode: ${getMode()}`,
-        `Attachments: ${attachmentsNames}`,
-        "",
-        toolboxInput.value || "(no content provided)",
-      ].join("\n");
-    }
-
-    function buildConsultText() {
-      const attachmentsNames = getCurrentAttachments().map(f => f.name).join(", ") || "(none)";
-      return [
-        "CONSULT WITH DR. LOHIT",
-        `Mode: ${getMode()}`,
-        `Attachments: ${attachmentsNames}`,
-        "",
-        consultInput.value || "(no question provided)",
-      ].join("\n");
-    }
-
-    // SOAP split / merge
-    function syncSplitFromMain() {
-      const text = soapOutput.value || "";
-      // Very simple split on headings if they exist; otherwise just put everything in Subjective.
-      const parts = { S: "", O: "", A: "", P: "" };
-      const lines = text.split(/\r?\n/);
-      let current = "S";
-      lines.forEach((line) => {
-        const trimmed = line.trim();
-        const upper = trimmed.toUpperCase();
-        if (upper.startsWith("SUBJECTIVE:")) current = "S";
-        else if (upper.startsWith("OBJECTIVE:")) current = "O";
-        else if (upper.startsWith("ASSESSMENT:")) current = "A";
-        else if (upper.startsWith("PLAN:")) current = "P";
-        parts[current] += line + "\n";
+      tabs.forEach((tab) => {
+        const btn = document.getElementById(tab.id);
+        if (btn) {
+          btn.addEventListener("click", () => activateTab(tab.key));
+        }
       });
-      splitS.value = parts.S.trim();
-      splitO.value = parts.O.trim();
-      splitA.value = parts.A.trim();
-      splitP.value = parts.P.trim();
-    }
 
-    function syncMainFromSplit() {
-      const combined = [
-        splitS.value ? "Subjective:\n" + splitS.value.trim() : "",
-        splitO.value ? "\nObjective:\n" + splitO.value.trim() : "",
-        splitA.value ? "\nAssessment:\n" + splitA.value.trim() : "",
-        splitP.value ? "\nPlan:\n" + splitP.value.trim() : "",
-      ]
-        .filter(Boolean)
-        .join("\n\n")
-        .trim();
-      soapOutput.value = combined;
-    }
-
-    // Toolbox context options
-    function refreshToolboxContextOptions() {
-      const tool = toolboxTool.value;
-      toolboxContext.innerHTML = "";
-      let options = [];
-      if (tool === "bw-helper") {
-        options = [
-          ["general-bw", "General bloodwork"],
-          ["pre-op-bw", "Pre-op bloodwork"],
-          ["cbc-only", "CBC only"],
-          ["chem-only", "Biochemistry only"],
-          ["ua", "Urinalysis"],
-        ];
-      } else if (tool === "email-helper") {
-        options = [
-          ["bw-results", "Bloodwork results"],
-          ["surgery-update", "Surgery update"],
-          ["follow-up", "Follow-up / recheck"],
-          ["med-instructions", "Medication instructions"],
-        ];
-      } else if (tool === "client-handout") {
-        options = [
-          ["derm", "Derm / allergy"],
-          ["gi", "GI / vomiting / diarrhea"],
-          ["dental", "Dental care"],
-          ["behavior", "Behavior / anxiety"],
-        ];
-      } else if (tool === "soap-snippet") {
-        options = [
-          ["assessment-only", "Assessment only"],
-          ["plan-only", "Plan only"],
-          ["summary", "Short summary"],
-        ];
-      } else {
-        options = [
-          ["default", "General text"],
-          ["simplify", "Simplify for client"],
-        ];
-      }
-      options.forEach(([value, label]) => {
-        const opt = document.createElement("option");
-        opt.value = value;
-        opt.textContent = label;
-        toolboxContext.appendChild(opt);
+      // On load, check hash
+      window.addEventListener("load", () => {
+        const hash = window.location.hash.replace("#", "");
+        if (!hash) return;
+        const params = new URLSearchParams(hash);
+        const tool = params.get("tool");
+        if (tool && tabs.some((t) => t.key === tool)) {
+          activateTab(tool);
+        }
       });
-    }
+    })();
 
-    // LocalStorage templates
-    const TEMPLATE_KEY = "lohit_toolbox_templates";
+    // --------------- Appointment SOAP ---------------
+    (function setupAppointment() {
+      const btn = document.getElementById("generateApptBtn");
+      if (!btn) return;
 
-    function loadTemplatesFromStorage() {
+      btn.addEventListener("click", async () => {
+        const reason = document.getElementById("apptReason").value.trim();
+        const history = document.getElementById("apptHistory").value.trim();
+        const pe = document.getElementById("apptPE").value.trim();
+        const diagnostics = document.getElementById("apptDiagnostics").value.trim();
+        const assessment = document.getElementById("apptAssessment").value.trim();
+        const planNotes = document.getElementById("apptPlan").value.trim();
+        const meds = document.getElementById("apptMeds").value.trim();
+        const mode = getMode();
+
+        setStatus("Generating appointment SOAP...");
+        setOutput("");
+
+        try {
+          const res = await fetch(BACKEND_URL + "/api/soap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "appointment",
+              mode,
+              reason,
+              history,
+              peFindings: pe,
+              diagnostics,
+              assessmentNotes: assessment,
+              planNotes,
+              medsDispensed: meds,
+            }),
+          });
+
+          if (!res.ok) {
+            throw new Error("HTTP " + res.status);
+          }
+          const data = await res.json();
+          if (!data || !data.text) {
+            setStatus("Error: no text returned from backend.", true);
+            return;
+          }
+          setOutput(data.text);
+          setStatus("Done.");
+        } catch (err) {
+          console.error(err);
+          setStatus("Error contacting backend for appointment SOAP.", true);
+        }
+      });
+    })();
+
+    // --------------- Surgery SOAP ---------------
+    (function setupSurgery() {
+      const btn = document.getElementById("generateSurgeryBtn");
+      if (!btn) return;
+
+      btn.addEventListener("click", async () => {
+        const template = document.getElementById("surgeryTemplate").value;
+        const label = document.getElementById("surgeryLabel").value.trim();
+        const notes = document.getElementById("surgeryNotes").value.trim();
+        const recovery = document.getElementById("surgeryRecovery").value.trim();
+        const meds = document.getElementById("surgeryMeds").value.trim();
+        const mode = getMode();
+
+        setStatus("Generating surgery SOAP...");
+        setOutput("");
+
+        try {
+          const res = await fetch(BACKEND_URL + "/api/soap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "surgery",
+              mode,
+              template,
+              caseLabel: label,
+              procedureNotes: notes,
+              recoveryNotes: recovery,
+              medsDispensed: meds,
+            }),
+          });
+
+          if (!res.ok) {
+            throw new Error("HTTP " + res.status);
+          }
+          const data = await res.json();
+          if (!data || !data.text) {
+            setStatus("Error: no text returned from backend.", true);
+            return;
+          }
+          setOutput(data.text);
+          setStatus("Done.");
+        } catch (err) {
+          console.error(err);
+          setStatus("Error contacting backend for surgery SOAP.", true);
+        }
+      });
+    })();
+
+    // --------------- Toolbox templates (localStorage) ---------------
+    const TOOLBOX_TEMPLATES_KEY = "lohit_toolbox_templates_v1";
+
+    function loadToolboxTemplates() {
       try {
-        const raw = localStorage.getItem(TEMPLATE_KEY);
-        const parsed = raw ? JSON.parse(raw) : {};
-        return parsed && typeof parsed === "object" ? parsed : {};
-      } catch {
-        return {};
+        const raw = localStorage.getItem(TOOLBOX_TEMPLATES_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed;
+      } catch (e) {
+        console.warn("Error reading toolbox templates:", e);
+        return [];
       }
     }
 
-    function saveTemplatesToStorage(templates) {
+    function saveToolboxTemplates(list) {
       try {
-        localStorage.setItem(TEMPLATE_KEY, JSON.stringify(templates));
-      } catch (err) {
-        console.error("Failed to save templates:", err);
+        localStorage.setItem(TOOLBOX_TEMPLATES_KEY, JSON.stringify(list || []));
+      } catch (e) {
+        console.warn("Error saving toolbox templates:", e);
       }
     }
 
-    function refreshTemplateDropdown() {
-      const templates = loadTemplatesFromStorage();
-      const names = Object.keys(templates).sort((a, b) => a.localeCompare(b));
-
-      templateSelect.innerHTML = "";
+    function refreshToolboxTemplateSelect() {
+      const select = document.getElementById("toolboxTemplateSelect");
+      if (!select) return;
+      const templates = loadToolboxTemplates();
+      const current = select.value;
+      select.innerHTML = "";
       const noneOpt = document.createElement("option");
       noneOpt.value = "";
       noneOpt.textContent = "(none)";
-      templateSelect.appendChild(noneOpt);
+      select.appendChild(noneOpt);
 
-      names.forEach((name) => {
+      templates.forEach((tpl, index) => {
         const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        templateSelect.appendChild(opt);
+        opt.value = String(index);
+        opt.textContent = tpl.name || "Template " + (index + 1);
+        select.appendChild(opt);
       });
+
+      if (current && select.querySelector(`option[value="${current}"]`)) {
+        select.value = current;
+      } else {
+        select.value = "";
+      }
     }
 
-    // ========= EVENT HANDLERS =========
+    // --------------- Toolbox ---------------
+    (function setupToolbox() {
+      const generateBtn = document.getElementById("generateToolboxBtn");
+      if (!generateBtn) return;
 
-    // Tabs
-    tabs.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const tabName = btn.dataset.tab;
-        currentTab = tabName;
+      const toolSel = document.getElementById("toolboxTool");
+      const subtypeSel = document.getElementById("toolboxSubtype");
+      const inputEl = document.getElementById("toolboxInput");
+      const tmplSelect = document.getElementById("toolboxTemplateSelect");
+      const saveBtn = document.getElementById("toolboxSaveTemplateBtn");
+      const deleteBtn = document.getElementById("toolboxDeleteTemplateBtn");
+      const loadBtn = document.getElementById("toolboxLoadTemplateBtn");
 
-        tabs.forEach((t) => t.classList.remove("active"));
-        btn.classList.add("active");
+      refreshToolboxTemplateSelect();
 
-        Object.entries(tabSections).forEach(([name, section]) => {
-          if (name === tabName) section.classList.add("active");
-          else section.classList.remove("active");
+      saveBtn.addEventListener("click", () => {
+        const text = (inputEl.value || "").trim();
+        if (!text) {
+          alert("Enter some Toolbox input first to save as a template.");
+          return;
+        }
+        const name = prompt("Template name (e.g., 'ALT mildly high email'):");
+        if (!name) return;
+
+        const templates = loadToolboxTemplates();
+        templates.push({
+          name,
+          tool: toolSel.value,
+          subtype: subtypeSel.value,
+          text,
         });
-
-        renderAttachments();
-        setStatus(`Ready (${tabName}).`);
+        saveToolboxTemplates(templates);
+        refreshToolboxTemplateSelect();
       });
-    });
 
-    // Attachments
-    fileInputGlobal.addEventListener("change", (e) => {
-      handleFilesSelected(e.target.files);
-      fileInputGlobal.value = "";
-    });
+      deleteBtn.addEventListener("click", () => {
+        const idx = tmplSelect.value;
+        if (!idx) {
+          alert("Select a template to delete.");
+          return;
+        }
+        const templates = loadToolboxTemplates();
+        const index = parseInt(idx, 10);
+        if (isNaN(index) || index < 0 || index >= templates.length) return;
+        if (!confirm("Delete selected template?")) return;
+        templates.splice(index, 1);
+        saveToolboxTemplates(templates);
+        refreshToolboxTemplateSelect();
+      });
 
-    btnShowQR.addEventListener("click", () => {
-      // For now, just show an alert with current URL and instructions
-      alert(
-        "QR bridge v1: Open this same URL on your phone by scanning a QR that points to this page.\n\n1) On desktop: copy this URL.\n2) Use any QR generator (for now) to make a code.\n3) Scan with your phone and open the page.\n\nFuture version: this button will show a live QR automatically."
-      );
-    });
+      loadBtn.addEventListener("click", () => {
+        const idx = tmplSelect.value;
+        if (!idx) {
+          alert("Select a template to load.");
+          return;
+        }
+        const templates = loadToolboxTemplates();
+        const index = parseInt(idx, 10);
+        if (isNaN(index) || index < 0 || index >= templates.length) return;
+        const tpl = templates[index];
+        if (tpl.tool) toolSel.value = tpl.tool;
+        if (tpl.subtype) subtypeSel.value = tpl.subtype;
+        if (tpl.text) inputEl.value = tpl.text;
+      });
 
-    // Appointment
-    btnAppt.addEventListener("click", () => {
-      const intakeText = buildAppointmentText();
-      callBackend(getMode(), "appointment", intakeText);
-    });
+      generateBtn.addEventListener("click", async () => {
+        const tool = toolSel.value;
+        const subtype = subtypeSel.value;
+        const input = (inputEl.value || "").trim();
+        const mode = getMode();
 
-    // Surgery
-    btnSx.addEventListener("click", () => {
-      const intakeText = buildSurgeryText();
-      callBackend(getMode(), "surgery", intakeText);
-    });
+        if (!input) {
+          if (!confirm("Input is empty. Generate anyway?")) return;
+        }
 
-    // Toolbox
-    toolboxTool.addEventListener("change", () => {
-      refreshToolboxContextOptions();
-    });
+        setStatus("Generating toolbox output...");
+        setOutput("");
 
-    btnToolbox.addEventListener("click", () => {
-      const intakeText = buildToolboxText();
-      callBackend(getMode(), "toolbox", intakeText);
-    });
+        try {
+          const res = await fetch(BACKEND_URL + "/api/toolbox", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              mode,
+              tool,
+              subtype,
+              input,
+            }),
+          });
 
-    // Templates
-    btnSaveTemplate.addEventListener("click", () => {
-      const content = toolboxInput.value || "";
-      if (!content.trim()) {
-        alert("Nothing in Toolbox input to save as a template.");
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          if (!data || !data.text) {
+            setStatus("Error: no text returned from backend.", true);
+            return;
+          }
+          setOutput(data.text);
+          setStatus("Done.");
+        } catch (err) {
+          console.error(err);
+          setStatus("Error contacting backend for toolbox.", true);
+        }
+      });
+    })();
+
+    // --------------- Consult ---------------
+    (function setupConsult() {
+      const btn = document.getElementById("generateConsultBtn");
+      if (!btn) return;
+      const inputEl = document.getElementById("consultInput");
+
+      btn.addEventListener("click", async () => {
+        const question = (inputEl.value || "").trim();
+        const mode = getMode();
+        if (!question) {
+          alert("Type a message for your consult first.");
+          return;
+        }
+
+        setStatus("Thinking about consult...");
+        setOutput("");
+
+        try {
+          const res = await fetch(BACKEND_URL + "/api/consult", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              mode,
+              question,
+            }),
+          });
+
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          if (!data || !data.text) {
+            setStatus("Error: no text returned from backend.", true);
+            return;
+          }
+          setOutput(data.text);
+          setStatus("Done.");
+        } catch (err) {
+          console.error(err);
+          setStatus("Error contacting backend for consult.", true);
+        }
+      });
+    })();
+
+    // --------------- Copy output ---------------
+    (function setupCopy() {
+      const btn = document.getElementById("copyOutputBtn");
+      const textarea = document.getElementById("outputTextarea");
+      if (!btn || !textarea) return;
+
+      btn.addEventListener("click", async () => {
+        const text = textarea.value;
+        if (!text) {
+          alert("Nothing to copy yet.");
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.textContent = "Copied";
+          setTimeout(() => (btn.textContent = "Copy"), 1500);
+        } catch (e) {
+          console.warn("Clipboard error:", e);
+          alert("Could not copy to clipboard; please select text manually.");
+        }
+      });
+    })();
+
+    // --------------- QR per tool ---------------
+    (function setupQR() {
+      const qrModal = document.getElementById("qrModal");
+      const qrCanvas = document.getElementById("qrCanvas");
+      const qrTitle = document.getElementById("qrTitle");
+      const qrCloseBtn = document.getElementById("qrCloseBtn");
+
+      if (!qrModal || !qrCanvas || !window.QRCode) {
+        console.warn("QR modal or QRCode library not found; skipping QR setup.");
         return;
       }
-      const name = prompt("Template name?");
-      if (!name) return;
-      const templates = loadTemplatesFromStorage();
-      templates[name] = content;
-      saveTemplatesToStorage(templates);
-      refreshTemplateDropdown();
-      setStatus(`Saved template "${name}".`);
-    });
 
-    btnLoadTemplate.addEventListener("click", () => {
-      const name = templateSelect.value;
-      if (!name) return;
-      const templates = loadTemplatesFromStorage();
-      const content = templates[name];
-      if (content) {
-        toolboxInput.value = content;
-        setStatus(`Loaded template "${name}".`);
+      function toolLabel(tool) {
+        switch (tool) {
+          case "appointment":
+            return "Appointment";
+          case "surgery":
+            return "Surgery";
+          case "toolbox":
+            return "Toolbox";
+          case "consult":
+            return "Consult";
+          default:
+            return "SOAP";
+        }
       }
-    });
 
-    btnDeleteTemplate.addEventListener("click", () => {
-      const name = templateSelect.value;
-      if (!name) return;
-      const confirmDelete = confirm(`Delete template "${name}"?`);
-      if (!confirmDelete) return;
-      const templates = loadTemplatesFromStorage();
-      delete templates[name];
-      saveTemplatesToStorage(templates);
-      refreshTemplateDropdown();
-      setStatus(`Deleted template "${name}".`);
-    });
+      function openQr(tool) {
+        const hash = "#tool=" + encodeURIComponent(tool);
+        const url = window.location.origin + window.location.pathname + hash;
 
-    // Consult
-    btnConsult.addEventListener("click", () => {
-      const intakeText = buildConsultText();
-      callBackend(getMode(), "consult", intakeText);
-    });
+        qrTitle.textContent = "Open " + toolLabel(tool) + " on your phone";
+        qrModal.classList.remove("qr-hidden");
 
-    // Copy
-    btnCopyOutput.addEventListener("click", () => {
-      if (!soapOutput.value) {
-        setStatus("Nothing to copy.");
-        return;
+        QRCode.toCanvas(qrCanvas, url, { width: 220 }, function (err) {
+          if (err) {
+            console.error("QR error:", err);
+          }
+        });
       }
-      soapOutput.select();
-      document.execCommand("copy");
-      setStatus("Copied to clipboard.");
-      window.getSelection().removeAllRanges();
-    });
 
-    // Split / merge toggle
-    toggleSplitSoap.addEventListener("change", () => {
-      if (toggleSplitSoap.checked) {
-        syncSplitFromMain();
-        outputMainWrapper.style.display = "none";
-        outputSplitWrapper.style.display = "block";
-      } else {
-        syncMainFromSplit();
-        outputMainWrapper.style.display = "block";
-        outputSplitWrapper.style.display = "none";
+      const mapping = {
+        appointmentQrBtn: "appointment",
+        surgeryQrBtn: "surgery",
+        toolboxQrBtn: "toolbox",
+        consultQrBtn: "consult",
+      };
+
+      Object.keys(mapping).forEach((btnId) => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          btn.addEventListener("click", () => openQr(mapping[btnId]));
+        }
+      });
+
+      if (qrCloseBtn) {
+        qrCloseBtn.addEventListener("click", () => {
+          qrModal.classList.add("qr-hidden");
+        });
       }
-    });
 
-    splitS.addEventListener("input", syncMainFromSplit);
-    splitO.addEventListener("input", syncMainFromSplit);
-    splitA.addEventListener("input", syncMainFromSplit);
-    splitP.addEventListener("input", syncMainFromSplit);
-
-    // Feedback
-    btnSoapFeedback.addEventListener("click", () => {
-      const currentSoap = soapOutput.value || "";
-      if (!currentSoap.trim()) {
-        setStatus("No SOAP to critique.");
-        return;
-      }
-      const mode = getMode();
-      const feedbackPrompt = [
-        "SOAP FEEDBACK REQUEST",
-        `Mode: ${mode}`,
-        "",
-        "Please critique the following SOAP based on Lohit's clinic rules and suggest specific improvements. Do not rewrite the SOAP; just give feedback.",
-        "",
-        currentSoap,
-      ].join("\n");
-      callBackend(mode, "feedback", feedbackPrompt);
-    });
-
-    btnRefineSoap.addEventListener("click", () => {
-      const currentSoap = soapOutput.value || "";
-      if (!currentSoap.trim()) {
-        setStatus("No SOAP to refine.");
-        return;
-      }
-      const fb = feedbackInput.value || "";
-      const mode = getMode();
-      const refinePrompt = [
-        "SOAP REFINEMENT REQUEST",
-        `Mode: ${mode}`,
-        "",
-        "Original SOAP:",
-        currentSoap,
-        "",
-        "Doctor feedback / refine notes:",
-        fb || "(none provided)",
-        "",
-        "Please return a revised SOAP that incorporates the feedback and keeps all clinic formatting rules.",
-      ].join("\n");
-      callBackend(mode, "refine", refinePrompt);
-    });
-
-    // ========= INIT =========
-    (function init() {
-      refreshToolboxContextOptions();
-      refreshTemplateDropdown();
-      renderAttachments();
-      setStatus("Ready (appointment).");
+      qrModal.addEventListener("click", (e) => {
+        if (e.target === qrModal) {
+          qrModal.classList.add("qr-hidden");
+        }
+      });
     })();
   </script>
 </body>
