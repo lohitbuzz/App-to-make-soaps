@@ -3,5 +3,9 @@
   publish = "frontend"
   command = ""
 
+[build.environment]
+  NODE_VERSION = "18"
+
+# No functions — we use Render for backend
 [functions]
   directory = ""
