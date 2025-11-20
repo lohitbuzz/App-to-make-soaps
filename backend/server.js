@@ -71,7 +71,63 @@ app.get("/", (req, res) => {
 
 // ---------------- Main SOAP / Toolbox endpoint ----------------
 // NOTE: Frontend points to /api/soap for BOTH SOAP + toolbox.
+// ... your /api/soap route is here ...
 
+// === Simple in-memory text transfer relay for "send to desktop" ===
+const xferChannels = new Map(); // channelId -> { text: string | null, createdAt: number }
+
+function makeChannelId() {
+  return Math.random().toString(36).slice(2, 10) +
+         Math.random().toString(36).slice(2, 10);
+}
+
+app.post("/api/xfer/start", (req, res) => {
+  const channelId = makeChannelId();
+  xferChannels.set(channelId, { text: null, createdAt: Date.now() });
+  const now = Date.now();
+  for (const [id, info] of xferChannels.entries()) {
+    if (now - info.createdAt > 10 * 60 * 1000) {
+      xferChannels.delete(id);
+    }
+  }
+  res.json({ channelId });
+});
+
+app.post("/api/xfer/send", (req, res) => {
+  const { channelId, text, type } = req.body || {};
+  if (!channelId || typeof text !== "string") {
+    return res.status(400).json({ error: "channelId and text are required" });
+  }
+  const channel = xferChannels.get(channelId);
+  if (!channel) {
+    return res.status(404).json({ error: "Channel not found or expired" });
+  }
+  channel.text = text;
+  channel.type = type || "snippet";
+  channel.receivedAt = Date.now();
+  return res.json({ ok: true });
+});
+
+app.get("/api/xfer/receive", (req, res) => {
+  const channelId = req.query.channelId;
+  if (!channelId) {
+    return res.status(400).json({ error: "channelId is required" });
+  }
+  const channel = xferChannels.get(channelId);
+  if (!channel) {
+    return res.status(404).json({ error: "Channel not found or expired" });
+  }
+  if (typeof channel.text !== "string") {
+    return res.json({ ready: false });
+  }
+  const payload = {
+    ready: true,
+    text: channel.text,
+    type: channel.type || "snippet",
+  };
+  xferChannels.delete(channelId);
+  return res.json(payload);
+});
 app.post("/api/soap", async (req, res) => {
   const modeLabel = req.body?.mode || req.body?.accuracyMode || "unknown";
   const sourceLabel = req.body?.source || req.body?.tab || "unknown";
