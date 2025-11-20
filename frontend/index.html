@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lohit SOAP App v1.6.x</title>
+  <title>Lohit SOAP App v1.7.2</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -298,6 +298,7 @@
       justify-content: space-between;
       align-items: center;
       gap: 6px;
+      flex-wrap: wrap;
     }
 
     .output-title {
@@ -312,6 +313,7 @@
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .output-area {
@@ -430,21 +432,47 @@
       border-color: rgba(34,197,94,0.6);
       color: #bbf7d0;
     }
+
+    /* QR modal */
+    #qrModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #qrModalInner {
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 20px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.9);
+    }
+
+    #qrCanvas {
+      border-radius: 10px;
+      background: #0b1120;
+      padding: 8px;
+    }
   </style>
 </head>
 <body>
   <div class="app-shell">
     <header>
       <div>
-        <h1>Lohit SOAP App <span style="opacity:0.7;">v1.6.x</span></h1>
-        <span>Appointment • Surgery • Toolbox Lite • Vision • Feedback</span>
+        <h1>Lohit SOAP App <span style="opacity:0.7;">v1.7.2</span></h1>
+        <span>Appointment • Surgery • Toolbox • Consult • Vision • QR relay</span>
       </div>
       <div class="chip-row">
         <div class="chip">
-          <strong>Privacy:</strong> Clinic-Safe text only
+          <strong>Privacy:</strong> Clinic-safe text only
         </div>
         <div class="chip">
-          <strong>Vision:</strong> Screenshots / photos only
+          <strong>Vision:</strong> Screenshots / photos
         </div>
       </div>
     </header>
@@ -464,14 +492,13 @@
           </div>
         </div>
 
-        <!-- SOAP vs Toolbox/Consult hint -->
         <div class="row">
           <span class="hint" id="modeHint">
             SOAP mode: generates full Appointment/Surgery SOAPs in Avimark format.
           </span>
         </div>
 
-        <!-- Appointment vs Surgery (SOAP only) -->
+        <!-- SOAP: Appointment vs Surgery -->
         <div class="field-group" id="soapTypeGroup">
           <div class="field-title-row">
             <div class="field-title">Case type</div>
@@ -488,7 +515,7 @@
           </div>
         </div>
 
-        <!-- Strict / Help Me mode -->
+        <!-- Strict / Help Me -->
         <div class="field-group">
           <div class="field-title-row">
             <div class="field-title">Brain mode</div>
@@ -503,7 +530,7 @@
           </span>
         </div>
 
-        <!-- Basic signalment and tags -->
+        <!-- Basics -->
         <div class="field-group">
           <div class="field-title-row">
             <div class="field-title">Basics</div>
@@ -546,7 +573,7 @@
           </div>
         </div>
 
-        <!-- Surgery details (simple / advanced) -->
+        <!-- Surgery details -->
         <div class="field-group" id="surgeryFields">
           <div class="field-title-row">
             <div class="field-title">Surgery details</div>
@@ -608,41 +635,62 @@
             <div class="row">
               <div style="flex:1;">
                 <label for="premeds">Premeds (drugs + doses)</label>
-                <textarea id="premeds" class="small" placeholder="eg. Dexmedetomidine [0.5 mg/ml] X mcg/kg IM, Hydromorphone [2 mg/ml] Y mg/kg IM"></textarea>
+                <textarea id="premeds" class="small" placeholder="Dexmedetomidine [0.5 mg/ml] X mcg/kg IM; Hydromorphone [2 mg/ml] Y mg/kg IM"></textarea>
               </div>
             </div>
             <div class="row">
               <div style="flex:1;">
                 <label for="induction">Induction / maintenance</label>
-                <textarea id="induction" class="small" placeholder="eg. Propofol [10 mg/ml] to effect IV, Isoflurane in oxygen"></textarea>
+                <textarea id="induction" class="small" placeholder="Propofol [10 mg/ml] to effect IV; Isoflurane in oxygen"></textarea>
               </div>
             </div>
             <div class="row">
               <div style="flex:1;">
                 <label for="intraOpMeds">Intra-op meds</label>
-                <textarea id="intraOpMeds" class="small" placeholder="eg. Meloxicam [5 mg/ml] Z mg/kg SC, additional opioids, local blocks"></textarea>
+                <textarea id="intraOpMeds" class="small" placeholder="Meloxicam [5 mg/ml] Z mg/kg SC; local blocks; additional opioids"></textarea>
               </div>
             </div>
             <div class="row">
               <div style="flex:1;">
                 <label for="postOpMeds">Post-op meds / to go home</label>
-                <textarea id="postOpMeds" class="small" placeholder="eg. Gabapentin [100 mg/ml] ...; send home NSAID, etc."></textarea>
+                <textarea id="postOpMeds" class="small" placeholder="Gabapentin [100 mg/ml] ...; oral NSAID, etc."></textarea>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Free text + extra instructions -->
+        <!-- Toolbox Vision mode selector -->
+        <div class="field-group" id="toolboxVisionGroup" style="display:none;">
+          <div class="field-title-row">
+            <div class="field-title">Toolbox Vision mode</div>
+            <span class="field-subtitle">How to interpret photos in Toolbox</span>
+          </div>
+          <label for="toolboxImageMode">Interpret uploaded images as</label>
+          <select id="toolboxImageMode">
+            <option value="auto">Auto-detect (recommended)</option>
+            <option value="Bloodwork">Bloodwork</option>
+            <option value="Cytology">Cytology</option>
+            <option value="Radiology report">Radiology report</option>
+            <option value="Avimark screenshot">Avimark screenshot / Treatments</option>
+            <option value="Medication / Treatment sheet">Medication / Treatment sheet</option>
+            <option value="Freeform notes / handwriting">Freeform notes / handwriting</option>
+          </select>
+          <span class="hint">
+            In Toolbox mode only: let the brain auto-detect the image type, or force it into a specific category if you want.
+          </span>
+        </div>
+
+        <!-- Core notes -->
         <div class="field-group">
           <div class="field-title-row">
             <div class="field-title">Core notes</div>
             <span class="field-subtitle">What you would normally jot in the chart</span>
           </div>
-          <textarea id="freeText" class="large"
+          <textarea id="freeText" class="large" x-webkit-speech speech
             placeholder="Type or paste anything: brief history, PE snippets, treatment notes, lab results, etc.
 You can also just write: 'Please make a SOAP for X' and let Vision + brain help."></textarea>
           <label for="extraText">Extra instructions to AI (optional)</label>
-          <textarea id="extraText" class="small"
+          <textarea id="extraText" class="small" x-webkit-speech speech
             placeholder="eg. Emphasize dental charting; include recheck in 7-10 days; keep language simple for a new grad."></textarea>
         </div>
 
@@ -654,7 +702,7 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
           </div>
           <label for="imageInput">Upload screenshots / photos</label>
           <input id="imageInput" type="file" accept="image/*" multiple />
-          <span class="hint">Use screenshots of Avimark treatments/notes, anesthesia sheets, lab PDFs, or whiteboard photos. PDFs should be screenshotted for now.</span>
+          <span class="hint">Use screenshots of Avimark treatments/notes, anesthesia sheets, lab PDFs, cytology, radiology reports, or whiteboard photos. PDFs should be screenshotted for now.</span>
         </div>
 
         <!-- Run button + status -->
@@ -677,15 +725,16 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
             Output
             <span class="pill">Avimark-ready</span>
           </div>
-          <span class="badge green">Copy Full SOAP → paste into Avimark</span>
+          <span class="badge green">Copy Full → paste into Avimark</span>
         </div>
 
-        <!-- SOAP output -->
+        <!-- SOAP / Toolbox / Consult output -->
         <div class="output-card">
           <div class="output-header">
             <div class="output-title">Main output</div>
             <div class="output-actions">
-              <button class="button-ghost" id="copySoapBtn">Copy full SOAP</button>
+              <button class="button-ghost" id="copySoapBtn">Copy full text</button>
+              <button class="button-ghost" id="sendToDesktopBtn">Send to Desktop 📱→💻</button>
               <button class="button-ghost" id="clearOutputBtn">Clear</button>
             </div>
           </div>
@@ -713,7 +762,7 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
         </button>
         <button class="tab-button" id="tabToolbox">
           <span class="icon">🧰</span>
-          <span class="tab-label">Toolbox Lite</span>
+          <span class="tab-label">Toolbox</span>
         </button>
         <button class="tab-button" id="tabConsult">
           <span class="icon">💬</span>
@@ -723,12 +772,27 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
     </nav>
   </div>
 
+  <!-- QR Modal -->
+  <div id="qrModal">
+    <div id="qrModalInner">
+      <h3 style="margin:0 0 8px; font-size:13px;">Scan on your phone</h3>
+      <p style="margin:0 0 10px; font-size:11px; color:#9ca3af;">
+        Point your phone camera at this code to load this text on another device.
+      </p>
+      <canvas id="qrCanvas"></canvas><br />
+      <button style="margin-top:10px;" class="button-ghost danger" id="closeQrBtn">Close</button>
+    </div>
+  </div>
+
+  <!-- QRCode library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
   <script>
     // ---- State ----
-    let appMode = "soap";       // "soap" | "toolbox" | "consult"
+    let appMode = "soap";         // "soap" | "toolbox" | "consult"
     let caseType = "appointment"; // "appointment" | "surgery"
-    let surgeryMode = "simple"; // "simple" | "advanced"
-    let strictMode = false;     // Help Me (false) vs Strict (true)
+    let surgeryMode = "simple";   // "simple" | "advanced"
+    let strictMode = false;       // Help Me (false) vs Strict (true)
 
     // DOM helpers
     const $ = (id) => document.getElementById(id);
@@ -738,6 +802,7 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
     const surgeryFields = $("surgeryFields");
     const surgerySimpleBlock = $("surgerySimpleBlock");
     const surgeryAdvancedBlock = $("surgeryAdvancedBlock");
+    const toolboxVisionGroup = $("toolboxVisionGroup");
 
     const statusDot = $("statusDot");
     const statusText = $("statusText");
@@ -767,9 +832,15 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
     const strictOffBtn = $("strictOffBtn");
     const strictOnBtn = $("strictOnBtn");
 
-    // Copy buttons
+    // Output controls
     const copySoapBtn = $("copySoapBtn");
     const clearOutputBtn = $("clearOutputBtn");
+    const sendToDesktopBtn = $("sendToDesktopBtn");
+
+    // QR modal
+    const qrModal = $("qrModal");
+    const qrCanvas = $("qrCanvas");
+    const closeQrBtn = $("closeQrBtn");
 
     // Inputs
     const caseLabel = $("caseLabel");
@@ -790,6 +861,7 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
     const freeText = $("freeText");
     const extraText = $("extraText");
     const imageInput = $("imageInput");
+    const toolboxImageMode = $("toolboxImageMode");
 
     // ---- UI state updaters ----
     function setAppMode(mode) {
@@ -804,13 +876,19 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
 
       if (mode === "soap") {
         soapTypeGroup.style.display = "";
+        surgeryFields.style.display = caseType === "surgery" ? "" : "none";
+        toolboxVisionGroup.style.display = "none";
         modeHintEl.textContent = "SOAP mode: generates full Appointment/Surgery SOAPs in Avimark format.";
       } else if (mode === "toolbox") {
         soapTypeGroup.style.display = "none";
-        modeHintEl.textContent = "Toolbox mode: bloodwork summaries, quick client emails/notes, mini write-ups.";
+        surgeryFields.style.display = "none";
+        toolboxVisionGroup.style.display = "";
+        modeHintEl.textContent = "Toolbox mode: bloodwork summaries, quick client emails/notes, mini write-ups. Vision helps auto-parse images.";
       } else {
         soapTypeGroup.style.display = "none";
-        modeHintEl.textContent = "Consult mode: vet-to-vet reasoning, differentials, plan ideas.";
+        surgeryFields.style.display = "none";
+        toolboxVisionGroup.style.display = "none";
+        modeHintEl.textContent = "Consult mode: vet-to-vet reasoning, differentials, plan ideas. Images optional.";
       }
     }
 
@@ -818,7 +896,7 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
       caseType = type;
       caseAppointmentBtn.classList.toggle("active", type === "appointment");
       caseSurgeryBtn.classList.toggle("active", type === "surgery");
-      surgeryFields.style.display = type === "surgery" ? "" : "none";
+      surgeryFields.style.display = (appMode === "soap" && type === "surgery") ? "" : "none";
     }
 
     function setSurgeryMode(mode) {
@@ -876,9 +954,9 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
       if (!soapOutput.value.trim()) return;
       try {
         await navigator.clipboard.writeText(soapOutput.value);
-        setStatus("ready", "Copied SOAP to clipboard");
+        setStatus("ready", "Copied text to clipboard");
       } catch (e) {
-        showError("Could not copy SOAP.");
+        showError("Could not copy text.");
       }
     });
 
@@ -887,6 +965,33 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
       feedbackOutput.textContent = "Cleared. Run a new case to see fresh feedback.";
       setStatus("ready", "Ready");
       errorText.textContent = "";
+    });
+
+    // ---- QR: Send to Desktop ----
+    sendToDesktopBtn.addEventListener("click", async () => {
+      try {
+        const text = soapOutput.value.trim();
+        if (!text) return showError("Nothing to send.");
+        const res = await fetch("/api/share", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "Share failed");
+        const fullUrl = `${window.location.origin}?caseId=${data.id}`;
+        QRCode.toCanvas(qrCanvas, fullUrl, { width: 220 }, (err) => {
+          if (err) console.error(err);
+          qrModal.style.display = "flex";
+        });
+      } catch (err) {
+        console.error(err);
+        showError("Failed to create QR.");
+      }
+    });
+
+    closeQrBtn.addEventListener("click", () => {
+      qrModal.style.display = "none";
     });
 
     // ---- Image handling (convert to data URLs) ----
@@ -950,6 +1055,7 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
           freeText: freeText.value || "",
           extraText: extraText.value || "",
           images,
+          toolboxImageMode: toolboxImageMode.value || "auto",
         };
 
         const res = await fetch("/api/generate", {
@@ -981,12 +1087,30 @@ You can also just write: 'Please make a SOAP for X' and let Vision + brain help.
       }
     });
 
-    // ---- Initial state ----
-    setAppMode("soap");
-    setCaseType("appointment");
-    setSurgeryMode("simple");
-    setStrict(false);
-    setStatus("ready", "Ready");
+    // ---- On page load: handle ?caseId= for QR relay ----
+    window.addEventListener("DOMContentLoaded", async () => {
+      const params = new URLSearchParams(window.location.search);
+      const caseId = params.get("caseId");
+      if (caseId) {
+        try {
+          const res = await fetch(`/api/shared/${caseId}`);
+          const data = await res.json();
+          if (data.success && data.text) {
+            freeText.value = data.text;
+            setStatus("ready", "Loaded text from phone");
+          }
+        } catch (e) {
+          console.error("Error loading shared text", e);
+        }
+      }
+
+      // Initial UI state
+      setAppMode("soap");
+      setCaseType("appointment");
+      setSurgeryMode("simple");
+      setStrict(false);
+      setStatus("ready", "Ready");
+    });
   </script>
 </body>
 </html>
