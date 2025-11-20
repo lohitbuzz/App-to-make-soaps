@@ -3,18 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <title>Lohit SOAP App v1.7.2</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
-      --bg: #0f172a;
-      --bg-soft: #111827;
-      --card: #020617;
-      --accent: #14b8a6;
-      --accent-soft: rgba(20, 184, 166, 0.15);
-      --border: #1f2937;
-      --text: #e5e7eb;
-      --text-soft: #9ca3af;
-      --danger: #f97373;
+      --bg: #050811;
+      --bg-alt: #09121f;
+      --card: #101726;
+      --card-alt: #151f33;
+      --border: #28354d;
+      --accent: #18a4b8;
+      --accent-soft: rgba(24, 164, 184, 0.18);
+      --accent-strong: rgba(24, 164, 184, 0.85);
+      --text: #ecf3ff;
+      --text-soft: #aeb7cc;
+      --danger: #ff5b6a;
+      --radius: 10px;
+      --shadow-soft: 0 16px 40px rgba(0, 0, 0, 0.4);
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
     }
 
     * {
@@ -23,8 +29,8 @@
 
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      background: radial-gradient(circle at top, #1e293b 0, #020617 55%, #000 100%);
+      font-family: var(--font);
+      background: radial-gradient(circle at top, #182742 0, #050811 50%, #020309 100%);
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -32,1099 +38,1084 @@
     }
 
     .app-shell {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 12px 12px 60px;
+      padding: 12px 12px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     header {
-      padding: 12px 16px;
-      border-radius: 14px;
-      background: linear-gradient(120deg, rgba(20,184,166,0.18), rgba(56,189,248,0.05));
-      border: 1px solid rgba(148,163,184,0.35);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 10px;
+      padding: 10px 14px;
+      background: linear-gradient(120deg, rgba(24, 164, 184, 0.12), rgba(6, 12, 26, 0.9));
+      border-radius: 999px;
+      border: 1px solid rgba(24, 164, 184, 0.4);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 6px;
+      z-index: 10;
     }
 
     header h1 {
       font-size: 16px;
       margin: 0;
-      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
 
-    header span {
+    header .badges {
+      display: flex;
+      gap: 8px;
+      align-items: center;
       font-size: 11px;
       color: var(--text-soft);
     }
 
-    .chip-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      font-size: 10px;
-      padding: 4px 8px;
+    .badge {
+      padding: 4px 10px;
       border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.5);
-      background: rgba(15,23,42,0.8);
-      color: var(--text-soft);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.3);
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       white-space: nowrap;
     }
 
-    .chip strong {
-      color: var(--accent);
-      font-weight: 600;
+    .badge.accent {
+      border-color: rgba(24, 164, 184, 0.6);
+      background: rgba(24, 164, 184, 0.1);
     }
 
     main {
-      flex: 1;
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
-      gap: 10px;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      gap: 12px;
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 880px) {
       main {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .app-shell {
-        padding-bottom: 72px;
+        grid-template-columns: 1fr;
       }
     }
 
-    .pane {
-      background: linear-gradient(145deg, rgba(15,23,42,0.95), rgba(3,7,18,0.98));
-      border-radius: 16px;
-      border: 1px solid rgba(31,41,55,0.9);
-      padding: 12px;
+    .panel {
+      background: radial-gradient(circle at top left, rgba(24, 164, 184, 0.12), rgba(10, 15, 30, 0.98));
+      border-radius: 20px;
+      border: 1px solid rgba(24, 164, 184, 0.25);
+      box-shadow: var(--shadow-soft);
+      padding: 16px 14px 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      box-shadow:
-        0 18px 50px rgba(0,0,0,0.7),
-        inset 0 0 0 0.5px rgba(148,163,184,0.08);
+      gap: 14px;
     }
 
-    .pane-header {
+    .tabs-row {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .pane-title {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      display: flex;
-      align-items: center;
       gap: 6px;
-    }
-
-    .pill {
-      display: inline-flex;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      font-size: 10px;
-      border: 1px solid rgba(45,212,191,0.3);
-    }
-
-    .toggle-group,
-    .mode-row,
-    .row {
-      display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
+      margin-bottom: 4px;
     }
 
-    .toggle,
-    .button-ghost,
-    .button-main,
-    .chip-toggle {
+    .tab-pill {
       border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 11px;
-      border: 1px solid rgba(148,163,184,0.6);
-      background: rgba(15,23,42,0.9);
+      padding: 6px 12px;
+      font-size: 12px;
+      border: 1px solid transparent;
+      background: rgba(5, 10, 22, 0.9);
       color: var(--text-soft);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.15s ease-out;
+      transition: all 0.15s ease;
+    }
+
+    .tab-pill span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .tab-pill.active {
+      border-color: var(--accent-strong);
+      background: linear-gradient(130deg, rgba(24, 164, 184, 0.26), rgba(4, 10, 24, 1));
+      color: var(--text);
+    }
+
+    .tab-pill.active span.dot {
+      background: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    .inline-toggle-group {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 2px;
+      background: rgba(2, 7, 18, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      gap: 4px;
+      margin-left: 8px;
+    }
+
+    .inline-toggle {
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      border: none;
+      background: transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+    }
+
+    .inline-toggle.active {
+      background: rgba(24, 164, 184, 0.2);
+      color: var(--accent);
+    }
+
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .section-title-row h2 {
+      margin: 0;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-soft);
+    }
+
+    .help-note {
+      font-size: 11px;
+      color: var(--text-soft);
+      opacity: 0.85;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 700px) {
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label.field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    label.field span {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(1, 4, 14, 0.96);
+      color: var(--text);
+      padding: 6px 8px;
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      resize: vertical;
+      min-height: 30px;
+    }
+
+    .field textarea {
+      min-height: 80px;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+
+    .badge-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .generate-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn-primary {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent-strong), #44d0e4);
+      color: #021014;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       white-space: nowrap;
     }
 
-    .toggle.active,
-    .chip-toggle.active {
-      background: radial-gradient(circle at top left, rgba(45,212,191,0.35), rgba(15,23,42,0.98));
-      color: var(--text);
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(45,212,191,0.4);
-    }
-
-    .button-main {
-      background: linear-gradient(135deg, #14b8a6, #22c55e);
-      border-color: rgba(34,197,94,0.9);
-      color: #0b1120;
-      font-weight: 600;
-      padding-inline: 16px;
-    }
-
-    .button-main:disabled {
-      opacity: 0.6;
+    .btn-primary:disabled {
+      opacity: 0.5;
       cursor: default;
       box-shadow: none;
     }
 
-    .button-ghost {
-      border-style: dashed;
-      opacity: 0.8;
+    .btn-secondary {
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 6px 12px;
+      font-size: 11px;
+      cursor: pointer;
+      background: rgba(1, 3, 12, 0.9);
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
     }
 
-    .button-ghost.danger {
-      color: var(--danger);
-      border-color: rgba(239,68,68,0.7);
+    .btn-secondary:disabled {
+      opacity: 0.4;
+      cursor: default;
     }
 
-    .field-group {
+    .output-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .output-header-row h2 {
+      margin: 0;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-soft);
+    }
+
+    #mainOutputText {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: radial-gradient(circle at top left, rgba(24, 164, 184, 0.12), rgba(2, 5, 16, 0.96));
+      color: var(--text);
+      min-height: 260px;
+      padding: 10px 10px;
+      font-size: 12px;
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      resize: vertical;
+      outline: none;
+    }
+
+    #mainOutputText:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+
+    .feedback-box {
+      margin-top: 6px;
       border-radius: 12px;
-      border: 1px solid rgba(31,41,55,0.9);
-      background: radial-gradient(circle at top left, rgba(15,23,42,0.4), rgba(15,23,42,0.96));
-      padding: 8px 8px 10px;
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      background: rgba(3, 7, 18, 0.9);
+      padding: 8px 10px;
+      font-size: 11px;
+      color: var(--text-soft);
+      min-height: 52px;
+    }
+
+    .feedback-box strong {
+      color: var(--accent);
+    }
+
+    .toolbox-desktop-paste {
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(2, 6, 18, 0.96);
+      padding: 10px 10px 12px;
       display: flex;
       flex-direction: column;
       gap: 6px;
+      margin-top: 6px;
     }
 
-    .field-title-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .field-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-soft);
+    .toolbox-desktop-paste h3 {
+      margin: 0;
+      font-size: 12px;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      color: var(--text-soft);
     }
 
-    .field-subtitle {
-      font-size: 10px;
+    .toolbox-desktop-paste p.hint {
+      margin: 0;
+      font-size: 11px;
       color: var(--text-soft);
       opacity: 0.9;
     }
 
-    label {
-      font-size: 11px;
-      color: var(--text-soft);
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select,
-    textarea {
+    #desktopPasteInbox {
       width: 100%;
-      border-radius: 10px;
-      border: 1px solid rgba(31,41,55,0.9);
-      padding: 6px 8px;
-      font-size: 11px;
-      background: rgba(15,23,42,0.95);
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(1, 4, 14, 0.96);
       color: var(--text);
+      padding: 6px 8px;
+      font-size: 12px;
+      min-height: 80px;
+      resize: vertical;
       outline: none;
-      resize: vertical;
-      min-height: 0;
     }
 
-    textarea.small {
-      min-height: 48px;
-      max-height: 120px;
-    }
-
-    textarea.large {
-      min-height: 120px;
-      max-height: 220px;
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: var(--text-soft);
-      opacity: 0.5;
-    }
-
-    input[type="file"] {
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    .hint {
-      font-size: 10px;
-      color: var(--text-soft);
-      opacity: 0.8;
-    }
-
-    .output-card {
-      border-radius: 12px;
-      border: 1px solid rgba(31,41,55,0.9);
-      background: radial-gradient(circle at top left, rgba(15,23,42,0.55), rgba(3,7,18,0.98));
-      padding: 8px;
+    .toolbox-desktop-paste-actions {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .output-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .output-title {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-soft);
-    }
-
-    .output-actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
       justify-content: flex-end;
+      margin-top: 4px;
     }
 
-    .output-area {
-      width: 100%;
-      border-radius: 8px;
-      border: 1px solid rgba(31,41,55,0.9);
-      background: rgba(15,23,42,0.97);
-      color: var(--text);
-      font-size: 11px;
-      padding: 6px 8px;
-      min-height: 200px;
-      resize: vertical;
-      white-space: pre-wrap;
-    }
-
-    .feedback-text {
-      font-size: 11px;
-      color: var(--text-soft);
-      white-space: pre-wrap;
-    }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 10px;
-      color: var(--text-soft);
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: #22c55e;
-      box-shadow: 0 0 0 4px rgba(34,197,94,0.2);
-    }
-
-    .status-dot.busy {
-      background: #fbbf24;
-      box-shadow: 0 0 0 4px rgba(251,191,36,0.2);
-    }
-
-    .status-dot.error {
-      background: #f87171;
-      box-shadow: 0 0 0 4px rgba(248,113,113,0.2);
-    }
-
-    .error-text {
-      font-size: 10px;
-      color: var(--danger);
-    }
-
-    /* bottom tabs */
-    .bottom-nav {
-      position: fixed;
-      bottom: 8px;
-      left: 0;
-      right: 0;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 6px 10px;
-      z-index: 10;
-    }
-
-    .bottom-nav-inner {
-      border-radius: 999px;
-      border: 1px solid rgba(31,41,55,0.9);
-      background: rgba(3,7,18,0.96);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 4px;
-      gap: 4px;
-    }
-
-    .tab-button {
-      flex: 1;
-      border-radius: 999px;
-      border: none;
-      padding: 6px 8px;
-      background: transparent;
-      color: var(--text-soft);
-      font-size: 11px;
+    .vision-intake {
+      border-radius: 14px;
+      border: 1px dashed rgba(255, 255, 255, 0.17);
+      background: rgba(1, 4, 14, 0.95);
+      padding: 8px 10px 10px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      cursor: pointer;
+      gap: 6px;
     }
 
-    .tab-button span.icon {
-      font-size: 14px;
+    .vision-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
     }
 
-    .tab-button.active {
-      background: radial-gradient(circle at top, rgba(45,212,191,0.35), rgba(15,23,42,0.98));
-      color: var(--text);
-      box-shadow: 0 0 0 1px rgba(45,212,191,0.5);
+    .vision-preview-image {
+      max-width: 120px;
+      max-height: 90px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      object-fit: cover;
     }
 
-    .tab-label {
-      font-size: 10px;
-    }
-
-    .badge {
-      font-size: 9px;
-      padding: 2px 6px;
-      border-radius: 999px;
-      background: rgba(15,23,42,0.9);
-      border: 1px solid rgba(148,163,184,0.5);
+    .status-bar {
+      font-size: 11px;
       color: var(--text-soft);
-    }
-
-    .badge.green {
-      background: rgba(34,197,94,0.15);
-      border-color: rgba(34,197,94,0.6);
-      color: #bbf7d0;
-    }
-
-    /* QR modal */
-    #qrModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.65);
-      z-index: 9999;
+      display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 4px;
     }
 
-    #qrModalInner {
-      background: #0f172a;
-      border: 1px solid #334155;
-      padding: 20px;
-      border-radius: 14px;
-      text-align: center;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.9);
+    .status-pill {
+      padding: 2px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(1, 4, 14, 0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
     }
 
-    #qrCanvas {
-      border-radius: 10px;
-      background: #0b1120;
-      padding: 8px;
+    .status-pill span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #26d37c;
+      box-shadow: 0 0 0 4px rgba(38, 211, 124, 0.28);
+    }
+
+    .status-pill.error span.dot {
+      background: var(--danger);
+      box-shadow: 0 0 0 4px rgba(255, 91, 106, 0.32);
     }
   </style>
 </head>
 <body>
   <div class="app-shell">
     <header>
-      <div>
-        <h1>Lohit SOAP App <span style="opacity:0.7;">v1.7.2</span></h1>
-        <span>Appointment • Surgery • Toolbox • Consult • Vision • QR relay</span>
-      </div>
-      <div class="chip-row">
-        <div class="chip">
-          <strong>Privacy:</strong> Clinic-safe text only
+      <h1>Lohit SOAP App v1.7.2</h1>
+      <div class="badges">
+        <div class="badge accent">
+          <span>Privacy</span>
+          <span>Clinic-safe text only</span>
         </div>
-        <div class="chip">
-          <strong>Vision:</strong> Screenshots / photos
+        <div class="badge">
+          <span>Backend:</span>
+          <span>lohit-soap-app.onrender.com</span>
         </div>
       </div>
     </header>
 
     <main>
-      <!-- LEFT PANE: INPUT -->
-      <section class="pane" id="inputPane">
-        <div class="pane-header">
-          <div class="pane-title">
-            Input
-            <span class="pill">Doctor side</span>
+      <!-- LEFT: INPUT -->
+      <section class="panel" id="inputPanel">
+        <div class="tabs-row">
+          <button class="tab-pill active" data-main-tab="soap">
+            <span class="dot"></span>
+            <span>SOAP</span>
+          </button>
+          <button class="tab-pill" data-main-tab="toolbox">
+            <span class="dot"></span>
+            <span>Toolbox</span>
+          </button>
+          <button class="tab-pill" data-main-tab="consult">
+            <span class="dot"></span>
+            <span>Consult</span>
+          </button>
+
+          <div class="inline-toggle-group" id="soapCaseTypeToggle">
+            <button class="inline-toggle active" data-case-type="appointment">Appointment</button>
+            <button class="inline-toggle" data-case-type="surgery">Surgery</button>
           </div>
-          <div class="toggle-group">
-            <button class="toggle active" data-app-mode="soap" id="modeSoapBtn">SOAP</button>
-            <button class="toggle" data-app-mode="toolbox" id="modeToolboxBtn">Toolbox</button>
-            <button class="toggle" data-app-mode="consult" id="modeConsultBtn">Consult</button>
+
+          <div class="inline-toggle-group" id="surgeryLayoutToggle">
+            <button class="inline-toggle active" data-surgery-layout="simple">Simple</button>
+            <button class="inline-toggle" data-surgery-layout="advanced">Advanced</button>
+          </div>
+
+          <div class="inline-toggle-group" id="brainModeToggle">
+            <button class="inline-toggle active" data-brain-mode="help">Help Me</button>
+            <button class="inline-toggle" data-brain-mode="strict">Strict</button>
           </div>
         </div>
 
-        <div class="row">
-          <span class="hint" id="modeHint">
-            SOAP mode: generates full Appointment/Surgery SOAPs in Avimark format.
-          </span>
+        <!-- BASICS -->
+        <div class="section-title-row">
+          <h2>Basics</h2>
+          <span class="help-note">Case label is local only • Weight & ASA help refine output</span>
         </div>
 
-        <!-- SOAP: Appointment vs Surgery -->
-        <div class="field-group" id="soapTypeGroup">
-          <div class="field-title-row">
-            <div class="field-title">Case type</div>
-            <span class="field-subtitle">Appointment vs Surgery</span>
-          </div>
-          <div class="toggle-group">
-            <button class="chip-toggle active" data-case-type="appointment" id="caseAppointmentBtn">Appointment</button>
-            <button class="chip-toggle" data-case-type="surgery" id="caseSurgeryBtn">Surgery</button>
-          </div>
-          <div class="mode-row" id="surgeryModeRow">
-            <span class="hint">Surgery layout:</span>
-            <button class="chip-toggle active" id="simpleSurgeryBtn" data-surgery-mode="simple">Simple</button>
-            <button class="chip-toggle" id="advancedSurgeryBtn" data-surgery-mode="advanced">Advanced</button>
-          </div>
+        <div class="field-grid">
+          <label class="field">
+            <span>
+              Case label / patient name
+              <span class="badge-chip">Local only</span>
+            </span>
+            <input id="caseLabel" placeholder="eg. Milo dental, itchy dog, PU cat" />
+          </label>
+          <label class="field">
+            <span>Species</span>
+            <select id="species">
+              <option value="">--</option>
+              <option value="canine">Canine</option>
+              <option value="feline">Feline</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Weight (kg)</span>
+            <input id="weightKg" type="number" step="0.01" min="0" placeholder="kg" />
+          </label>
+          <label class="field">
+            <span>ASA</span>
+            <select id="asa">
+              <option value="">--</option>
+              <option value="ASA I">ASA I</option>
+              <option value="ASA II">ASA II</option>
+              <option value="ASA III">ASA III</option>
+              <option value="ASA IV">ASA IV</option>
+              <option value="ASA V">ASA V</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>TPR (note, optional)</span>
+            <input id="tpr" placeholder="eg. 38.6°C, 100 bpm, 28 rpm" />
+          </label>
         </div>
 
-        <!-- Strict / Help Me -->
-        <div class="field-group">
-          <div class="field-title-row">
-            <div class="field-title">Brain mode</div>
-            <span class="field-subtitle">How strict the AI can be</span>
+        <!-- SOAP FIELDS -->
+        <div id="soapFieldsSection">
+          <div class="section-title-row" style="margin-top:10px;">
+            <h2>SOAP inputs</h2>
+            <span class="help-note" id="soapModeHint">Appointment mode: reason, history, exam, diagnostics</span>
           </div>
-          <div class="toggle-group">
-            <button class="chip-toggle" id="strictOffBtn">Help Me (default)</button>
-            <button class="chip-toggle" id="strictOnBtn">Strict (no guessing)</button>
+
+          <!-- Appointment-specific -->
+          <div id="appointmentFields">
+            <div class="field-grid">
+              <label class="field">
+                <span>Appointment reason</span>
+                <input id="appointmentReason" placeholder="eg. cough, diarrhea, itchy ears, wellness exam" />
+              </label>
+              <label class="field">
+                <span>History (short)</span>
+                <input id="history" placeholder="What the owner told you / tech notes" />
+              </label>
+            </div>
           </div>
-          <span class="hint">
-            Help Me = safe templated normals allowed + Feedback summary. Strict = no invention, blanks only.
-          </span>
+
+          <!-- Surgery-specific -->
+          <div id="surgeryFields" style="display:none;">
+            <div class="field-grid">
+              <label class="field">
+                <span>Surgery preset</span>
+                <select id="surgeryPreset">
+                  <option value="">--</option>
+                  <option value="canine spay">Canine spay</option>
+                  <option value="canine neuter">Canine neuter</option>
+                  <option value="feline spay">Feline spay</option>
+                  <option value="feline neuter">Feline neuter</option>
+                  <option value="dental cohat">Dental - COHAT</option>
+                  <option value="mass removal">Mass removal</option>
+                  <option value="cystotomy">Cystotomy</option>
+                  <option value="pyometra spay">Pyometra spay</option>
+                  <option value="exploratory laparotomy">Exploratory laparotomy</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Anesthesia quick summary</span>
+                <input id="anesthesiaQuick" placeholder="eg. Dex + But, Propofol, Iso, fluids 5 ml/kg/hr" />
+              </label>
+            </div>
+            <label class="field">
+              <span>Core surgery notes</span>
+              <textarea id="surgicalNotes" placeholder="Key events, teeth extracted, masses removed, complications, etc."></textarea>
+            </label>
+          </div>
+
+          <!-- Shared -->
+          <label class="field">
+            <span>Exam findings (raw text, optional)</span>
+            <textarea id="examFindings" placeholder="You can leave this blank and let the brain build a templated normal exam."></textarea>
+          </label>
+
+          <label class="field">
+            <span>Diagnostics (data only, no interpretation)</span>
+            <textarea id="diagnosticsData" placeholder="eg. CBC/chem numbers, SNAP, urinalysis, radiograph summary headings"></textarea>
+          </label>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>Assessment hints (optional)</span>
+              <textarea id="assessmentHints" placeholder="Your problem list or thoughts. Brain will refine."></textarea>
+            </label>
+            <label class="field">
+              <span>Plan hints (optional)</span>
+              <textarea id="planHints" placeholder="Treatments, meds, discharge notes you want included."></textarea>
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Extra instructions to AI (optional)</span>
+            <textarea id="extraInstructions" placeholder="eg. Keep language simple for new grad; emphasize dental charting; include recheck in 7–10 days."></textarea>
+          </label>
         </div>
 
-        <!-- Basics -->
-        <div class="field-group">
-          <div class="field-title-row">
-            <div class="field-title">Basics</div>
-            <span class="field-subtitle">Optional but helpful</span>
+        <!-- TOOLBOX FIELDS -->
+        <div id="toolboxFieldsSection" style="display:none;">
+          <div class="section-title-row" style="margin-top:10px;">
+            <h2>Toolbox input</h2>
+            <span class="help-note">Paste bloodwork, notes, or “please write an email about …”</span>
           </div>
-          <div class="row">
-            <div style="flex:1;">
-              <label for="caseLabel">Case label / Patient name (local only)</label>
-              <input id="caseLabel" type="text" placeholder="eg. Milo dental, Daisy spay" />
-            </div>
-            <div style="width:105px;">
-              <label for="species">Species</label>
-              <select id="species">
-                <option value="">—</option>
-                <option>Dog</option>
-                <option>Cat</option>
-              </select>
-            </div>
-            <div style="width:90px;">
-              <label for="weightKg">Weight (kg)</label>
-              <input id="weightKg" type="number" step="0.1" placeholder="kg" />
-            </div>
-          </div>
-          <div class="row">
-            <div style="width:110px;">
-              <label for="asa">ASA</label>
-              <select id="asa">
-                <option value="">—</option>
-                <option>I</option>
-                <option>II</option>
-                <option>III</option>
-                <option>IV</option>
-                <option>V</option>
-              </select>
-            </div>
-            <div style="flex:1;">
-              <label for="tpr">TPR (optional note)</label>
-              <input id="tpr" type="text" placeholder="eg. 38.6°C, 100 bpm, 28 rpm" />
-            </div>
-          </div>
-        </div>
+          <label class="field">
+            <span>Core notes / request</span>
+            <textarea id="toolboxCoreNotes" placeholder="Type or paste anything: bloodwork, brief history, what you want written."></textarea>
+          </label>
+          <label class="field">
+            <span>Extra instructions to AI (optional)</span>
+            <textarea id="toolboxExtra" placeholder="eg. Short summary vs long explanation, client-friendly vs doctor-only, etc."></textarea>
+          </label>
 
-        <!-- Surgery details -->
-        <div class="field-group" id="surgeryFields">
-          <div class="field-title-row">
-            <div class="field-title">Surgery details</div>
-            <span class="field-subtitle">Only used when Case type = Surgery</span>
-          </div>
-          <div class="row">
-            <div style="flex:1;">
-              <label for="surgeryTemplate">Surgery preset</label>
-              <select id="surgeryTemplate">
-                <option value="">—</option>
-                <option>Canine Spay</option>
-                <option>Canine Neuter</option>
-                <option>Feline Spay</option>
-                <option>Feline Neuter</option>
-                <option>Dental – COHAT (with rads)</option>
-                <option>Dental – COHAT (no radiographs)</option>
-                <option>Mass removal</option>
-                <option>Pyometra spay</option>
-                <option>Exploratory laparotomy</option>
-                <option>Enterotomy</option>
-                <option>Gastrotomy</option>
-                <option>Gastropexy</option>
-                <option>Feline urethral unblock</option>
-                <option>Cystotomy</option>
-              </select>
+          <div class="vision-intake">
+            <span style="font-size:11px;color:var(--text-soft);">Upload screenshots / photos (for now this is local preview + blur only)</span>
+            <input type="file" id="visionFiles" accept="image/*" multiple />
+            <div class="vision-actions">
+              <button class="btn-secondary" id="blurImagesBtn" type="button" disabled>
+                Blur / pixelate images before sending
+              </button>
             </div>
-          </div>
-
-          <div id="surgerySimpleBlock">
-            <div class="row">
-              <div style="flex:1;">
-                <label for="anesthesiaSummary">Anesthesia quick summary</label>
-                <input id="anesthesiaSummary" type="text" placeholder="eg. Dex + But + Midaz, Propofol, Iso, fluids 5 ml/kg/hr" />
-              </div>
-            </div>
-          </div>
-
-          <div id="surgeryAdvancedBlock" style="display:none;">
-            <div class="row">
-              <div style="width:100px;">
-                <label for="cathGauge">IV catheter gauge</label>
-                <input id="cathGauge" type="text" placeholder="eg. 20G" />
-              </div>
-              <div style="flex:1;">
-                <label for="cathSite">IV catheter site / side</label>
-                <input id="cathSite" type="text" placeholder="eg. cephalic, left" />
-              </div>
-            </div>
-            <div class="row">
-              <div style="width:90px;">
-                <label for="ettSize">ET tube</label>
-                <input id="ettSize" type="text" placeholder="eg. 9.0" />
-              </div>
-              <div style="flex:1;">
-                <label for="fluids">Fluids</label>
-                <input id="fluids" type="text" placeholder="eg. LRS 5 ml/kg/hr, or declined" />
-              </div>
-            </div>
-            <div class="row">
-              <div style="flex:1;">
-                <label for="premeds">Premeds (drugs + doses)</label>
-                <textarea id="premeds" class="small" placeholder="Dexmedetomidine [0.5 mg/ml] X mcg/kg IM; Hydromorphone [2 mg/ml] Y mg/kg IM"></textarea>
-              </div>
-            </div>
-            <div class="row">
-              <div style="flex:1;">
-                <label for="induction">Induction / maintenance</label>
-                <textarea id="induction" class="small" placeholder="Propofol [10 mg/ml] to effect IV; Isoflurane in oxygen"></textarea>
-              </div>
-            </div>
-            <div class="row">
-              <div style="flex:1;">
-                <label for="intraOpMeds">Intra-op meds</label>
-                <textarea id="intraOpMeds" class="small" placeholder="Meloxicam [5 mg/ml] Z mg/kg SC; local blocks; additional opioids"></textarea>
-              </div>
-            </div>
-            <div class="row">
-              <div style="flex:1;">
-                <label for="postOpMeds">Post-op meds / to go home</label>
-                <textarea id="postOpMeds" class="small" placeholder="Gabapentin [100 mg/ml] ...; oral NSAID, etc."></textarea>
-              </div>
-            </div>
+            <div id="visionPreview" class="vision-preview"></div>
           </div>
         </div>
 
-        <!-- Toolbox Vision mode selector -->
-        <div class="field-group" id="toolboxVisionGroup" style="display:none;">
-          <div class="field-title-row">
-            <div class="field-title">Toolbox Vision mode</div>
-            <span class="field-subtitle">How to interpret photos in Toolbox</span>
+        <!-- CONSULT FIELDS -->
+        <div id="consultFieldsSection" style="display:none;">
+          <div class="section-title-row" style="margin-top:10px;">
+            <h2>Consult question</h2>
+            <span class="help-note">Short summary + focused question; brain answers for you only</span>
           </div>
-          <label for="toolboxImageMode">Interpret uploaded images as</label>
-          <select id="toolboxImageMode">
-            <option value="auto">Auto-detect (recommended)</option>
-            <option value="Bloodwork">Bloodwork</option>
-            <option value="Cytology">Cytology</option>
-            <option value="Radiology report">Radiology report</option>
-            <option value="Avimark screenshot">Avimark screenshot / Treatments</option>
-            <option value="Medication / Treatment sheet">Medication / Treatment sheet</option>
-            <option value="Freeform notes / handwriting">Freeform notes / handwriting</option>
-          </select>
-          <span class="hint">
-            In Toolbox mode only: let the brain auto-detect the image type, or force it into a specific category if you want.
-          </span>
+          <label class="field">
+            <span>Patient summary</span>
+            <textarea id="consultSummary" placeholder="Signalment, main problems, key diagnostics so far."></textarea>
+          </label>
+          <label class="field">
+            <span>Question for brain</span>
+            <textarea id="consultQuestion" placeholder="eg. Differentials? How hard should I recommend surgery? Dosing options?"></textarea>
+          </label>
         </div>
 
-        <!-- Core notes -->
-        <div class="field-group">
-          <div class="field-title-row">
-            <div class="field-title">Core notes</div>
-            <span class="field-subtitle">What you would normally jot in the chart</span>
-          </div>
-          <textarea id="freeText" class="large" x-webkit-speech speech
-            placeholder="Type or paste anything: brief history, PE snippets, treatment notes, lab results, etc.
-You can also just write: 'Please make a SOAP for X' and let Vision + brain help."></textarea>
-          <label for="extraText">Extra instructions to AI (optional)</label>
-          <textarea id="extraText" class="small" x-webkit-speech speech
-            placeholder="eg. Emphasize dental charting; include recheck in 7-10 days; keep language simple for a new grad."></textarea>
-        </div>
-
-        <!-- Vision upload -->
-        <div class="field-group">
-          <div class="field-title-row">
-            <div class="field-title">Vision intake</div>
-            <span class="field-subtitle">Screenshots / photos</span>
-          </div>
-          <label for="imageInput">Upload screenshots / photos</label>
-          <input id="imageInput" type="file" accept="image/*" multiple />
-          <span class="hint">Use screenshots of Avimark treatments/notes, anesthesia sheets, lab PDFs, cytology, radiology reports, or whiteboard photos. PDFs should be screenshotted for now.</span>
-        </div>
-
-        <!-- Run button + status -->
-        <div class="row" style="justify-content: space-between; align-items: center; margin-top:4px;">
-          <button class="button-main" id="generateBtn">Generate</button>
-          <div class="status-row">
-            <div class="status-dot" id="statusDot"></div>
-            <span id="statusText">Ready</span>
-          </div>
-        </div>
-        <div class="row">
-          <span class="error-text" id="errorText"></span>
+        <!-- GENERATE ROW -->
+        <div class="generate-row">
+          <button class="btn-primary" id="generateBtn">
+            <span>Generate</span>
+          </button>
+          <span class="help-note" id="statusMessage">Ready when you are.</span>
         </div>
       </section>
 
-      <!-- RIGHT PANE: OUTPUT -->
-      <section class="pane" id="outputPane">
-        <div class="pane-header">
-          <div class="pane-title">
-            Output
-            <span class="pill">Avimark-ready</span>
+      <!-- RIGHT: OUTPUT -->
+      <section class="panel" id="outputPanel">
+        <div class="output-header-row">
+          <h2>Main output</h2>
+          <button class="btn-secondary" id="copyFullOutputBtn" type="button" disabled>
+            Copy full text
+          </button>
+        </div>
+        <textarea id="mainOutputText" readonly></textarea>
+
+        <div class="feedback-box" id="feedbackBox">
+          <strong>Feedback & next inputs will appear here.</strong>
+          <div style="margin-top:4px;">
+            After each run, the brain will suggest what was missing, what it assumed, and what to add next.
           </div>
-          <span class="badge green">Copy Full → paste into Avimark</span>
         </div>
 
-        <!-- SOAP / Toolbox / Consult output -->
-        <div class="output-card">
-          <div class="output-header">
-            <div class="output-title">Main output</div>
-            <div class="output-actions">
-              <button class="button-ghost" id="copySoapBtn">Copy full text</button>
-              <button class="button-ghost" id="sendToDesktopBtn">Send to Desktop 📱→💻</button>
-              <button class="button-ghost" id="clearOutputBtn">Clear</button>
-            </div>
+        <!-- TOOLBOX desktop paste inbox -->
+        <div class="toolbox-desktop-paste" id="toolboxDesktopPaste">
+          <h3>Paste from phone (Toolbox inbox)</h3>
+          <p class="hint">
+            On your phone, tap “Copy full text”, send it to yourself (iMessage / email / notes), then paste it here.
+            Click “Move to main output” to bring it into the big output box.
+          </p>
+          <textarea id="desktopPasteInbox" placeholder="Paste text here from your phone..."></textarea>
+          <div class="toolbox-desktop-paste-actions">
+            <button class="btn-secondary" id="desktopPasteToOutputBtn" type="button">
+              Move to main output
+            </button>
           </div>
-          <textarea id="soapOutput" class="output-area" placeholder="Your SOAP / toolbox / consult output will appear here." readonly></textarea>
         </div>
-        <!-- TOOLBOX DESKTOP PASTE BOX -->
-<section class="toolbox-desktop-paste">
-  <h3>Paste from phone (Desktop inbox)</h3>
-  <p class="hint">
-    On your phone, use “Copy full text”, then paste it here on the desktop. 
-    Click “Move to main output” when you’re ready.
-  </p>
-  <textarea id="desktopPasteInbox" rows="5" placeholder="Paste text here from your phone..."></textarea>
-  <div class="toolbox-desktop-paste-actions">
-    <button id="desktopPasteToOutputBtn" type="button">
-      Move to main output
-    </button>
-  </div>
-</section>
 
-        <!-- Feedback -->
-        <div class="output-card">
-          <div class="output-header">
-            <div class="output-title">Feedback & next inputs</div>
+        <div class="status-bar">
+          <div class="status-pill" id="connectionStatusPill">
+            <span class="dot"></span>
+            <span id="connectionStatusText">Connected to backend</span>
           </div>
-          <div class="feedback-text" id="feedbackOutput">
-            After each run, the brain will summarize what was missing, what it assumed, and what you might want to add next.
-          </div>
+          <span id="errorText"></span>
         </div>
       </section>
     </main>
-
-    <!-- Bottom navigation -->
-    <nav class="bottom-nav">
-      <div class="bottom-nav-inner">
-        <button class="tab-button active" id="tabSoap">
-          <span class="icon">🩺</span>
-          <span class="tab-label">SOAP</span>
-        </button>
-        <button class="tab-button" id="tabToolbox">
-          <span class="icon">🧰</span>
-          <span class="tab-label">Toolbox</span>
-        </button>
-        <button class="tab-button" id="tabConsult">
-          <span class="icon">💬</span>
-          <span class="tab-label">Consult</span>
-        </button>
-      </div>
-    </nav>
   </div>
-
-  <!-- QR Modal -->
-  <div id="qrModal">
-    <div id="qrModalInner">
-      <h3 style="margin:0 0 8px; font-size:13px;">Scan on your phone</h3>
-      <p style="margin:0 0 10px; font-size:11px; color:#9ca3af;">
-        Point your phone camera at this code to load this text on another device.
-      </p>
-      <canvas id="qrCanvas"></canvas><br />
-      <button style="margin-top:10px;" class="button-ghost danger" id="closeQrBtn">Close</button>
-    </div>
-  </div>
-
-  <!-- QRCode library -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
   <script>
-    // ---- State ----
-    let appMode = "soap";         // "soap" | "toolbox" | "consult"
-    let caseType = "appointment"; // "appointment" | "surgery"
-    let surgeryMode = "simple";   // "simple" | "advanced"
-    let strictMode = false;       // Help Me (false) vs Strict (true)
-
-    // DOM helpers
-    const $ = (id) => document.getElementById(id);
-
-    const modeHintEl = $("modeHint");
-    const soapTypeGroup = $("soapTypeGroup");
-    const surgeryFields = $("surgeryFields");
-    const surgerySimpleBlock = $("surgerySimpleBlock");
-    const surgeryAdvancedBlock = $("surgeryAdvancedBlock");
-    const toolboxVisionGroup = $("toolboxVisionGroup");
-
-    const statusDot = $("statusDot");
-    const statusText = $("statusText");
-    const errorText = $("errorText");
-    const soapOutput = $("soapOutput");
-    const feedbackOutput = $("feedbackOutput");
-
-    const generateBtn = $("generateBtn");
+    const API_BASE = 'https://lohit-soap-app.onrender.com';
+    const API_GENERATE = `${API_BASE}/generate`;
 
     // Tabs
-    const tabSoap = $("tabSoap");
-    const tabToolbox = $("tabToolbox");
-    const tabConsult = $("tabConsult");
+    const tabButtons = document.querySelectorAll('.tab-pill[data-main-tab]');
+    const caseTypeToggleButtons = document.querySelectorAll('#soapCaseTypeToggle .inline-toggle');
+    const surgeryLayoutButtons = document.querySelectorAll('#surgeryLayoutToggle .inline-toggle');
+    const brainModeButtons = document.querySelectorAll('#brainModeToggle .inline-toggle');
 
-    // Mode toggles
-    const modeSoapBtn = $("modeSoapBtn");
-    const modeToolboxBtn = $("modeToolboxBtn");
-    const modeConsultBtn = $("modeConsultBtn");
+    let activeMainTab = 'soap'; // 'soap' | 'toolbox' | 'consult'
+    let activeCaseType = 'appointment'; // 'appointment' | 'surgery'
+    let activeSurgeryLayout = 'simple'; // 'simple' | 'advanced'
+    let brainMode = 'help'; // 'help' | 'strict'
 
-    // Case toggles
-    const caseAppointmentBtn = $("caseAppointmentBtn");
-    const caseSurgeryBtn = $("caseSurgeryBtn");
-    const simpleSurgeryBtn = $("simpleSurgeryBtn");
-    const advancedSurgeryBtn = $("advancedSurgeryBtn");
+    const soapFieldsSection = document.getElementById('soapFieldsSection');
+    const toolboxFieldsSection = document.getElementById('toolboxFieldsSection');
+    const consultFieldsSection = document.getElementById('consultFieldsSection');
+    const appointmentFields = document.getElementById('appointmentFields');
+    const surgeryFields = document.getElementById('surgeryFields');
+    const soapModeHint = document.getElementById('soapModeHint');
+    const statusMessage = document.getElementById('statusMessage');
+    const connectionStatusPill = document.getElementById('connectionStatusPill');
+    const connectionStatusText = document.getElementById('connectionStatusText');
+    const errorText = document.getElementById('errorText');
 
-    // Strict toggles
-    const strictOffBtn = $("strictOffBtn");
-    const strictOnBtn = $("strictOnBtn");
+    function setMainTab(tab) {
+      activeMainTab = tab;
+      tabButtons.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.mainTab === tab);
+      });
 
-    // Output controls
-    const copySoapBtn = $("copySoapBtn");
-    const clearOutputBtn = $("clearOutputBtn");
-    const sendToDesktopBtn = $("sendToDesktopBtn");
+      // Show/hide sections
+      soapFieldsSection.style.display = tab === 'soap' ? '' : 'none';
+      toolboxFieldsSection.style.display = tab === 'toolbox' ? '' : 'none';
+      consultFieldsSection.style.display = tab === 'consult' ? '' : 'none';
 
-    // QR modal
-    const qrModal = $("qrModal");
-    const qrCanvas = $("qrCanvas");
-    const closeQrBtn = $("closeQrBtn");
+      // Only show Appointment/Surgery toggles when SOAP is active
+      document.getElementById('soapCaseTypeToggle').style.display =
+        tab === 'soap' ? 'inline-flex' : 'none';
+      document.getElementById('surgeryLayoutToggle').style.display =
+        tab === 'soap' && activeCaseType === 'surgery' ? 'inline-flex' : 'none';
 
-    // Inputs
-    const caseLabel = $("caseLabel");
-    const species = $("species");
-    const weightKg = $("weightKg");
-    const asa = $("asa");
-    const tpr = $("tpr");
-    const surgeryTemplate = $("surgeryTemplate");
-    const anesthesiaSummary = $("anesthesiaSummary");
-    const cathGauge = $("cathGauge");
-    const cathSite = $("cathSite");
-    const ettSize = $("ettSize");
-    const fluids = $("fluids");
-    const premeds = $("premeds");
-    const induction = $("induction");
-    const intraOpMeds = $("intraOpMeds");
-    const postOpMeds = $("postOpMeds");
-    const freeText = $("freeText");
-    const extraText = $("extraText");
-    const imageInput = $("imageInput");
-    const toolboxImageMode = $("toolboxImageMode");
+      // Toolbox desktop paste box always visible, but label makes most sense there
+      const pasteBox = document.getElementById('toolboxDesktopPaste');
+      pasteBox.style.opacity = tab === 'toolbox' ? '1' : '0.6';
 
-    // ---- UI state updaters ----
-    function setAppMode(mode) {
-      appMode = mode;
-      modeSoapBtn.classList.toggle("active", mode === "soap");
-      modeToolboxBtn.classList.toggle("active", mode === "toolbox");
-      modeConsultBtn.classList.toggle("active", mode === "consult");
-
-      tabSoap.classList.toggle("active", mode === "soap");
-      tabToolbox.classList.toggle("active", mode === "toolbox");
-      tabConsult.classList.toggle("active", mode === "consult");
-
-      if (mode === "soap") {
-        soapTypeGroup.style.display = "";
-        surgeryFields.style.display = caseType === "surgery" ? "" : "none";
-        toolboxVisionGroup.style.display = "none";
-        modeHintEl.textContent = "SOAP mode: generates full Appointment/Surgery SOAPs in Avimark format.";
-      } else if (mode === "toolbox") {
-        soapTypeGroup.style.display = "none";
-        surgeryFields.style.display = "none";
-        toolboxVisionGroup.style.display = "";
-        modeHintEl.textContent = "Toolbox mode: bloodwork summaries, quick client emails/notes, mini write-ups. Vision helps auto-parse images.";
-      } else {
-        soapTypeGroup.style.display = "none";
-        surgeryFields.style.display = "none";
-        toolboxVisionGroup.style.display = "none";
-        modeHintEl.textContent = "Consult mode: vet-to-vet reasoning, differentials, plan ideas. Images optional.";
-      }
+      updateSoapModeHint();
     }
 
     function setCaseType(type) {
-      caseType = type;
-      caseAppointmentBtn.classList.toggle("active", type === "appointment");
-      caseSurgeryBtn.classList.toggle("active", type === "surgery");
-      surgeryFields.style.display = (appMode === "soap" && type === "surgery") ? "" : "none";
+      activeCaseType = type;
+      caseTypeToggleButtons.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.caseType === type);
+      });
+
+      appointmentFields.style.display = type === 'appointment' ? '' : 'none';
+      surgeryFields.style.display = type === 'surgery' ? '' : 'none';
+      document.getElementById('surgeryLayoutToggle').style.display =
+        type === 'surgery' && activeMainTab === 'soap' ? 'inline-flex' : 'none';
+
+      updateSoapModeHint();
     }
 
-    function setSurgeryMode(mode) {
-      surgeryMode = mode;
-      simpleSurgeryBtn.classList.toggle("active", mode === "simple");
-      advancedSurgeryBtn.classList.toggle("active", mode === "advanced");
-      surgerySimpleBlock.style.display = mode === "simple" ? "" : "none";
-      surgeryAdvancedBlock.style.display = mode === "advanced" ? "" : "none";
+    function setSurgeryLayout(layout) {
+      activeSurgeryLayout = layout;
+      surgeryLayoutButtons.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.surgeryLayout === layout);
+      });
     }
 
-    function setStrict(flag) {
-      strictMode = flag;
-      strictOffBtn.classList.toggle("active", !flag);
-      strictOnBtn.classList.toggle("active", flag);
+    function setBrainMode(mode) {
+      brainMode = mode;
+      brainModeButtons.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.brainMode === mode);
+      });
     }
 
-    function setStatus(state, message) {
-      statusText.textContent = message || "";
-      errorText.textContent = "";
-      statusDot.classList.remove("busy", "error");
-      if (state === "ready") {
-        statusDot.classList.remove("busy", "error");
-      } else if (state === "busy") {
-        statusDot.classList.add("busy");
-      } else if (state === "error") {
-        statusDot.classList.add("error");
+    function updateSoapModeHint() {
+      if (activeMainTab !== 'soap') {
+        soapModeHint.textContent = 'Toolbox / Consult don\'t use SOAP fields.';
+        return;
+      }
+      if (activeCaseType === 'surgery') {
+        soapModeHint.textContent =
+          'Surgery mode: preset + anesthesia summary + core notes; brain builds full surgical SOAP.';
+      } else {
+        soapModeHint.textContent =
+          'Appointment mode: reason, history, exam, diagnostics.';
       }
     }
 
-    function showError(msg) {
-      errorText.textContent = msg || "Error.";
-      setStatus("error", "Error");
+    tabButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setMainTab(btn.dataset.mainTab);
+      });
+    });
+
+    caseTypeToggleButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setCaseType(btn.dataset.caseType);
+      });
+    });
+
+    surgeryLayoutButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setSurgeryLayout(btn.dataset.surgeryLayout);
+      });
+    });
+
+    brainModeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setBrainMode(btn.dataset.brainMode);
+      });
+    });
+
+    setMainTab('soap');
+    setCaseType('appointment');
+    setSurgeryLayout('simple');
+    setBrainMode('help');
+
+    // --- Output + copy full text ---
+    const mainOutputText = document.getElementById('mainOutputText');
+    const copyFullOutputBtn = document.getElementById('copyFullOutputBtn');
+    const feedbackBox = document.getElementById('feedbackBox');
+
+    function updateCopyButtonState() {
+      if (!copyFullOutputBtn || !mainOutputText) return;
+      const hasText = mainOutputText.value.trim().length > 0;
+      copyFullOutputBtn.disabled = !hasText;
     }
 
-    // ---- Event listeners: tabs & mode toggles ----
-    tabSoap.addEventListener("click", () => setAppMode("soap"));
-    tabToolbox.addEventListener("click", () => setAppMode("toolbox"));
-    tabConsult.addEventListener("click", () => setAppMode("consult"));
-
-    modeSoapBtn.addEventListener("click", () => setAppMode("soap"));
-    modeToolboxBtn.addEventListener("click", () => setAppMode("toolbox"));
-    modeConsultBtn.addEventListener("click", () => setAppMode("consult"));
-
-    caseAppointmentBtn.addEventListener("click", () => setCaseType("appointment"));
-    caseSurgeryBtn.addEventListener("click", () => setCaseType("surgery"));
-
-    simpleSurgeryBtn.addEventListener("click", () => setSurgeryMode("simple"));
-    advancedSurgeryBtn.addEventListener("click", () => setSurgeryMode("advanced"));
-
-    strictOffBtn.addEventListener("click", () => setStrict(false));
-    strictOnBtn.addEventListener("click", () => setStrict(true));
-
-    // ---- Copy & clear ----
-    copySoapBtn.addEventListener("click", async () => {
-      if (!soapOutput.value.trim()) return;
+    copyFullOutputBtn.addEventListener('click', async () => {
+      if (!mainOutputText.value.trim()) return;
       try {
-        await navigator.clipboard.writeText(soapOutput.value);
-        setStatus("ready", "Copied text to clipboard");
-      } catch (e) {
-        showError("Could not copy text.");
-      }
-    });
-
-    clearOutputBtn.addEventListener("click", () => {
-      soapOutput.value = "";
-      feedbackOutput.textContent = "Cleared. Run a new case to see fresh feedback.";
-      setStatus("ready", "Ready");
-      errorText.textContent = "";
-    });
-
-    // ---- QR: Send to Desktop ----
-    sendToDesktopBtn.addEventListener("click", async () => {
-      try {
-        const text = soapOutput.value.trim();
-        if (!text) return showError("Nothing to send.");
-        const res = await fetch("/api/share", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || "Share failed");
-        const fullUrl = `${window.location.origin}?caseId=${data.id}`;
-        QRCode.toCanvas(qrCanvas, fullUrl, { width: 220 }, (err) => {
-          if (err) console.error(err);
-          qrModal.style.display = "flex";
-        });
+        await navigator.clipboard.writeText(mainOutputText.value);
+        const old = copyFullOutputBtn.textContent;
+        copyFullOutputBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyFullOutputBtn.textContent = old;
+        }, 1400);
       } catch (err) {
-        console.error(err);
-        showError("Failed to create QR.");
+        console.error('Clipboard error:', err);
+        alert('Could not copy to clipboard. Please select text and copy manually.');
       }
     });
 
-    closeQrBtn.addEventListener("click", () => {
-      qrModal.style.display = "none";
+    // Desktop paste inbox → main output
+    const desktopPasteInbox = document.getElementById('desktopPasteInbox');
+    const desktopPasteToOutputBtn = document.getElementById('desktopPasteToOutputBtn');
+
+    desktopPasteToOutputBtn.addEventListener('click', () => {
+      const text = desktopPasteInbox.value;
+      if (!text.trim()) return;
+      mainOutputText.value = text;
+      updateCopyButtonState();
     });
 
-    // ---- Image handling (convert to data URLs) ----
-    function readFilesAsDataUrls(files) {
-      return Promise.all(
-        Array.from(files || []).map(
-          (file) =>
-            new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = () => resolve(null);
-              reader.readAsDataURL(file);
-            })
-        )
-      ).then((results) => results.filter(Boolean));
+    // --- Vision / blur (front-end only) ---
+    const visionFilesInput = document.getElementById('visionFiles');
+    const blurImagesBtn = document.getElementById('blurImagesBtn');
+    const visionPreview = document.getElementById('visionPreview');
+    let blurredImageDataUrls = [];
+
+    function resetVisionState() {
+      blurredImageDataUrls = [];
+      if (visionPreview) visionPreview.innerHTML = '';
+      if (blurImagesBtn) {
+        blurImagesBtn.disabled = !(visionFilesInput && visionFilesInput.files.length);
+        blurImagesBtn.textContent = 'Blur / pixelate images before sending';
+      }
     }
 
-    // ---- Build formData object for the backend ----
-    function collectFormData() {
-      const base = {
-        "Case label": caseLabel.value.trim(),
-        "Species": species.value || "",
-        "Weight_kg": weightKg.value || "",
-        "ASA": asa.value || "",
-        "TPR": tpr.value || "",
+    async function pixelateImageFile(file, pixelFactor = 0.1) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const w = img.width;
+          const h = img.height;
+          const smallCanvas = document.createElement('canvas');
+          smallCanvas.width = Math.max(1, Math.floor(w * pixelFactor));
+          smallCanvas.height = Math.max(1, Math.floor(h * pixelFactor));
+          const sctx = smallCanvas.getContext('2d');
+          sctx.imageSmoothingEnabled = false;
+          sctx.drawImage(img, 0, 0, smallCanvas.width, smallCanvas.height);
+
+          const bigCanvas = document.createElement('canvas');
+          bigCanvas.width = w;
+          bigCanvas.height = h;
+          const bctx = bigCanvas.getContext('2d');
+          bctx.imageSmoothingEnabled = false;
+          bctx.drawImage(smallCanvas, 0, 0, smallCanvas.width, smallCanvas.height, 0, 0, w, h);
+
+          const dataUrl = bigCanvas.toDataURL('image/jpeg', 0.85);
+          resolve(dataUrl);
+        };
+        img.onerror = (e) => reject(e);
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          img.src = ev.target.result;
+        };
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (visionFilesInput) {
+      visionFilesInput.addEventListener('change', () => {
+        resetVisionState();
+      });
+    }
+
+    if (blurImagesBtn) {
+      blurImagesBtn.addEventListener('click', async () => {
+        const files = Array.from(visionFilesInput.files || []);
+        if (!files.length) return;
+
+        blurImagesBtn.disabled = true;
+        blurImagesBtn.textContent = 'Blurring...';
+
+        try {
+          blurredImageDataUrls = [];
+          if (visionPreview) visionPreview.innerHTML = '';
+
+          for (const file of files) {
+            const url = await pixelateImageFile(file, 0.12);
+            blurredImageDataUrls.push(url);
+            const imgEl = document.createElement('img');
+            imgEl.src = url;
+            imgEl.className = 'vision-preview-image';
+            visionPreview.appendChild(imgEl);
+          }
+
+          blurImagesBtn.textContent = 'Images blurred (local preview only)';
+        } catch (err) {
+          console.error('Blur error:', err);
+          alert('Problem blurring images; please double-check before sending.');
+          blurImagesBtn.textContent = 'Blur / pixelate images before sending';
+        } finally {
+          blurImagesBtn.disabled = false;
+        }
+      });
+    }
+
+    // --- Generate ---
+    const generateBtn = document.getElementById('generateBtn');
+
+    async function callBackend(payload) {
+      const res = await fetch(API_GENERATE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Backend error ${res.status}: ${text}`);
+      }
+      return res.json();
+    }
+
+    generateBtn.addEventListener('click', async () => {
+      statusMessage.textContent = 'Generating...';
+      errorText.textContent = '';
+      connectionStatusPill.classList.remove('error');
+      connectionStatusText.textContent = 'Connected to backend';
+      generateBtn.disabled = true;
+
+      // Basics
+      const caseLabel = document.getElementById('caseLabel').value.trim();
+      const species = document.getElementById('species').value;
+      const weightKg = document.getElementById('weightKg').value.trim();
+      const asa = document.getElementById('asa').value;
+      const tpr = document.getElementById('tpr').value.trim();
+
+      const basics = { caseLabel, species, weightKg, asa, tpr };
+
+      // SOAP fields
+      const appointmentReason = document.getElementById('appointmentReason').value.trim();
+      const history = document.getElementById('history').value.trim();
+      const examFindings = document.getElementById('examFindings').value.trim();
+      const diagnosticsData = document.getElementById('diagnosticsData').value.trim();
+      const assessmentNotes = document.getElementById('assessmentHints').value.trim();
+      const planNotes = document.getElementById('planHints').value.trim();
+      const extraInstructions = document.getElementById('extraInstructions').value.trim();
+      const surgeryPreset = document.getElementById('surgeryPreset').value;
+      const anesthesiaQuickSummary = document.getElementById('anesthesiaQuick').value.trim();
+      const surgicalNotes = document.getElementById('surgicalNotes').value.trim();
+
+      const soapFields = {
+        appointmentReason,
+        history,
+        examFindings,
+        diagnosticsData,
+        assessmentNotes,
+        planNotes,
+        extraInstructions,
+        surgeryPreset,
+        anesthesiaQuickSummary,
+        surgicalNotes,
       };
 
-      if (appMode === "soap" && caseType === "surgery") {
-        base["Surgery template"] = surgeryTemplate.value || "";
-        base["Surgery mode"] = surgeryMode;
-        base["Anesthesia summary"] = anesthesiaSummary.value || "";
-        if (surgeryMode === "advanced") {
-          base["IV catheter gauge"] = cathGauge.value || "";
-          base["IV catheter site"] = cathSite.value || "";
-          base["ET tube"] = ettSize.value || "";
-          base["Fluids"] = fluids.value || "";
-          base["Premeds"] = premeds.value || "";
-          base["Induction / maintenance"] = induction.value || "";
-          base["Intra-op meds"] = intraOpMeds.value || "";
-          base["Post-op meds / to go home"] = postOpMeds.value || "";
-        }
-      }
+      // Toolbox fields
+      const toolboxCoreNotes = document.getElementById('toolboxCoreNotes').value.trim();
+      const toolboxExtra = document.getElementById('toolboxExtra').value.trim();
+      const toolboxFields = {
+        coreNotes: toolboxCoreNotes,
+        extraInstructions: toolboxExtra,
+      };
 
-      return base;
-    }
+      // Consult fields
+      const consultSummary = document.getElementById('consultSummary').value.trim();
+      const consultQuestion = document.getElementById('consultQuestion').value.trim();
+      const consultFields = {
+        patientSummary: consultSummary,
+        question: consultQuestion,
+      };
 
-    // ---- Generate button handler ----
-    generateBtn.addEventListener("click", async () => {
+      const payload = {
+        mode: activeMainTab,
+        caseType: activeCaseType,
+        surgeryLayout: activeSurgeryLayout,
+        brainMode,
+        basics,
+        soapFields,
+        toolboxFields,
+        consultFields,
+      };
+
       try {
-        setStatus("busy", "Generating...");
-        generateBtn.disabled = true;
+        const json = await callBackend(payload);
+        if (!json.ok) {
+          throw new Error(json.error || 'Unknown backend error');
+        }
+        mainOutputText.value = json.output || '';
+        updateCopyButtonState();
 
-        const images = await readFilesAsDataUrls(imageInput.files);
-
-        const payload = {
-          appMode,
-          caseType,
-          surgeryMode,
-          strictMode,
-          formData: collectFormData(),
-          freeText: freeText.value || "",
-          extraText: extraText.value || "",
-          images,
-          toolboxImageMode: toolboxImageMode.value || "auto",
-        };
-
-        const res = await fetch("/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || "Response not OK");
+        // Minimal feedback bar
+        const missingBits = [];
+        if (activeMainTab === 'soap') {
+          if (!weightKg) missingBits.push('weight');
+          if (!asa) missingBits.push('ASA');
+          if (activeCaseType === 'surgery' && !anesthesiaQuickSummary) {
+            missingBits.push('anesthesia quick summary');
+          }
+        } else if (activeMainTab === 'toolbox') {
+          if (!toolboxCoreNotes) missingBits.push('core notes');
+        } else if (activeMainTab === 'consult') {
+          if (!consultSummary) missingBits.push('patient summary');
+          if (!consultQuestion) missingBits.push('consult question');
         }
 
-        const data = await res.json();
-        if (!data.success) {
-          throw new Error(data.error || "Unknown server error");
+        let fb = '<strong>Feedback & next inputs.</strong><br />';
+        if (missingBits.length) {
+          fb += 'Helpful next fields: ' + missingBits.join(', ') + '.';
+        } else {
+          fb += 'You provided enough info. Refine if you want different emphasis or tone.';
         }
-
-        soapOutput.value = data.soap || "";
-        feedbackOutput.textContent =
-          data.feedback ||
-          "No feedback text returned. Run again or switch to Help Me mode for more guidance.";
-        setStatus("ready", "Done");
+        feedbackBox.innerHTML = fb;
+        statusMessage.textContent = 'Done.';
       } catch (err) {
         console.error(err);
-        showError("Something went wrong generating the output.");
+        mainOutputText.value = '';
+        updateCopyButtonState();
+        feedbackBox.innerHTML =
+          '<strong>There was an error.</strong><br />Please check the console or try again.';
+        statusMessage.textContent = 'Error.';
+        connectionStatusPill.classList.add('error');
+        connectionStatusText.textContent = 'Error talking to backend';
+        errorText.textContent = err.message || 'Unknown error.';
       } finally {
         generateBtn.disabled = false;
       }
     });
 
-    // ---- On page load: handle ?caseId= for QR relay ----
-    window.addEventListener("DOMContentLoaded", async () => {
-      const params = new URLSearchParams(window.location.search);
-      const caseId = params.get("caseId");
-      if (caseId) {
-        try {
-          const res = await fetch(`/api/shared/${caseId}`);
-          const data = await res.json();
-          if (data.success && data.text) {
-            freeText.value = data.text;
-            setStatus("ready", "Loaded text from phone");
-          }
-        } catch (e) {
-          console.error("Error loading shared text", e);
-        }
-      }
-
-      // Initial UI state
-      setAppMode("soap");
-      setCaseType("appointment");
-      setSurgeryMode("simple");
-      setStrict(false);
-      setStatus("ready", "Ready");
-    });
+    // Initial copy button state
+    updateCopyButtonState();
   </script>
 </body>
 </html>
