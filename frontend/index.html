@@ -257,8 +257,10 @@
     .output-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       font-size: 13px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .output-controls label {
@@ -282,6 +284,68 @@
       font-size: 11px;
       text-align: right;
       color: var(--text-muted);
+    }
+
+    /* Surgery simple / advanced */
+
+    .sx-mode-toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .sx-mode-toggle label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    /* Accordion for advanced surgery */
+
+    .accordion-section {
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      overflow: hidden;
+      background: #fafbfc;
+    }
+
+    .accordion-header {
+      width: 100%;
+      text-align: left;
+      padding: 8px 10px;
+      background: #f0f4f8;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .accordion-header span.chevron {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .accordion-body {
+      display: none;
+      padding: 8px 10px 10px;
+    }
+
+    .accordion-body.open {
+      display: block;
+    }
+
+    /* Capture card */
+
+    .capture-card .btn-primary {
+      margin-top: 0;
+      margin-bottom: 4px;
     }
 
     /* QR modal */
@@ -464,6 +528,18 @@
             <button class="btn-ghost" id="qrSurgeryBtn">Open on phone (QR)</button>
           </div>
 
+          <div class="sx-mode-toggle">
+            <span>Mode:</span>
+            <label>
+              <input type="radio" name="sxMode" value="simple" checked />
+              Simple
+            </label>
+            <label>
+              <input type="radio" name="sxMode" value="advanced" />
+              Advanced
+            </label>
+          </div>
+
           <div class="field-group">
             <label for="sxTemplate">Surgery template</label>
             <small>This steers the template. You can override anything with notes below.</small>
@@ -507,6 +583,120 @@
             <label for="sxMeds">Meds dispensed</label>
             <small>Optional: list post-op meds dispensed if you want to lock them in.</small>
             <textarea id="sxMeds"></textarea>
+          </div>
+
+          <!-- Advanced accordion -->
+          <div id="sxAdvancedContainer" style="display:none;margin-top:4px;">
+            <div class="accordion-section">
+              <button
+                type="button"
+                class="accordion-header"
+                data-accordion-target="accSxAnes"
+              >
+                <span>Anesthesia & monitoring details</span>
+                <span class="chevron">▼</span>
+              </button>
+              <div class="accordion-body" id="accSxAnes">
+                <div class="field-group">
+                  <label for="sxAsa">ASA status</label>
+                  <select id="sxAsa">
+                    <option value="">(not set)</option>
+                    <option value="ASA I">ASA I</option>
+                    <option value="ASA II">ASA II</option>
+                    <option value="ASA III">ASA III</option>
+                    <option value="ASA IV">ASA IV</option>
+                    <option value="ASA V">ASA V</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="sxPremed">Pre-med combo</label>
+                  <select id="sxPremed">
+                    <option value="">(not set)</option>
+                    <option value="Dexmedetomidine + Butorphanol">
+                      Dexmedetomidine + Butorphanol
+                    </option>
+                    <option value="Dexmedetomidine + Hydromorphone">
+                      Dexmedetomidine + Hydromorphone
+                    </option>
+                    <option value="Acepromazine + Hydromorphone">
+                      Acepromazine + Hydromorphone
+                    </option>
+                    <option value="Midazolam + Butorphanol">
+                      Midazolam + Butorphanol
+                    </option>
+                    <option value="Hydromorphone alone">
+                      Hydromorphone alone
+                    </option>
+                    <option value="Custom / other">
+                      Custom / other (describe in Procedure notes)
+                    </option>
+                  </select>
+                  <small>Used to describe pre-med; exact doses stay in your record.</small>
+                </div>
+                <div class="field-group">
+                  <label for="sxInduction">Induction</label>
+                  <input
+                    id="sxInduction"
+                    type="text"
+                    placeholder="e.g., Propofol to effect, Alfaxalone IV"
+                  />
+                </div>
+                <div class="field-group">
+                  <label for="sxMaintenance">Maintenance</label>
+                  <input
+                    id="sxMaintenance"
+                    type="text"
+                    placeholder="e.g., Isoflurane in oxygen"
+                  />
+                </div>
+                <div class="field-group">
+                  <label for="sxMonitoring">
+                    Monitoring notes
+                  </label>
+                  <textarea
+                    id="sxMonitoring"
+                    placeholder="e.g., SPO2, ETCO2, BP, ECG, temp, fluids monitored throughout."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-section">
+              <button
+                type="button"
+                class="accordion-header"
+                data-accordion-target="accSxAccess"
+              >
+                <span>IV catheter, fluids & airway</span>
+                <span class="chevron">▼</span>
+              </button>
+              <div class="accordion-body" id="accSxAccess">
+                <div class="field-group">
+                  <label for="sxCatheter">IV catheter</label>
+                  <input
+                    id="sxCatheter"
+                    type="text"
+                    placeholder="e.g., 22G cephalic, left"
+                  />
+                </div>
+                <div class="field-group">
+                  <label for="sxFluids">Fluids</label>
+                  <input
+                    id="sxFluids"
+                    type="text"
+                    placeholder="e.g., LRS 5 mL/kg/hr (dog) / 3 mL/kg/hr (cat)"
+                  />
+                </div>
+                <div class="field-group">
+                  <label for="sxEtt">ET tube size</label>
+                  <input
+                    id="sxEtt"
+                    type="text"
+                    placeholder="e.g., 8.0 mm cuffed, secured at 22 cm"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <button class="btn-primary" id="generateSxBtn">
@@ -604,7 +794,7 @@
         </section>
       </div>
 
-      <!-- RIGHT COLUMN: Status + Output -->
+      <!-- RIGHT COLUMN: Status + Output + Capture -->
       <div class="right-column">
         <section class="card">
           <h2 style="font-size:15px;margin-bottom:6px;">Status</h2>
@@ -619,6 +809,7 @@
                 <input type="checkbox" id="splitSoapCheckbox" />
                 <span>Split into S / O / A / P</span>
               </label>
+              <button class="btn-small" id="outputQrBtn">QR</button>
               <button class="btn-small" id="copyOutputBtn">Copy</button>
             </div>
           </div>
@@ -627,6 +818,24 @@
             placeholder="Generated SOAP or toolbox text will appear here. Paste directly into Avimark."
             style="min-height:260px;"
           ></textarea>
+        </section>
+
+        <section class="card capture-card" style="margin-top:10px;">
+          <h2 style="font-size:15px;margin-bottom:6px;">Capture &amp; Send</h2>
+          <div class="field-group" style="margin-bottom:6px;">
+            <button class="btn-primary" id="captureAppBtn">
+              Download screenshot of this page
+            </button>
+            <small>Captures this app view as a PNG you can attach to Avimark or email.</small>
+          </div>
+          <div class="field-group" style="margin-bottom:0;">
+            <button class="btn-ghost" id="captureHintBtn">
+              Show OS screenshot shortcuts
+            </button>
+            <small>
+              Quick reminder pop-up for keyboard shortcuts (helpful on clinic workstations).
+            </small>
+          </div>
         </section>
 
         <div class="footer-note">
@@ -644,14 +853,15 @@
         <button class="qr-close-btn" id="qrCloseBtn">&times;</button>
       </div>
       <div id="qrCodeContainer"></div>
-      <p class="qr-help-text">
+      <p class="qr-help-text" id="qrHelpText">
         Scan this code with your phone camera. The app will open directly to this section.
       </p>
     </div>
   </div>
 
-  <!-- QRCode library -->
+  <!-- QRCode + html2canvas libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <script>
     // ---- CONFIG ----
@@ -663,6 +873,9 @@
     const soapOutput = document.getElementById("soapOutput");
     const splitSoapCheckbox = document.getElementById("splitSoapCheckbox");
     const copyOutputBtn = document.getElementById("copyOutputBtn");
+    const outputQrBtn = document.getElementById("outputQrBtn");
+    const captureAppBtn = document.getElementById("captureAppBtn");
+    const captureHintBtn = document.getElementById("captureHintBtn");
 
     const tabButtons = document.querySelectorAll(".tab-button");
     const appointmentSection = document.getElementById("appointmentSection");
@@ -687,6 +900,16 @@
     const sxRecovery = document.getElementById("sxRecovery");
     const sxMeds = document.getElementById("sxMeds");
     const generateSxBtn = document.getElementById("generateSxBtn");
+    const sxModeRadios = document.querySelectorAll('input[name="sxMode"]');
+    const sxAdvancedContainer = document.getElementById("sxAdvancedContainer");
+    const sxAsa = document.getElementById("sxAsa");
+    const sxPremed = document.getElementById("sxPremed");
+    const sxInduction = document.getElementById("sxInduction");
+    const sxMaintenance = document.getElementById("sxMaintenance");
+    const sxMonitoring = document.getElementById("sxMonitoring");
+    const sxCatheter = document.getElementById("sxCatheter");
+    const sxFluids = document.getElementById("sxFluids");
+    const sxEtt = document.getElementById("sxEtt");
 
     // Toolbox inputs
     const toolSelect = document.getElementById("toolSelect");
@@ -707,6 +930,7 @@
     const qrModalTitle = document.getElementById("qrModalTitle");
     const qrCloseBtn = document.getElementById("qrCloseBtn");
     const qrCodeContainer = document.getElementById("qrCodeContainer");
+    const qrHelpText = document.getElementById("qrHelpText");
     const qrAppointmentBtn = document.getElementById("qrAppointmentBtn");
     const qrSurgeryBtn = document.getElementById("qrSurgeryBtn");
     const qrToolboxBtn = document.getElementById("qrToolboxBtn");
@@ -747,6 +971,46 @@
         params.toString();
       window.history.replaceState({}, "", newUrl);
     }
+
+    // ---- SURGERY SIMPLE / ADVANCED ----
+    function getSxMode() {
+      const checked = Array.from(sxModeRadios).find((r) => r.checked);
+      return checked ? checked.value : "simple";
+    }
+
+    function updateSxModeUI() {
+      const mode = getSxMode();
+      sxAdvancedContainer.style.display = mode === "advanced" ? "" : "none";
+    }
+
+    sxModeRadios.forEach((r) =>
+      r.addEventListener("change", () => {
+        updateSxModeUI();
+      })
+    );
+
+    // Accordion behaviour
+    const accordionHeaders = document.querySelectorAll(".accordion-header");
+    accordionHeaders.forEach((btn) => {
+      const targetId = btn.dataset.accordionTarget;
+      const body = document.getElementById(targetId);
+      if (!body) return;
+
+      // Open first section by default
+      if (targetId === "accSxAnes") {
+        body.classList.add("open");
+      }
+
+      btn.addEventListener("click", () => {
+        const isOpen = body.classList.toggle("open");
+        body.style.display = isOpen ? "block" : "none";
+        const chev = btn.querySelector(".chevron");
+        if (chev) chev.textContent = isOpen ? "▲" : "▼";
+      });
+
+      // Initial display
+      body.style.display = body.classList.contains("open") ? "block" : "none";
+    });
 
     // ---- TOOLBOX TEMPLATES (localStorage) ----
     const TEMPLATE_STORAGE_KEY = "lohit_toolbox_templates";
@@ -935,6 +1199,21 @@
     });
 
     generateSxBtn.addEventListener("click", () => {
+      const sxMode = getSxMode();
+      const advanced =
+        sxMode === "advanced"
+          ? {
+              asa: sxAsa.value,
+              premedCombo: sxPremed.value,
+              induction: sxInduction.value,
+              maintenance: sxMaintenance.value,
+              monitoring: sxMonitoring.value,
+              catheter: sxCatheter.value,
+              fluids: sxFluids.value,
+              ett: sxEtt.value,
+            }
+          : {};
+
       const payload = {
         tab: "surgery",
         mode: modeSelect.value,
@@ -945,6 +1224,8 @@
           procedureNotes: sxProcedureNotes.value,
           recovery: sxRecovery.value,
           medsDispensed: sxMeds.value,
+          sxMode,
+          advanced,
         },
       };
       callBackend(payload);
@@ -976,14 +1257,61 @@
       callBackend(payload);
     });
 
+    // ---- SCREENSHOT HELPERS ----
+    captureAppBtn.addEventListener("click", () => {
+      if (typeof html2canvas !== "function") {
+        alert("Screenshot helper not available in this browser.");
+        return;
+      }
+      statusMessage.textContent = "Capturing screenshot…";
+      statusMessage.classList.remove("error");
+      html2canvas(document.querySelector(".app-shell"), {
+        scale: 2,
+        useCORS: true,
+      })
+        .then((canvas) => {
+          canvas.toBlob((blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "lohit-soap-app.png";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            statusMessage.textContent = "Screenshot downloaded.";
+          });
+        })
+        .catch((err) => {
+          console.error(err);
+          statusMessage.textContent = "Could not capture screenshot.";
+          statusMessage.classList.add("error");
+        });
+    });
+
+    captureHintBtn.addEventListener("click", () => {
+      const msg =
+        "Quick screenshot shortcuts:\n\n" +
+        "Windows:\n" +
+        "  • Win + Shift + S → select area\n" +
+        "  • Print Screen → full screen\n\n" +
+        "macOS:\n" +
+        "  • ⌘ + Shift + 4 → select area\n" +
+        "  • ⌘ + Shift + 5 → screenshot menu\n\n" +
+        "iPad/iPhone:\n" +
+        "  • Power + Volume Up (Face ID)\n" +
+        "  • Power + Home (older models)\n\n" +
+        "You can then crop/redact and upload if needed.";
+      alert(msg);
+    });
+
     // ---- QR HELPERS ----
     function buildQrUrlFor(target) {
-      const base =
-        window.location.origin + window.location.pathname;
+      const base = window.location.origin + window.location.pathname;
       const params = new URLSearchParams();
 
       if (target === "attachments") {
-        // Just open app; tab = appointment as default context
         params.set("tab", "appointment");
         return `${base}?${params.toString()}`;
       }
@@ -995,17 +1323,34 @@
         params.set("context", toolContext.value);
       } else if (target === "surgery") {
         params.set("sxTemplate", sxTemplate.value);
+        params.set("sxMode", getSxMode());
       }
 
       return `${base}?${params.toString()}`;
     }
 
     function openQrModalFor(target) {
-      const url = buildQrUrlFor(target);
+      let url = "";
+      let help = "";
+
+      if (target === "outputShare") {
+        // handled separately
+        return;
+      }
+
+      url = buildQrUrlFor(target);
+
       qrModalTitle.textContent =
         target === "attachments"
           ? "Attachments on phone"
-          : "Open on phone – " + target.charAt(0).toUpperCase() + target.slice(1);
+          : "Open on phone – " +
+            target.charAt(0).toUpperCase() +
+            target.slice(1);
+
+      help =
+        target === "attachments"
+          ? "Scan this with your phone to open the app for this workstation. Use your phone's camera app and then take/redact photos before upload."
+          : "Scan this code with your phone camera. The app will open directly to this section.";
 
       // Clear old QR
       qrCodeContainer.innerHTML = "";
@@ -1015,8 +1360,64 @@
         height: 220,
       });
 
+      qrHelpText.textContent = help;
       qrModal.classList.remove("hidden");
     }
+
+    // Output-sharing QR (send to another device)
+    outputQrBtn.addEventListener("click", () => {
+      const text = soapOutput.value.trim();
+      if (!text) {
+        statusMessage.textContent = "No output to share yet.";
+        statusMessage.classList.add("error");
+        return;
+      }
+
+      let truncated = false;
+      let useText = text;
+      if (useText.length > 1800) {
+        useText = useText.slice(0, 1800);
+        truncated = true;
+      }
+
+      let encoded;
+      try {
+        // Unicode-safe base64 → URL
+        encoded = encodeURIComponent(
+          btoa(unescape(encodeURIComponent(useText)))
+        );
+      } catch (e) {
+        console.error(e);
+        statusMessage.textContent = "Could not encode output for QR.";
+        statusMessage.classList.add("error");
+        return;
+      }
+
+      const base = window.location.origin + window.location.pathname;
+      const params = new URLSearchParams();
+      params.set("share", encoded);
+      const url = `${base}?${params.toString()}`;
+
+      qrModalTitle.textContent = truncated
+        ? "Output QR (first part only)"
+        : "Output QR";
+      qrCodeContainer.innerHTML = "";
+      qrInstance = new QRCode(qrCodeContainer, {
+        text: url,
+        width: 220,
+        height: 220,
+      });
+
+      qrHelpText.textContent = truncated
+        ? "Scan on another device to open this app with the first part of the output pre-filled (text was long, so this QR includes the first section only)."
+        : "Scan on another device to open this app with the current output pre-filled.";
+      qrModal.classList.remove("hidden");
+
+      statusMessage.textContent = truncated
+        ? "Output too long; QR includes the first section only."
+        : "QR ready – scan on another device.";
+      statusMessage.classList.remove("error");
+    });
 
     qrAppointmentBtn.addEventListener("click", () =>
       openQrModalFor("appointment")
@@ -1040,7 +1441,7 @@
       }
     });
 
-    // ---- URL PARAMS: deep links from QR ----
+    // ---- URL PARAMS: deep links from QR & shared output ----
     function initFromUrlParams() {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab") || "appointment";
@@ -1048,23 +1449,49 @@
 
       const toolParam = params.get("tool");
       if (toolParam) {
-        [...toolSelect.options].forEach((opt) => {
+        Array.from(toolSelect.options).forEach((opt) => {
           if (opt.value === toolParam) toolSelect.value = toolParam;
         });
       }
 
       const contextParam = params.get("context");
       if (contextParam) {
-        [...toolContext.options].forEach((opt) => {
+        Array.from(toolContext.options).forEach((opt) => {
           if (opt.value === contextParam) toolContext.value = contextParam;
         });
       }
 
       const sxTemplateParam = params.get("sxTemplate");
       if (sxTemplateParam) {
-        [...sxTemplate.options].forEach((opt) => {
+        Array.from(sxTemplate.options).forEach((opt) => {
           if (opt.value === sxTemplateParam) sxTemplate.value = sxTemplateParam;
         });
+      }
+
+      const sxModeParam = params.get("sxMode");
+      if (sxModeParam) {
+        Array.from(sxModeRadios).forEach((r) => {
+          r.checked = r.value === sxModeParam;
+        });
+        updateSxModeUI();
+      } else {
+        updateSxModeUI();
+      }
+
+      const shareParam = params.get("share");
+      if (shareParam) {
+        try {
+          const base64 = decodeURIComponent(shareParam);
+          const ascii = atob(base64);
+          // escape/unescape used only to handle Unicode safely
+          const text = decodeURIComponent(escape(ascii));
+          lastRawOutput = text;
+          updateOutput();
+          statusMessage.textContent = "Loaded shared output from QR link.";
+          statusMessage.classList.remove("error");
+        } catch (e) {
+          console.warn("Failed to decode shared output", e);
+        }
       }
     }
 
