@@ -1,310 +1,148 @@
-// server.js
-// Lohit SOAP app backend v1.7.2 (text-only, Vision-ready later)
+// server.js - Lohit SOAP App backend v1.7.3
 
 const express = require('express');
 const cors = require('cors');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-if (!process.env.OPENAI_API_KEY) {
-  console.warn('WARNING: OPENAI_API_KEY is not set. Requests will fail.');
-}
-
-app.use(cors({
-  origin: [
-    'https://lohitssoap.netlify.app',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:5500',
-  ],
-  credentials: false,
-}));
-
-app.use(express.json({ limit: '5mb' }));
-
-// Simple health check
-app.get('/', (req, res) => {
-  res.send('Lohit SOAP app backend v1.7.2 is running.');
-});
-
-// Utility: call OpenAI Chat Completion using Node 18+ global fetch
-async function callOpenAI(systemPrompt, userPrompt) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is missing');
-  }
-
-  const body = {
-    model: 'gpt-4.1-mini',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    temperature: 0.4,
-    max_tokens: 2200,
-  };
-
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(`OpenAI error ${resp.status}: ${text}`);
-  }
-
-  const data = await resp.json();
-  const content =
-    data.choices?.[0]?.message?.content?.trim() ||
-    'Error: no content returned from model.';
-  return content;
-}
-
-// Core route – handles SOAP, Toolbox, Consult
-app.post('/generate', async (req, res) => {
-  try {
-    const {
-      mode,            // 'soap' | 'toolbox' | 'consult'
-      caseType,        // 'appointment' | 'surgery'
-      surgeryLayout,   // 'simple' | 'advanced'
-      brainMode,       // 'help' | 'strict'
-      basics = {},
-      soapFields = {},
-      toolboxFields = {},
-      consultFields = {},
-    } = req.body || {};
-
-    let systemPrompt = '';
-    let userPrompt = '';
-
-    const strictNote =
-      brainMode === 'strict'
-        ? 'STRICT MODE: Do not invent data. If something is missing, clearly label it as [Not provided].'
-        : 'HELP ME MODE: You may use safe, generic templated normals if typical and clearly label any assumptions.';
-
-    if (mode === 'soap') {
-      // SOAP (Appointment or Surgery)
-      systemPrompt = `
-You are generating Avimark-compatible veterinary SOAP notes for Dr. Lohit Busanelli.
-Rules:
-- Species: small animal general practice.
-- Output sections in this exact order, with these headings: Subjective, Objective, Assessment, Plan.
-- Do not add extra headings or bullets.
-- Use single spacing. No blank lines inside a section. One blank line between sections.
-- For physical exams, use the clinic’s standard system list: General, Vitals, Eyes, Ears, Oral cavity, Nose, Respiratory, Cardiovascular, Abdomen, Urogenital, Musculoskeletal, Neurological, Integument, Lymphatic, Diagnostics.
-- Bloodwork and diagnostic results in Objective are DATA ONLY. Interpretation goes in Assessment.
-- For surgery/anesthesia cases, include ASA status in Objective or assessment.
-- Plan for surgery/anesthesia cases must always follow this order:
-  1. IV Catheter / Fluids
-  2. Pre-medications
-  3. Induction / Maintenance
-  4. Surgical Prep
-  5. Surgical Procedure
-  6. Intra-op Medications
-  7. Recovery
-  8. Medications Dispensed
-  9. Aftercare
-- All drug mentions in the Plan must include concentrations in brackets immediately after the drug name. Example: Dexmedetomidine [0.5 mg/ml], Midazolam [5 mg/ml].
-- Do not include exact administration times.
-- Use clear, clinic-friendly wording appropriate for Avimark.
-${strictNote}
-      `.trim();
-
-      const {
-        caseLabel,
-        species,
-        weightKg,
-        asa,
-        tpr,
-      } = basics;
-
-      const {
-        appointmentReason,
-        history,
-        examFindings,
-        diagnosticsData,
-        assessmentNotes,
-        planNotes,
-        surgeryPreset,
-        anesthesiaQuickSummary,
-        surgicalNotes,
-        extraInstructions,
-      } = soapFields;
-
-      const isSurgery = caseType === 'surgery';
-
-      const contextParts = [];
-
-      contextParts.push(`Case label: ${caseLabel || '[Not provided]'}`);
-      contextParts.push(`Case type: ${caseType || 'appointment'}`);
-      contextParts.push(`Surgery layout: ${surgeryLayout || 'simple'}`);
-      contextParts.push(`Species: ${species || '[Not provided]'}; Weight: ${weightKg || '[Not provided]'} kg; ASA: ${asa || '[Not provided]'}; TPR note: ${tpr || '[Not provided]'}.`);
-
-      if (isSurgery) {
-        contextParts.push(`Surgery preset/type: ${surgeryPreset || '[Not provided]'}.`);
-        contextParts.push(`Anesthesia quick summary: ${anesthesiaQuickSummary || '[Not provided]'}.`);
-        contextParts.push(`Core surgery notes / key events: ${surgicalNotes || '[Not provided]'}.`);
-      } else {
-        contextParts.push(`Appointment reason: ${appointmentReason || '[Not provided]'}.`);
-        contextParts.push(`History: ${history || '[Not provided]'}.`);
-      }
-
-      contextParts.push(`Exam findings (raw text if provided): ${examFindings || '[Not provided]'}.`);
-      contextParts.push(`Diagnostics (data only, if provided): ${diagnosticsData || '[Not provided]'}.`);
-      contextParts.push(`Doctor assessment hints (optional): ${assessmentNotes || '[Not provided]'}.`);
-      contextParts.push(`Doctor plan hints (optional): ${planNotes || '[Not provided]'}.`);
-      contextParts.push(`Extra instructions to AI: ${extraInstructions || '[Not provided]'}.`);
-
-      userPrompt = `
-Using the clinic rules above, write a complete SOAP note for this case.
-
-${contextParts.join('\n')}
-      `.trim();
-    } else if (mode === 'toolbox') {
-      // Toolbox text helper
-      systemPrompt = `
-You are a veterinary writing assistant for Dr. Lohit Busanelli.
-You generate short, clinic-friendly text that can be pasted into Avimark or emailed to clients.
-Follow these rules:
-- Respect any explicit instructions from the doctor.
-- Keep formatting simple and text-only (no bullet characters that might paste badly).
-- If the doctor asks for a summary, keep it concise but medically accurate.
-${strictNote}
-      `.trim();
-
-      const {
-        coreNotes,
-        extraInstructions,
-      } = toolboxFields;
-
-      userPrompt = `
-The doctor is using Toolbox mode.
-
-Core notes / request:
-${coreNotes || '[Not provided]'}
-
-Extra instructions to AI:
-${extraInstructions || '[Not provided]'}
-
-Write the requested text now.
-      `.trim();
-    } else if (mode === 'consult') {
-      // Consult mode
-      systemPrompt = `
-You are a small-animal veterinary consultant helping Dr. Lohit Busanelli think through cases.
-Provide clear reasoning, differentials, and plan suggestions.
-Avoid overly long essays; focus on clinically useful points the doctor can quickly scan between appointments.
-${strictNote}
-      `.trim();
-
-      const {
-        question,
-        patientSummary,
-      } = consultFields;
-
-      userPrompt = `
-Patient summary:
-${patientSummary || '[Not provided]'}
-
-Consult question:
-${question || '[Not provided]'}
-      `.trim();
-    } else {
-      return res.status(400).json({ error: 'Invalid mode. Expected soap, toolbox, or consult.' });
-    }
-
-    const output = await callOpenAI(systemPrompt, userPrompt);
-
-    res.json({ ok: true, output });
-  } catch (err) {
-    console.error('Error in /generate:', err);
-    res.status(500).json({
-      ok: false,
-      error: 'Server error: ' + err.message,
-    });
-  }
-});
-
-// --- Simple in-memory QR relay store (text only for now) ---
-const relayStore = new Map();
-
-// Create / init a caseId
-app.post('/relay/init', (req, res) => {
-  const caseId = Math.random().toString(36).slice(2, 10);
-  relayStore.set(caseId, { createdAt: Date.now(), text: '', notes: '' });
-  res.json({ caseId });
-});
-
-// Upload text from phone
-app.post('/relay/upload', (req, res) => {
-  const { caseId, text, notes } = req.body || {};
-  if (!caseId || !relayStore.has(caseId)) {
-    return res.status(400).json({ error: 'Invalid or missing caseId.' });
-  }
-  const existing = relayStore.get(caseId);
-  relayStore.set(caseId, {
-    ...existing,
-    text: text || '',
-    notes: notes || '',
-    updatedAt: Date.now(),
-  });
-  res.json({ ok: true });
-});
-
-// Poll from desktop
-app.get('/relay/poll/:caseId', (req, res) => {
-  const { caseId } = req.params;
-  if (!relayStore.has(caseId)) {
-    return res.status(404).json({ error: 'caseId not found.' });
-  }
-  const data = relayStore.get(caseId);
-  res.json({ ok: true, data });
-});
-
-// Clear data when done
-app.post('/relay/clear', (req, res) => {
-  const { caseId } = req.body || {};
-  if (caseId && relayStore.has(caseId)) {
-    relayStore.delete(caseId);
-  }
-  res.json({ ok: true });
-});
-
-app.listen(PORT, () => {
-  console.log(`Lohit SOAP app backend running on port ${PORT}`);
-});
-// Simple in-memory store: { caseId: { text: "", createdAt, updatedAt } }
-const textRelay = new Map();
+const bodyParser = require('body-parser');
 const crypto = require('crypto');
 
-// init: desktop calls this to get a caseId for "Receive from phone"
-app.post('/relay/init', (req, res) => {
-  const caseId = crypto.randomBytes(6).toString('hex'); // 12-char id
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+app.use(cors());
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
+// Health check
+app.get('/', (req, res) => {
+  res.send('Lohit SOAP App backend v1.7.3 is running.');
+});
+
+// ---------- 1. SOAP / TOOLBOX GENERATE ----------
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+
+async function callOpenAI(messages) {
+  if (!OPENAI_API_KEY) {
+    return {
+      ok: false,
+      error: 'OPENAI_API_KEY is not set on the backend. Add it in Render → Environment.',
+    };
+  }
+
+  const payload = {
+    model: 'gpt-4.1-mini',
+    messages,
+    temperature: 0.2,
+  };
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      return { ok: false, error: `OpenAI HTTP ${res.status}: ${txt}` };
+    }
+
+    const data = await res.json();
+    const content =
+      data.choices &&
+      data.choices[0] &&
+      data.choices[0].message &&
+      data.choices[0].message.content;
+
+    if (!content) {
+      return { ok: false, error: 'No content returned from OpenAI.' };
+    }
+
+    return { ok: true, content };
+  } catch (err) {
+    console.error('Error calling OpenAI:', err);
+    return { ok: false, error: err.message || String(err) };
+  }
+}
+
+app.post('/generate', async (req, res) => {
+  try {
+    const { mode, intake, context } = req.body || {};
+
+    const systemPrompt = `
+You are the "Lohit SOAP Brain" for a small animal veterinary clinic.
+You generate Avimark-compatible SOAP notes and toolbox text.
+
+Rules:
+- Always output plain text, no markdown.
+- For SOAP, use headings: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare.
+- Plan for surgery: 1) IV Catheter/Fluids 2) Pre-medications 3) Induction/Maintenance 4) Surgical Prep 5) Surgical Procedure 6) Intra-op Medications 7) Recovery 8) Medications Dispensed 9) Aftercare.
+- Bloodwork summaries in Objective are data-only; interpretation goes in Assessment.
+- Single spacing; blank line only between major sections.
+- Keep language clear and client-friendly for discharge/aftercare.
+
+Mode:
+- "strict": do not invent missing details; explicitly say when information is not provided.
+- "help": you may use safe templated normals and assumptions, but always call out any assumptions in a short "Missing/Assumed" line at the end.
+`;
+
+    const userPrompt = `
+Mode: ${mode || 'help'}
+
+Context/intake:
+${intake || '(no intake text provided)'}
+
+Extra context from UI (optional):
+${context || '(none)'}
+`;
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ];
+
+    const result = await callOpenAI(messages);
+    if (!result.ok) {
+      return res
+        .status(500)
+        .json({ ok: false, error: result.error || 'Unknown OpenAI error.' });
+    }
+
+    res.json({ ok: true, text: result.content });
+  } catch (err) {
+    console.error('Error in /generate:', err);
+    res
+      .status(500)
+      .json({ ok: false, error: err.message || 'Server error in /generate.' });
+  }
+});
+
+// ---------- 2. TEXT RELAY (QR text from phone → desktop) ----------
+
+const textRelay = new Map(); // caseId -> { text, createdAt, updatedAt }
+
+app.post('/relay/init-text', (req, res) => {
+  const caseId = crypto.randomBytes(6).toString('hex');
   textRelay.set(caseId, { text: '', createdAt: Date.now(), updatedAt: null });
   res.json({ ok: true, caseId });
 });
 
-// phone (or any client) sends text
 app.post('/relay/text', (req, res) => {
   const { caseId, text } = req.body || {};
   if (!caseId || !textRelay.has(caseId)) {
     return res.status(400).json({ ok: false, error: 'Invalid or missing caseId.' });
   }
   const entry = textRelay.get(caseId);
-  entry.text = text;
+  entry.text = text || '';
   entry.updatedAt = Date.now();
   textRelay.set(caseId, entry);
   res.json({ ok: true });
 });
 
-// desktop polls to get text
-app.get('/relay/poll/:caseId', (req, res) => {
+app.get('/relay/poll-text/:caseId', (req, res) => {
   const { caseId } = req.params;
   if (!caseId || !textRelay.has(caseId)) {
     return res.status(404).json({ ok: false, error: 'caseId not found.' });
@@ -312,9 +150,296 @@ app.get('/relay/poll/:caseId', (req, res) => {
   res.json({ ok: true, data: textRelay.get(caseId) });
 });
 
-// optional: clear when done
-app.post('/relay/clear', (req, res) => {
+app.post('/relay/clear-text', (req, res) => {
   const { caseId } = req.body || {};
   if (caseId) textRelay.delete(caseId);
   res.json({ ok: true });
+});
+
+// Phone page for sending text
+app.get('/relay/text-page', (req, res) => {
+  const { caseId } = req.query;
+  if (!caseId || !textRelay.has(caseId)) {
+    return res.status(400).send('Missing or invalid caseId.');
+  }
+
+  res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Send text to desktop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="font-family:-apple-system,system-ui;font-size:16px;padding:12px;background:#020812;color:#eee;">
+  <h2 style="margin-top:0;">Send text to desktop</h2>
+  <p>Paste or type anything below, then tap <b>Send</b>. It will appear on the desktop in the main output box.</p>
+  <textarea id="txt" style="width:100%;height:240px;border-radius:8px;border:1px solid #444;background:#050b18;color:#eee;padding:8px;"></textarea>
+  <button id="sendBtn" style="margin-top:12px;padding:10px 16px;border-radius:999px;border:none;background:#06b6d4;color:#020617;font-weight:600;">Send to desktop</button>
+  <p id="status" style="margin-top:8px;color:#9ca3af;"></p>
+  <script>
+    const caseId = ${JSON.stringify(caseId)};
+    const API_BASE = '';
+
+    const txt = document.getElementById('txt');
+    const btn = document.getElementById('sendBtn');
+    const statusEl = document.getElementById('status');
+
+    btn.addEventListener('click', async () => {
+      const text = txt.value.trim();
+      if (!text) {
+        statusEl.textContent = 'Nothing to send yet.';
+        return;
+      }
+      btn.disabled = true;
+      statusEl.textContent = 'Sending...';
+      try {
+        const res = await fetch(API_BASE + '/relay/text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ caseId, text }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Error');
+        statusEl.textContent = 'Sent ✓ You can close this tab.';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Error sending text. Try again.';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
+  `);
+});
+
+// ---------- 3. FILE / IMAGE RELAY with redaction ----------
+
+const fileRelay = new Map(); // caseId -> { dataUrl, mimeType, createdAt, updatedAt }
+
+app.post('/relay/init-file', (req, res) => {
+  const caseId = crypto.randomBytes(6).toString('hex');
+  fileRelay.set(caseId, {
+    dataUrl: '',
+    mimeType: '',
+    createdAt: Date.now(),
+    updatedAt: null,
+  });
+  res.json({ ok: true, caseId });
+});
+
+app.post('/relay/file', (req, res) => {
+  const { caseId, dataUrl, mimeType } = req.body || {};
+  if (!caseId || !fileRelay.has(caseId)) {
+    return res.status(400).json({ ok: false, error: 'Invalid or missing caseId.' });
+  }
+  if (!dataUrl) {
+    return res.status(400).json({ ok: false, error: 'Missing image dataUrl.' });
+  }
+  const entry = fileRelay.get(caseId);
+  entry.dataUrl = dataUrl;
+  entry.mimeType = mimeType || 'image/png';
+  entry.updatedAt = Date.now();
+  fileRelay.set(caseId, entry);
+  res.json({ ok: true });
+});
+
+app.get('/relay/poll-file/:caseId', (req, res) => {
+  const { caseId } = req.params;
+  if (!caseId || !fileRelay.has(caseId)) {
+    return res.status(404).json({ ok: false, error: 'caseId not found.' });
+  }
+  res.json({ ok: true, data: fileRelay.get(caseId) });
+});
+
+app.post('/relay/clear-file', (req, res) => {
+  const { caseId } = req.body || {};
+  if (caseId) fileRelay.delete(caseId);
+  res.json({ ok: true });
+});
+
+// Phone page for upload + rectangle redaction
+app.get('/relay/file-page', (req, res) => {
+  const { caseId } = req.query;
+  if (!caseId || !fileRelay.has(caseId)) {
+    return res.status(400).send('Missing or invalid caseId.');
+  }
+
+  res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Send document to desktop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="font-family:-apple-system,system-ui;font-size:16px;padding:12px;background:#020812;color:#eee;">
+  <h2 style="margin-top:0;">Send document to desktop</h2>
+  <p>Choose a photo or document, cover client info with black rectangles, then tap <b>Send</b>.</p>
+  <input id="fileInput" type="file" accept="image/*" capture="environment" style="margin:8px 0;" />
+  <div style="margin-top:8px;">
+    <canvas id="canvas" style="max-width:100%;border:1px solid #374151;border-radius:4px;background:#020617;"></canvas>
+  </div>
+  <div style="margin-top:8px;">
+    <button id="resetBtn" style="padding:6px 10px;border-radius:999px;border:none;background:#374151;color:#e5e7eb;">Reset</button>
+    <button id="sendBtn" style="padding:8px 14px;border-radius:999px;border:none;background:#06b6d4;color:#020617;font-weight:600;float:right;">Send redacted image</button>
+  </div>
+  <p id="status" style="margin-top:8px;color:#9ca3af;clear:both;"></p>
+
+  <script>
+    const caseId = ${JSON.stringify(caseId)};
+    const API_BASE = '';
+
+    const fileInput = document.getElementById('fileInput');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const resetBtn = document.getElementById('resetBtn');
+    const sendBtn = document.getElementById('sendBtn');
+    const statusEl = document.getElementById('status');
+
+    let originalImage = null;
+    let drawing = false;
+    let startX = 0, startY = 0;
+
+    function loadImageToCanvas(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          originalImage = img;
+          const maxWidth = window.innerWidth - 32;
+          const scale = Math.min(1, maxWidth / img.width);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      loadImageToCanvas(file);
+      statusEl.textContent = 'Draw black boxes over names, phone numbers, microchips, etc.';
+    });
+
+    function redrawImage() {
+      if (!originalImage) return;
+      ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (!originalImage) return;
+      drawing = true;
+      const rect = canvas.getBoundingClientRect();
+      startX = e.clientX - rect.left;
+      startY = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!drawing || !originalImage) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      redrawImage();
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(startX, startY, x - startX, y - startY);
+    });
+
+    canvas.addEventListener('mouseup', (e) => {
+      if (!drawing || !originalImage) return;
+      drawing = false;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(startX, startY, x - startX, y - startY);
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      if (drawing) {
+        drawing = false;
+        redrawImage();
+      }
+    });
+
+    // Touch events
+    canvas.addEventListener('touchstart', (e) => {
+      if (!originalImage) return;
+      e.preventDefault();
+      drawing = true;
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches[0];
+      startX = t.clientX - rect.left;
+      startY = t.clientY - rect.top;
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (!drawing || !originalImage) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches[0];
+      const x = t.clientX - rect.left;
+      const y = t.clientY - rect.top;
+      redrawImage();
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(startX, startY, x - startX, y - startY);
+    });
+
+    canvas.addEventListener('touchend', (e) => {
+      if (!drawing || !originalImage) return;
+      e.preventDefault();
+      drawing = false;
+      const rect = canvas.getBoundingClientRect();
+      const t = e.changedTouches[0];
+      const x = t.clientX - rect.left;
+      const y = t.clientY - rect.top;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(startX, startY, x - startX, y - startY);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      if (!originalImage) return;
+      redrawImage();
+      statusEl.textContent = 'Redactions cleared. Draw boxes again.';
+    });
+
+    sendBtn.addEventListener('click', async () => {
+      if (!originalImage) {
+        statusEl.textContent = 'Choose a photo first.';
+        return;
+      }
+      sendBtn.disabled = true;
+      statusEl.textContent = 'Preparing image...';
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const res = await fetch(API_BASE + '/relay/file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ caseId, dataUrl, mimeType: 'image/png' }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Error');
+        statusEl.textContent = 'Sent ✓ Check the desktop attachments panel.';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Error sending image. Try again.';
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
+  `);
+});
+
+// ---------- START SERVER ----------
+
+app.listen(PORT, () => {
+  console.log(`Lohit SOAP app backend running on port ${PORT}`);
 });
