@@ -1,107 +1,71 @@
-// server.js – Lohit SOAP App v1.7.5 backend
-// Node: CommonJS style (require). Run with: node server.js
+// backend/server.js
+
+require('dotenv').config();
 
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
-const OpenAI = require('openai');
+const { OpenAI } = require('openai');
 
 const app = express();
-
-// ---------- CONFIG ----------
 const PORT = process.env.PORT || 3000;
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5.1-mini';
 
-// Create OpenAI client (expects OPENAI_API_KEY in env)
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// ---------- MIDDLEWARE ----------
+// ---------- Middleware ----------
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '4mb' }));
 
-// Serve static assets from current dir (index.html, etc.)
-app.use(express.static(__dirname));
+// Optional: serve frontend if you run this as a single app locally
+// Adjust the path if your structure changes.
+const frontendPath = path.join(__dirname, '..', 'frontend');
+app.use(express.static(frontendPath));
 
-// Root -> index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+// ---------- OpenAI client ----------
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
-// ---------- HELPERS ----------
-
-// Safely extract text from Responses API output
-function extractResponseText(response) {
-  try {
-    if (!response || !Array.isArray(response.output) || response.output.length === 0) {
-      return 'No output returned.';
-    }
-
-    // The docs’ simple example: response.output[0].content[0].text
-    const first = response.output[0];
-    if (!first || !Array.isArray(first.content) || first.content.length === 0) {
-      return 'No output content found.';
-    }
-
-    // Try the simple path
-    const c0 = first.content[0];
-    if (typeof c0 === 'string') return c0.trim();
-    if (c0 && typeof c0.text === 'string') return c0.text.trim();
-
-    // Fallback: concatenate anything that smells like text
-    let text = '';
-    for (const chunk of first.content) {
-      if (!chunk) continue;
-      if (typeof chunk === 'string') {
-        text += chunk;
-      } else if (typeof chunk.text === 'string') {
-        text += chunk.text;
-      } else if (chunk.type === 'output_text' && chunk.text && typeof chunk.text.value === 'string') {
-        text += chunk.text.value;
+// Helper: generic call to the “brain”
+async function callBrain({ systemPrompt, userContent, model = 'gpt-4.1-mini' }) {
+  const completion = await openai.chat.completions.create({
+    model,
+    temperature: 0.4,
+    messages: [
+      {
+        role: 'system',
+        content: systemPrompt
+      },
+      {
+        role: 'user',
+        content: userContent
       }
-    }
+    ]
+  });
 
-    return text.trim() || 'No text output found.';
-  } catch (err) {
-    console.error('Error extracting response text:', err);
-    return 'Error extracting response text.';
-  }
+  const text =
+    completion.choices?.[0]?.message?.content?.trim() ||
+    'No output produced.';
+  return text;
 }
 
-// Core “brain” rules for SOAP output
-const SOAP_BRAIN_SYSTEM_PROMPT = `
-You are the dedicated SOAP brain for Dr. Lohit Busanelli's small animal clinics.
+// ---------- System prompts (SOAP / toolbox / consult / helper) ----------
 
-Global rules:
-- Species: dogs and cats (mostly general practice; sometimes more complex surgery).
-- Output MUST be Avimark-compatible plain text (no markdown, no bullets unless explicitly hinted).
-- Always structure SOAP as:
-  Subjective:
-  Objective:
-  Assessment:
-  Plan:
+// Core clinic rules shared by SOAP + helper so they’re consistent.
+const BASE_SOAP_RULES = `
+You are the SOAP brain for Dr. Lohit Busanelli’s small animal clinic.
 
-Subjective:
-- Concise summary of presenting complaint, history, and owner communication.
-- Include relevant Covet / phone-call context only if provided.
+GENERAL RULES (ALWAYS APPLY):
+- Output MUST be plain text, no Markdown, no asterisks.
+- Make notes Avimark-compatible: normal line breaks are fine, no extra blank lines except where specified.
+- Use classical SOAP sections: Subjective, Objective, Assessment, Plan.
+- For PE: use systems list in Objective (General, Vitals, Eyes, Ears, Oral, Nose, Respiratory, Cardiovascular, Abdomen, Urogenital, Musculoskeletal, Neurological, Integument, Lymphatic).
+- Bloodwork and diagnostics:
+  - Objective = data only (values and descriptive findings).
+  - Assessment = interpretation and clinical significance.
+- Keep tone concise but complete, like a good vet medical record, not client-facing prose unless explicitly asked.
 
-Objective:
-- Systems-based PE list in this order: General, Vitals, Eyes, Ears, Oral cavity, Nose, Respiratory, Cardiovascular,
-  Abdomen, Urogenital, Musculoskeletal, Neurological, Integument, Lymphatic, Diagnostics.
-- For surgery/dentistry, include anesthesia status and monitoring in Objective as data-only, but keep interpretations for Assessment.
-- Bloodwork and diagnostics here are "data only" (numbers and factual findings). No interpretation here.
-
-Assessment:
-- Problem list and differentials, plus concise interpretation of bloodwork and diagnostics.
-- For anesthesia/surgery, include ASA grade and any peri-anesthetic risk commentary here.
-- Be clinically realistic and conservative; do not over-diagnose.
-
-Plan:
-- For medical/appointment cases: diagnostics, treatments, medications, home care, recheck timing.
-- For surgical/anesthetic cases, ALWAYS structure Plan as numbered categories in this exact order,
-  with a line break only between these main categories (Avimark friendly):
-
+SURGERY-SPECIFIC RULES:
+- For surgery/anesthesia cases, include ASA status in Assessment.
+- Plan MUST use this exact category order, with one blank line between categories and single spacing within each category:
   1. IV Catheter / Fluids
   2. Pre-medications
   3. Induction / Maintenance
@@ -111,312 +75,350 @@ Plan:
   7. Recovery
   8. Medications Dispensed
   9. Aftercare
+- Do NOT invent exact times for drugs. Only include drug, dose, route, and concentration.
+- Every time you mention a drug, immediately include its concentration in square brackets.
+  Example: "Dexmedetomidine [0.5 mg/ml]" "Midazolam [5 mg/ml]" etc.
+- For standard dog neuters: assume 2-0 Monocryl unless the user hints otherwise; >35 kg dog can be 0 Monocryl if relevant.
+- Dental surgery details: if extractions described, reference AAHA/AVDC standards and closure phrase:
+  "tension-free flap, no denuded bone, suture line not over defect" with 4-0 Monocryl in a simple interrupted pattern.
+- Local oral nerve blocks when mentioned: lidocaine max 4 mg/kg for dogs, 2 mg/kg for cats.
 
-- Within each category, single-space text, no blank lines between sentences.
-- Mention ET tube, IV catheter placement, and fluids under appropriate categories (1, 3, 7) for anesthesia cases.
-- For surgery: describe the procedure clearly, including closure layers and suture material (Monocryl by default; 0 Monocryl for dogs >35 kg for neuters as per clinic rules).
-- For dental extractions: mention AAHA/AVDC standards and standard closure phrase:
-  "tension-free flap, no denuded bone, suture line not over defect" with 4-0 Monocryl simple interrupted.
+APPOINTMENT TEMPLATES:
+- For non-surgical appointments:
+  - Subjective: owner complaint, history, context.
+  - Objective: full systems PE with key abnormal findings; diagnostics listed as data only.
+  - Assessment: problem list + differentials as needed.
+  - Plan: diagnostics, treatments, client communication, recheck.
 
-Drug & formatting rules:
-- Every time you mention a drug in the Plan or Medications Dispensed, include the concentration in brackets immediately after the drug name (e.g. "Midazolam [5 mg/ml]").
-- Do NOT include exact administration times; only drug, dose, route, and frequency as appropriate.
-- Midazolam concentration is always 5 mg/ml.
-- Record fluids as ml/kg/hr where relevant.
-- For local oral nerve blocks in dental cases, use lidocaine up to 4 mg/kg (dogs) or 2 mg/kg (cats) only when clearly indicated by the input.
+VACCINES:
+- If vaccines are provided:
+  - include a brief sentence in Subjective or Assessment about preventive care.
+  - Plan should specify vaccine name, 1-year vs 3-year, and injection site/route if clearly implied.
 
-Vaccines:
-- If vaccines are provided as structured input, include them under Assessment/Plan in a brief, clean format, with site and duration (1-year vs 3-year) where obvious from the codes.
-- Do not invent vaccines not listed.
+DENTAL:
+- For "Dental – COHAT (no rads)" templates, still describe professional cleaning, probing, charting, polishing, local blocks when indicated, and note that dental radiographs were not performed.
 
-Tone & style:
-- Write like a busy, competent GP vet in Ontario writing for Avimark.
-- No legal disclaimers unless explicitly requested.
-- Be concise but not cryptic; avoid purple prose.
-- If key data are missing, you may use gentle, generic phrasing, but do not fabricate very specific findings.
-- When in doubt, be conservative and safe.
-
-IMPORTANT:
-- Do NOT echo the instructions above.
-- Do NOT add headings other than: Subjective:, Objective:, Assessment:, Plan:
-- Output MUST be a single plain-text block ready to paste into Avimark.
+STYLE:
+- Never hallucinate wild details; you can gently fill normal PE if the case is clearly routine and the user didn’t specify (“Help Me” style).
+- Keep it readable chair-side: logical paragraphs, but not long essays.
 `;
 
-// Toolbox brain
-const TOOLBOX_SYSTEM_PROMPT = `
-You are the Toolbox brain for a small-animal veterinary clinic (dogs and cats).
-You help with:
-- Bloodwork Helper Lite: short or standard written summaries for vets and client-friendly wording.
-- Email / Client Update helper: clear, empathetic emails summarizing plans and estimates.
-- Client Handout helper: brief, structured client handouts (Avimark/email friendly, no heavy formatting).
-- SOAP Snippet helper: concise text snippets to paste into parts of a SOAP.
-- Covet Fixer: clean up and structure Covet-generated SOAPs into Avimark-ready text, following clinic style.
-- Freeform mode: respond to whatever the vet asks, but still write as a real clinic vet.
-- Client Summary Recorder: turn rambly notes into tight client summaries.
+// System prompt for toolbox mode
+const TOOLBOX_RULES = `
+You are the Toolbox brain for Dr. Lohit Busanelli’s clinic.
 
-General rules:
-- Audience may be either veterinary staff or pet owners; adjust tone based on the request.
-- DO NOT fabricate lab values or specifics that are not in the input.
-- Keep formatting plain-text and Avimark/email friendly.
-- If the user doesn't specify, default to a practical, moderate-length answer rather than a wall of text.
+TOOLS:
+1) Bloodwork Helper Lite
+   - Input: raw lab values or text.
+   - Output: short or standard summary (if user hints) describing abnormalities and concise interpretation.
+   - NO dosing or treatment protocols unless clearly requested.
+   - Separate "Abnormal values" line from "Interpretation" line if possible.
+
+2) Email / Client Update Helper
+   - Input: rough notes about what was discussed.
+   - Output: a clear, client-friendly email body that can be pasted into an email client.
+   - Use polite, simple language, short paragraphs.
+
+3) Client Handout Helper
+   - Input: condition/notes.
+   - Output: brief client handout with headings like Overview, What we’re worried about, At home care, When to call us.
+
+4) SOAP Snippet Helper
+   - Input: description of what snippet is needed.
+   - Output: only the requested snippet (e.g., Assessment section, or a Plan block) in clinic SOAP style, no extra chatter.
+
+5) Covet Fixer (improve Covet SOAP)
+   - Input: raw Covet transcript/SOAP.
+   - Output: rewritten, clean, Avimark-ready SOAP or communication summary, keeping the medical meaning but fixing formatting.
+
+6) Freeform mode
+   - General small-animal clinic helper; follow the user’s explicit instructions and produce Avimark-compatible text.
+
+7) Client Summary Recorder
+   - Input: free dictation or text.
+   - Output: a short, structured summary of the client interaction or call log, suitable for Avimark (e.g., "Spoke with owner, discussed X, Y, Z…").
+
+GLOBAL:
+- Always produce plain text, no Markdown.
+- Keep outputs concise but complete enough for medical/legal records.
 `;
 
-// Consult brain
-const CONSULT_SYSTEM_PROMPT = `
-You are a veterinary internal-medicine/general-practice consultant for dogs and cats.
-Your job:
-- Read the provided question + case context (signalment, history, exam, labs, imaging).
-- Suggest differentials, prioritize them, and recommend next steps (diagnostics and treatment options).
-- Be practical for a busy GP clinic in Ontario (cost-aware, realistic about what can be done in-house).
+// System prompt for consult mode
+const CONSULT_RULES = `
+You are the internal consult brain for Dr. Lohit Busanelli’s small animal clinic.
 
-Rules:
-- Structure your answer with short, labeled sections (e.g. "Top differentials", "Key rule-outs", "Recommended next steps", "Client communication notes").
-- Do not give drug doses unless the user explicitly asks.
-- Do not contradict clear facts in the case; if data are missing, say so and outline what you’d want.
-- Keep language clear and calm; the reader is a vet, not a client.
+- Goal: help with differentials, ranking likelihoods, and suggesting next diagnostic and treatment steps.
+- Be practical for a busy GP in Ontario.
+- Use clear headings: Summary, Differentials (ranked), Recommended next diagnostics, Treatment/monitoring ideas, Red flags / when to escalate.
+- When dosages are needed, keep them generic and conventional; do NOT guess if unsure.
+- Plain text only, no Markdown.
+- Assume the reader is a veterinarian; clinical language is fine.
 `;
 
-// ---------- ROUTES ----------
+// System prompt for SOAP helper console
+const HELPER_RULES = `
+You are the SOAP helper console for Dr. Lohit Busanelli.
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true, message: 'Lohit SOAP App backend running.' });
-});
+Input:
+- The current SOAP text (from the main output area).
+- Optional external transcript or voice notes.
+- A "helper prompt" describing what is needed (e.g., discharge instructions, call log summary, email, brief summary).
 
-// ----- SOAP GENERATION -----
+Output:
+- Exactly what is requested (discharge, email, summary, etc.) and nothing else.
+- Follow the clinic’s tone: clear, calm, and practical.
+- Avimark-compatible text, no Markdown.
+`;
+
+// ---------- Route: SOAP generation ----------
 app.post('/api/generate', async (req, res) => {
   try {
-    const body = req.body || {};
-    const visitType = body.visitType || 'appointment';
+    const payload = req.body || {};
 
-    // Build a structured user prompt summarizing the form
-    const prompt = `
-You are generating a complete SOAP note for a small-animal case.
+    // You can inspect/tune this mapping later if needed.
+    const {
+      caseLabel,
+      patientName,
+      species,
+      sex,
+      weightKg,
+      visitType,
+      asa,
+      tprNotes,
+      appointmentPreset,
+      surgeryPreset,
+      surgeryMode,
+      vaccinesToday,
+      vaccineSelections,
+      coreNotes,
+      pe,
+      assessmentHints,
+      planHints,
+      extra,
+      externalTranscript,
+      externalTranscriptInclude,
+      voiceTranscript,
+      voiceUseTranscriptInSoap
+    } = payload;
 
-Structured input:
-- Case label: ${body.caseLabel || '(none)'}
-- Patient name: ${body.patientName || '(unknown)'}
-- Species: ${body.species || '(unknown)'}
-- Sex: ${body.sex || '(unknown)'}
-- Weight (kg): ${body.weightKg || '(not provided)'}
-- Visit type: ${visitType}
-- ASA (if surgery): ${body.asa || '(n/a)'}
-- TPR / notes: ${body.tprNotes || '(not provided)'}
+    const visitDescription =
+      visitType === 'surgery' ? 'Surgery/anesthesia SOAP' : 'Appointment SOAP';
 
-Appointment preset: ${body.appointmentPreset || '(none)'}
-Surgery preset: ${body.surgeryPreset || '(none)'}
-Surgery mode: ${body.surgeryMode || '(simple/unspecified)'}
+    const userContent = `
+Generate a full SOAP for Dr. Lohit Busanelli using the clinic rules.
 
-Vaccines today: ${body.vaccinesToday ? 'Yes' : 'No'}
-Selected vaccine codes: ${Array.isArray(body.vaccineSelections) && body.vaccineSelections.length > 0 ? body.vaccineSelections.join(', ') : '(none)'}
+VISIT TYPE:
+- ${visitDescription}
+- Appointment preset: ${appointmentPreset || 'none'}
+- Surgery preset: ${surgeryPreset || 'none'}
+- Surgery mode (simple vs advanced detail): ${surgeryMode || 'simple'}
+- ASA (if surgery): ${asa || 'not specified'}
 
-Core notes / history:
-${body.coreNotes || '(none)'}
+PATIENT:
+- Case label: ${caseLabel || 'n/a'}
+- Patient name: ${patientName || 'n/a'}
+- Species: ${species || 'n/a'}
+- Sex: ${sex || 'n/a'}
+- Weight (kg): ${weightKg || 'n/a'}
 
-PE & diagnostics (data only):
-${body.pe || '(none)'}
+VACCINES:
+- Vaccines done today: ${vaccinesToday ? 'yes' : 'no'}
+- Vaccine selections (codes): ${Array.isArray(vaccineSelections) ? vaccineSelections.join(', ') : ''}
 
-Assessment hints (vet thinking / concerns):
-${body.assessmentHints || '(none)'}
+TPR / VITALS NOTES:
+${tprNotes || '(none)'}
 
-Plan & discharge hints:
-${body.planHints || '(none)'}
+CORE NOTES / HISTORY (Subjective hints):
+${coreNotes || '(none)'}
 
-Extra instructions / anything else:
-${body.extra || '(none)'}
+PE & DIAGNOSTICS – DATA ONLY (Objective hints):
+${pe || '(none)'}
 
-External transcript (e.g. Covet / call log) – include structured communication summary?: ${body.externalTranscriptInclude ? 'Yes' : 'No'}
-${body.externalTranscript || '(none)'}
+ASSESSMENT HINTS (problems / rule-outs / concerns):
+${assessmentHints || '(none)'}
 
-Voice transcript (if provided, may be rambly dictation):
-${body.voiceUseTranscriptInSoap && body.voiceTranscript ? body.voiceTranscript : '(none or context-only)'}
+PLAN & DISCHARGE HINTS:
+${planHints || '(none)'}
 
-Task:
-- Using the system rules, generate a single complete SOAP ready to paste into Avimark.
-- Respect all structure rules (Subjective, Objective, Assessment, Plan and Plan 1–9 order for surgery/anesthesia cases).
-- If data are thin, make safe, generic assumptions; do not fabricate very detailed PE findings or lab numbers.
-    `.trim();
+EXTRA INSTRUCTIONS / EDGE CASES:
+${extra || '(none)'}
 
-    const response = await openai.responses.create({
-      model: OPENAI_MODEL,
-      input: [
-        { role: 'system', content: SOAP_BRAIN_SYSTEM_PROMPT },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.4,
-    });
+EXTERNAL TRANSCRIPT (Covet / call log) – may be long:
+${externalTranscript ? externalTranscript : '(none)'}
 
-    const text = extractResponseText(response);
-    res.json({ output: text });
-  } catch (err) {
-    console.error('Error in /api/generate:', err);
-    res.status(500).json({ error: 'Error generating SOAP.' });
-  }
-});
+Include a structured communication summary as part of the SOAP? ${externalTranscriptInclude ? 'yes' : 'no'}
 
-// ----- TOOLBOX GENERATION -----
-app.post('/api/generate-toolbox', async (req, res) => {
-  try {
-    const body = req.body || {};
-    const mode = body.toolboxMode || 'freeform';
-
-    const prompt = `
-Toolbox mode: ${mode}
-
-Core text / notes:
-${body.text || '(none provided)'}
-
-External transcript (if any):
-${body.externalTranscript || '(none)'}
-
-Voice transcript context:
-${body.voiceTranscript || '(none)'}
-
-Instructions:
-- Use the selected toolbox mode to interpret the above content.
-- Bloodwork helper: summarise lab abnormalities and give a short, clinically useful interpretation for the vet and (if appropriate) a client-friendly explanation.
-- Email helper: produce a clear, polite, empathetic email body.
-- Handout helper: produce a simple, structured client handout in plain text.
-- SOAP snippet helper: produce only the snippet requested (e.g. Assessment, Plan, or discharge).
-- Covet Fixer: clean up and restructure the text into Avimark-ready format in Dr. Lohit’s style.
-- Freeform: do whatever task the user text is asking for, as long as it’s veterinary-clinic related.
-- Client Summary Recorder: turn messy dictation into a tight, readable summary for the medical record or client communication.
-
-Keep the output plain-text, no markdown.
-    `.trim();
-
-    const response = await openai.responses.create({
-      model: OPENAI_MODEL,
-      input: [
-        { role: 'system', content: TOOLBOX_SYSTEM_PROMPT },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.5,
-    });
-
-    const text = extractResponseText(response);
-    res.json({ output: text });
-  } catch (err) {
-    console.error('Error in /api/generate-toolbox:', err);
-    res.status(500).json({ error: 'Error generating toolbox output.' });
-  }
-});
-
-// ----- CONSULT GENERATION -----
-app.post('/api/generate-consult', async (req, res) => {
-  try {
-    const body = req.body || {};
-
-    const prompt = `
-Consult question:
-${body.question || '(none)'}
-
-Case context (signalment, history, PE, diagnostics):
-${body.context || '(none)'}
-
-External transcript:
-${body.externalTranscript || '(none)'}
-
-Voice transcript context:
-${body.voiceTranscript || '(none)'}
-
-Task:
-- Answer the consult question as a vet-to-vet internal-medicine / GP consult.
-- Provide prioritized differentials, key rule-outs, suggested further diagnostics, treatment options, and client communication notes.
-- Assume this is a busy Ontario GP practice with limited time and moderate budget.
-    `.trim();
-
-    const response = await openai.responses.create({
-      model: OPENAI_MODEL,
-      input: [
-        { role: 'system', content: CONSULT_SYSTEM_PROMPT },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.4,
-    });
-
-    const text = extractResponseText(response);
-    res.json({ output: text });
-  } catch (err) {
-    console.error('Error in /api/generate-consult:', err);
-    res.status(500).json({ error: 'Error generating consult output.' });
-  }
-});
-
-// ----- SOAP HELPER CONSOLE -----
-app.post('/api/generate-helper', async (req, res) => {
-  try {
-    const body = req.body || {};
-    const helperPrompt = body.helperPrompt || '';
-    const soapText = body.soapText || '';
-    const externalTranscript = body.externalTranscript || '';
-    const voiceTranscript = body.voiceTranscript || '';
-
-    const prompt = `
-You are the SOAP helper console attached to a completed SOAP note.
-
-Helper request:
-${helperPrompt || '(none)'}
-
-Current SOAP text:
-${soapText || '(no SOAP text provided)'}
-
-External transcript:
-${externalTranscript || '(none)'}
-
-Voice transcript context:
+VOICE TRANSCRIPT:
+Use transcript text in reasoning: ${voiceUseTranscriptInSoap ? 'yes' : 'no'}
+Transcript content (if any):
 ${voiceTranscript || '(none)'}
 
-Task:
-- Use the helper request plus the SOAP and transcripts to create exactly what is asked:
-  e.g. discharge instructions, email body, call log summary, brief weight consult, etc.
-- Keep it Avimark/email friendly plain-text.
-- Do not reprint the entire SOAP unless explicitly requested.
-    `.trim();
+TASK:
+- Build a complete SOAP that fits all base rules.
+- Respect that diagnostics in Objective are data-only and interpretation in Assessment.
+- If information is missing but the case obviously needs a normal PE, you may fill in templated normals consistent with a typical healthy or mildly ill patient, but do not fabricate wild issues.
+- Make it Avimark-ready plain text.
+`;
 
-    const response = await openai.responses.create({
-      model: OPENAI_MODEL,
-      input: [
-        { role: 'system', content: SOAP_BRAIN_SYSTEM_PROMPT },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.5,
+    const output = await callBrain({
+      systemPrompt: BASE_SOAP_RULES,
+      userContent
     });
 
-    const text = extractResponseText(response);
-    res.json({ output: text });
+    res.json({ output });
   } catch (err) {
-    console.error('Error in /api/generate-helper:', err);
-    res.status(500).json({ error: 'Error generating helper output.' });
+    console.error('Error in /api/generate:', err);
+    res.status(500).json({ error: 'Failed to generate SOAP.' });
   }
 });
 
-// ----- PHONE → DESKTOP RELAY (TEXT ONLY, IN-MEMORY STUB) -----
-let lastDesktopRelayText = '';
+// ---------- Route: Toolbox ----------
+app.post('/api/generate-toolbox', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const {
+      toolboxMode,
+      text,
+      externalTranscript,
+      voiceTranscript
+    } = payload;
+
+    const userContent = `
+TOOLBOX MODE: ${toolboxMode || 'unknown'}
+
+CORE TEXT / NOTES:
+${text || '(none)'}
+
+EXTERNAL TRANSCRIPT:
+${externalTranscript || '(none)'}
+
+VOICE TRANSCRIPT (context only, if provided):
+${voiceTranscript || '(none)'}
+
+TASK:
+Using the selected toolbox mode, produce a single Avimark-compatible text output that would be most useful to the doctor.
+Do not explain what you are doing; just output the final text.
+`;
+
+    const output = await callBrain({
+      systemPrompt: TOOLBOX_RULES,
+      userContent
+    });
+
+    res.json({ output });
+  } catch (err) {
+    console.error('Error in /api/generate-toolbox:', err);
+    res.status(500).json({ error: 'Failed to generate toolbox output.' });
+  }
+});
+
+// ---------- Route: Consult ----------
+app.post('/api/generate-consult', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const {
+      question,
+      context,
+      externalTranscript,
+      voiceTranscript
+    } = payload;
+
+    const userContent = `
+CONSULT QUESTION:
+${question || '(none)'}
+
+CASE CONTEXT:
+${context || '(none)'}
+
+EXTERNAL TRANSCRIPT:
+${externalTranscript || '(none)'}
+
+VOICE TRANSCRIPT (context only):
+${voiceTranscript || '(none)'}
+
+TASK:
+Answer the consult question following the consult rules (Summary, Differentials, Recommended next diagnostics, Treatment/monitoring, Red flags).
+`;
+
+    const output = await callBrain({
+      systemPrompt: CONSULT_RULES,
+      userContent
+    });
+
+    res.json({ output });
+  } catch (err) {
+    console.error('Error in /api/generate-consult:', err);
+    res.status(500).json({ error: 'Failed to generate consult output.' });
+  }
+});
+
+// ---------- Route: SOAP Helper Console ----------
+app.post('/api/generate-helper', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const {
+      helperPrompt,
+      soapText,
+      externalTranscript,
+      voiceTranscript
+    } = payload;
+
+    const userContent = `
+HELPER REQUEST:
+${helperPrompt || '(none)'}
+
+CURRENT SOAP TEXT:
+${soapText || '(none)'}
+
+EXTERNAL TRANSCRIPT:
+${externalTranscript || '(none)'}
+
+VOICE TRANSCRIPT:
+${voiceTranscript || '(none)'}
+
+TASK:
+Produce exactly what the helper request asks for (e.g., discharge instructions, client email, call log summary), based on the SOAP and transcripts.
+Plain text only, Avimark-compatible.
+`;
+
+    const output = await callBrain({
+      systemPrompt: HELPER_RULES + '\n' + BASE_SOAP_RULES,
+      userContent
+    });
+
+    res.json({ output });
+  } catch (err) {
+    console.error('Error in /api/generate-helper:', err);
+    res.status(500).json({ error: 'Failed to generate helper output.' });
+  }
+});
+
+// ---------- Route: Send to desktop (relay stub) ----------
+let lastDesktopText = '';
 
 app.post('/api/send-to-desktop', (req, res) => {
   try {
-    const body = req.body || {};
-    const text = body.text || '';
-
-    lastDesktopRelayText = text;
-    console.log('Received text for desktop relay (length):', text.length);
-
-    // In this version, the desktop button just shows an alert in the UI.
-    // Later, you can add a GET endpoint to fetch lastDesktopRelayText.
-    res.json({ ok: true, message: 'Stored text for desktop relay.' });
+    const { text } = req.body || {};
+    lastDesktopText = text || '';
+    // In future you can expose GET /api/last-desktop-text for your desktop relay.
+    res.json({ ok: true });
   } catch (err) {
     console.error('Error in /api/send-to-desktop:', err);
-    res.status(500).json({ error: 'Error storing text for desktop relay.' });
+    res.status(500).json({ error: 'Failed to relay text.' });
   }
 });
 
-// Optional: simple endpoint to inspect relay text during development
-app.get('/api/last-desktop-text', (req, res) => {
-  res.json({ text: lastDesktopRelayText || '' });
+// Optional health check
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, status: 'Backend running' });
 });
 
-// ---------- START SERVER ----------
+// Fallback: serve frontend index for any non-API GET (for local use)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+// ---------- Start server ----------
 app.listen(PORT, () => {
-  console.log(`Lohit SOAP App backend running on http://localhost:${PORT}`);
+  console.log(`Lohit SOAP App backend running on port ${PORT}`);
 });
