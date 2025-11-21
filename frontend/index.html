@@ -808,6 +808,48 @@
                 </div>
               </div>
 
+              <!-- NEW: Anesthesia dropdown (surgery only) -->
+              <div class="field-row" id="surgeryAnesthesiaRow" style="display:none;">
+                <div class="field">
+                  <label class="field-label">
+                    Anesthesia protocol
+                    <span class="hint">Select all that apply (Ctrl/Cmd-click on desktop)</span>
+                  </label>
+                  <select id="surgeryAnesthesia" multiple size="10">
+                    <optgroup label="Premed">
+                      <option value="premed_dexmedetomidine">Dexmedetomidine</option>
+                      <option value="premed_butorphanol">Butorphanol</option>
+                      <option value="premed_buprenorphine">Buprenorphine</option>
+                      <option value="premed_hydromorphone">Hydromorphone</option>
+                      <option value="premed_methadone">Methadone</option>
+                      <option value="premed_midazolam">Midazolam</option>
+                    </optgroup>
+                    <optgroup label="Induction">
+                      <option value="induction_propofol">Propofol</option>
+                      <option value="induction_alfaxalone">Alfaxalone</option>
+                      <option value="induction_ketamine_midazolam">Ketamine + Midazolam</option>
+                      <option value="induction_propofol_midazolam">Propofol + Midazolam</option>
+                    </optgroup>
+                    <optgroup label="Intra-op">
+                      <option value="intra_meloxicam_inj">Meloxicam inj</option>
+                      <option value="intra_onsior_inj">Onsior inj</option>
+                      <option value="intra_cefazolin">Cefazolin</option>
+                      <option value="intra_duplicillin_im">Duplicillin IM</option>
+                      <option value="intra_local_blocks">Local blocks</option>
+                    </optgroup>
+                    <optgroup label="Post-op Analgesia">
+                      <option value="post_meloxicam_oral">Meloxicam oral</option>
+                      <option value="post_onsior_oral">Onsior oral</option>
+                      <option value="post_gabapentin">Gabapentin</option>
+                    </optgroup>
+                    <optgroup label="Post-op Antibiotics">
+                      <option value="post_convenia">Convenia</option>
+                      <option value="post_amoxi_clav">Amoxi-Clav</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+
               <!-- Vaccines -->
               <div class="vaccine-row">
                 <label class="checkbox-inline">
@@ -1284,6 +1326,8 @@
     const vaccineSelector = document.getElementById('vaccineSelector');
     const speciesSelect = document.getElementById('species');
     const appointmentPreset = document.getElementById('appointmentPreset');
+    const surgeryAnesthesiaRow = document.getElementById('surgeryAnesthesiaRow');
+    const surgeryAnesthesiaSelect = document.getElementById('surgeryAnesthesia');
 
     function updateVisitType(type) {
       if (type === 'appointment') {
@@ -1292,12 +1336,14 @@
         asaField.style.display = 'none';
         appointmentPresetRow.style.display = 'flex';
         surgeryPresetRow.style.display = 'none';
+        surgeryAnesthesiaRow.style.display = 'none';
       } else {
         visitTypeAppointmentBtn.classList.remove('active');
         visitTypeSurgeryBtn.classList.add('active');
         asaField.style.display = 'flex';
         appointmentPresetRow.style.display = 'none';
         surgeryPresetRow.style.display = 'flex';
+        surgeryAnesthesiaRow.style.display = 'flex';
       }
     }
 
@@ -1312,6 +1358,7 @@
         surgeryModeSimpleBtn.classList.remove('active');
         surgeryModeAdvancedBtn.classList.add('active');
       }
+      // (In future we can change visible inputs based on simple vs advanced)
     }
     surgeryModeSimpleBtn.addEventListener('click', () => updateSurgeryMode('simple'));
     surgeryModeAdvancedBtn.addEventListener('click', () => updateSurgeryMode('advanced'));
@@ -1372,6 +1419,7 @@
       const toggle = document.getElementById(toggleId);
       const body = document.getElementById(bodyId);
       if (!toggle || !body) return;
+      body.style.display = 'none';
       toggle.addEventListener('click', () => {
         const open = body.style.display !== 'none';
         body.style.display = open ? 'none' : 'block';
@@ -1689,6 +1737,11 @@
       return Array.from(vaccineSelector.selectedOptions).map(o => o.value);
     }
 
+    function gatherSelectedAnesthesia() {
+      if (!surgeryAnesthesiaSelect) return [];
+      return Array.from(surgeryAnesthesiaSelect.selectedOptions).map(o => o.value);
+    }
+
     function setWorkingState(isWorking, label) {
       outputPanelChip.textContent = isWorking ? (label || 'Working…') : 'Ready';
     }
@@ -1718,6 +1771,7 @@
         surgeryMode: surgeryModeSimpleBtn.classList.contains('active') ? 'simple' : 'advanced',
         vaccinesToday: vaccinesTodayCheckbox.checked,
         vaccineSelections: gatherSelectedVaccines(),
+        surgeryAnesthesiaSelections: gatherSelectedAnesthesia(),
         coreNotes: document.getElementById('soapCoreNotes').value,
         pe: document.getElementById('soapPE').value,
         assessmentHints: document.getElementById('soapAssessmentHints').value,
@@ -1755,7 +1809,7 @@
     // --------- Toolbox generation ----------
     const toolboxGenerateMainBtn = document.getElementById('toolboxGenerateMainBtn');
     const toolboxModeSelect = document.getElementById('toolboxMode');
-    const toolboxInput = document.getElementById('toolboxInput');
+    const toolboxInputEl = document.getElementById('toolboxInput');
 
     function generateToolbox(extra = {}) {
       setWorkingState(true, 'Toolbox working…');
@@ -1764,7 +1818,7 @@
       const payload = {
         mode: 'toolbox',
         toolboxMode: toolboxModeSelect.value,
-        text: toolboxInput.value,
+        text: toolboxInputEl.value,
         externalTranscript: document.getElementById('toolboxExternalTranscript').value,
         voiceTranscript: extra.voiceTranscript || (toolboxRecorder.isContextSaved() ? toolboxRecorder.getTranscript() : '')
       };
