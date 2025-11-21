@@ -612,6 +612,22 @@
       color: var(--text-soft);
     }
 
+    /* Mobile vs desktop helpers */
+    .mobile-only {
+      display: none;
+    }
+    .desktop-only {
+      display: inline-flex;
+    }
+
+    @media (max-width: 900px) {
+      .desktop-only {
+        display: none !important;
+      }
+      .mobile-only {
+        display: inline-flex;
+      }
+    }
   </style>
 </head>
 <body>
@@ -655,6 +671,13 @@
               <div class="panel-chip">Appointment · Surgery · Voice</div>
             </div>
             <div class="panel-body">
+              <!-- Mobile upload shortcut -->
+              <div class="button-row mobile-only">
+                <button class="btn btn-soft" id="soapMobileUploadBtn">
+                  📷 Upload from this phone
+                </button>
+              </div>
+
               <!-- Row 1: Case / patient -->
               <div class="field-row">
                 <div class="field">
@@ -868,8 +891,8 @@
                     </div>
                   </div>
                   <div class="rec-actions">
-                    <button class="btn btn-soft" id="recSaveContextBtn">Save (use as hidden context)</button>
-                    <button class="btn btn-primary" id="recGenerateBtn">Generate SOAP from voice + inputs</button>
+                    <button class="btn btn-soft" id="recSaveRecordingBtn">Save recording (context only)</button>
+                    <button class="btn btn-primary" id="recSaveTranscribeBtn">Save &amp; transcribe</button>
                     <button class="btn btn-danger" id="recClearBtn">Clear recordings</button>
                   </div>
 
@@ -877,12 +900,19 @@
                   <div>
                     <div class="collapse-toggle" id="transcriptToggle">
                       <span class="chevron">▶</span>
-                      <span>View transcript (optional)</span>
+                      <span>Transcript (optional – edit before SOAP)</span>
                     </div>
                     <div id="transcriptBody" class="collapse-body" style="display:none;">
-                      <div class="scroll-area" id="voiceTranscriptView">
-                        Transcript will appear here after recording stops.
-                      </div>
+                      <label class="checkbox-inline" style="margin-bottom:4px;">
+                        <input type="checkbox" id="useTranscriptForSoap" />
+                        <span>Use transcript text when generating SOAP</span>
+                      </label>
+                      <textarea
+                        id="voiceTranscriptEdit"
+                        class="scroll-area"
+                        style="min-height:80px;"
+                        placeholder="Transcript will appear here after recording stops. You can edit before generating SOAP.">
+                      </textarea>
                     </div>
                   </div>
                 </div>
@@ -904,6 +934,13 @@
               <div class="panel-chip">Bloodwork · Email · Handout · Covet Fixer · Freeform</div>
             </div>
             <div class="panel-body">
+              <!-- Mobile upload shortcut -->
+              <div class="button-row mobile-only">
+                <button class="btn btn-soft" id="toolboxMobileUploadBtn">
+                  📷 Upload from this phone
+                </button>
+              </div>
+
               <div class="field-row">
                 <div class="field">
                   <label class="field-label">Tool</label>
@@ -996,6 +1033,13 @@
               <div class="panel-chip">Reasoning · Differentials · Plans</div>
             </div>
             <div class="panel-body">
+              <!-- Mobile upload shortcut -->
+              <div class="button-row mobile-only">
+                <button class="btn btn-soft" id="consultMobileUploadBtn">
+                  📷 Upload from this phone
+                </button>
+              </div>
+
               <div class="field">
                 <label class="field-label">
                   Consult question
@@ -1088,12 +1132,21 @@
               <div class="button-row" id="outputButtonsSoap">
                 <button class="btn btn-primary" id="copyFullSoapBtn">Copy full SOAP</button>
                 <button class="btn btn-soft" id="copyPlanMedsAfterBtn">Copy Plan + Meds + Aftercare</button>
+                <button class="btn btn-soft mobile-only" id="sendOutputToDesktopBtn">
+                  📤 Send output to desktop
+                </button>
               </div>
               <div class="button-row" id="outputButtonsToolbox" style="display:none;">
                 <button class="btn btn-primary" id="copyToolboxOutputBtn">Copy toolbox output</button>
+                <button class="btn btn-soft mobile-only" id="sendToolboxOutputToDesktopBtn">
+                  📤 Send output to desktop
+                </button>
               </div>
               <div class="button-row" id="outputButtonsConsult" style="display:none;">
                 <button class="btn btn-primary" id="copyConsultOutputBtn">Copy consult output</button>
+                <button class="btn btn-soft mobile-only" id="sendConsultOutputToDesktopBtn">
+                  📤 Send output to desktop
+                </button>
               </div>
 
               <!-- SOAP Helper Console -->
@@ -1142,10 +1195,10 @@
                   <span class="tiny">Phone ↔ Desktop relay · Uploads</span>
                 </div>
                 <div class="right-bottom-buttons">
-                  <button class="btn btn-soft" id="receiveTextFromPhoneBtn">
+                  <button class="btn btn-soft desktop-only" id="receiveTextFromPhoneBtn">
                     📲 Receive text from phone
                   </button>
-                  <button class="btn btn-soft" id="receiveFilesFromPhoneBtn">
+                  <button class="btn btn-soft desktop-only" id="receiveFilesFromPhoneBtn">
                     🗂 Receive files from phone
                   </button>
                   <button class="btn btn-soft" id="uploadFromDeviceBtn">
@@ -1190,7 +1243,6 @@
       toolboxSection.style.display = tab === 'toolbox' ? 'block' : 'none';
       consultSection.style.display = tab === 'consult' ? 'block' : 'none';
 
-      // Output card behavior
       if (tab === 'soap') {
         outputPanelTitle.textContent = 'OUTPUT · AI BRAIN – SOAP';
         outputPanelChip.textContent = 'Ready';
@@ -1213,8 +1265,6 @@
         outputButtonsConsult.style.display = 'flex';
         soapHelperConsole.style.display = 'none';
       }
-
-      // Clear output header status only, not content.
     }
 
     tabButtons.forEach(btn => {
@@ -1294,7 +1344,7 @@
         add('fvrcp_3', 'FVRCP – 3-year (SQ LH)');
         add('rabies_1_cat', 'Rabies – 1-year (SQ RH)');
         add('rabies_3_cat', 'Rabies – 3-year (SQ RH)');
-        add('felv', 'FeLV (SQ LF)'); // as low as possible
+        add('felv', 'FeLV (SQ LF)');
       }
     }
 
@@ -1317,7 +1367,7 @@
     updateVisitType('appointment');
     updateSurgeryMode('simple');
 
-    // --------- Collapses (SOAP ext transcript & voice) ----------
+    // --------- Collapses ----------
     function wireCollapse(toggleId, bodyId) {
       const toggle = document.getElementById(toggleId);
       const body = document.getElementById(bodyId);
@@ -1339,7 +1389,132 @@
     wireCollapse('consultTranscriptToggle', 'consultTranscriptBody');
     wireCollapse('helperToggle', 'helperBody');
 
-    // --------- Recorder (generic helper used per-tab) ----------
+    // --------- SOAP recorder (custom logic) ----------
+    let soapVoiceTranscript = '';
+    let soapVoiceContextSaved = false;
+
+    (function setupSoapRecorder() {
+      const recBtn = document.getElementById('recBtn');
+      const recBtnIcon = document.getElementById('recBtnIcon');
+      const recBtnLabel = document.getElementById('recBtnLabel');
+      const recDot = document.getElementById('recDot');
+      const recStatus = document.getElementById('recStatusText');
+      const recSummary = document.getElementById('recSummaryText');
+      const saveRecordingBtn = document.getElementById('recSaveRecordingBtn');
+      const saveTranscribeBtn = document.getElementById('recSaveTranscribeBtn');
+      const clearBtn = document.getElementById('recClearBtn');
+      const transcriptEdit = document.getElementById('voiceTranscriptEdit');
+      const useTranscriptCheckbox = document.getElementById('useTranscriptForSoap');
+      const transcriptToggle = document.getElementById('transcriptToggle');
+      const transcriptBody = document.getElementById('transcriptBody');
+
+      let mediaRecorder = null;
+      let chunks = [];
+
+      function setRecState(isRecording) {
+        if (isRecording) {
+          recBtnIcon.textContent = '⏹';
+          recBtnLabel.textContent = 'Stop';
+          recDot.classList.add('recording');
+          recStatus.textContent = 'Recording in progress…';
+        } else {
+          recBtnIcon.textContent = '🎙';
+          recBtnLabel.textContent = 'Record';
+          recDot.classList.remove('recording');
+          if (soapVoiceTranscript) {
+            recStatus.textContent = 'Recording finished.';
+          } else {
+            recStatus.textContent = 'Not recording';
+          }
+        }
+      }
+
+      async function startRecording() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          chunks = [];
+
+          mediaRecorder.ondataavailable = e => {
+            if (e.data.size > 0) chunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'audio/webm' });
+            // Stub transcript – real STT happens on backend.
+            soapVoiceTranscript = '[Voice note recorded – transcript to be generated by backend].';
+            transcriptEdit.value = soapVoiceTranscript;
+            if (recSummary) {
+              recSummary.textContent = '1 recording captured in this session.';
+            }
+            setRecState(false);
+          };
+
+          mediaRecorder.start();
+          setRecState(true);
+        } catch (err) {
+          console.error('Error starting recorder', err);
+          alert('Unable to access microphone. Please check browser permissions.');
+        }
+      }
+
+      function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+      }
+
+      if (recBtn) {
+        recBtn.addEventListener('click', () => {
+          if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+            startRecording();
+          } else {
+            stopRecording();
+          }
+        });
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          soapVoiceTranscript = '';
+          soapVoiceContextSaved = false;
+          transcriptEdit.value = '';
+          if (recSummary) recSummary.textContent = 'No recordings in this session yet.';
+          setRecState(false);
+        });
+      }
+
+      if (saveRecordingBtn) {
+        saveRecordingBtn.addEventListener('click', () => {
+          if (!soapVoiceTranscript) {
+            alert('No recording yet. Record and stop at least once first.');
+            return;
+          }
+          soapVoiceContextSaved = true;
+          alert('Recording saved as context (transcript use is optional).');
+        });
+      }
+
+      if (saveTranscribeBtn) {
+        saveTranscribeBtn.addEventListener('click', () => {
+          if (!soapVoiceTranscript) {
+            alert('No recording yet. Record and stop at least once first.');
+            return;
+          }
+          soapVoiceContextSaved = true;
+          useTranscriptCheckbox.checked = true;
+          // Open transcript panel
+          if (transcriptBody && transcriptToggle) {
+            transcriptBody.style.display = 'block';
+            transcriptToggle.classList.add('open');
+          }
+          alert('Recording saved and transcript will be used for SOAP (unless you uncheck the box).');
+        });
+      }
+
+    })();
+
+    // --------- Generic recorder for Toolbox / Consult ----------
     function makeRecorder(config) {
       const {
         recBtnId,
@@ -1399,9 +1574,8 @@
             if (e.data.size > 0) chunks.push(e.data);
           };
 
-          mediaRecorder.onstop = async () => {
+          mediaRecorder.onstop = () => {
             const blob = new Blob(chunks, { type: 'audio/webm' });
-            // For now, we don't send blob anywhere; we just fake a transcript placeholder.
             transcriptText = '[Voice note recorded – transcript to be generated by backend].';
             if (transcriptView) {
               transcriptView.textContent = transcriptText;
@@ -1474,23 +1648,6 @@
       };
     }
 
-    const soapRecorder = makeRecorder({
-      recBtnId: 'recBtn',
-      recBtnIconId: 'recBtnIcon',
-      recBtnLabelId: 'recBtnLabel',
-      recDotId: 'recDot',
-      recStatusId: 'recStatusText',
-      recSummaryId: 'recSummaryText',
-      transcriptViewId: 'voiceTranscriptView',
-      saveBtnId: 'recSaveContextBtn',
-      generateBtnId: 'recGenerateBtn',
-      clearBtnId: 'recClearBtn',
-      onGenerate: (transcript) => {
-        // Reuse the SOAP generate flow but include voice transcript
-        generateSOAP({ voiceTranscript: transcript });
-      }
-    });
-
     const toolboxRecorder = makeRecorder({
       recBtnId: 'toolboxRecBtn',
       recBtnIconId: 'toolboxRecBtnIcon',
@@ -1540,6 +1697,12 @@
       setWorkingState(true, 'Generating SOAP…');
       mainOutput.textContent = 'Working on SOAP…';
 
+      const useTranscriptCheckbox = document.getElementById('useTranscriptForSoap');
+      const transcriptEdit = document.getElementById('voiceTranscriptEdit');
+      const useTranscript = useTranscriptCheckbox && useTranscriptCheckbox.checked;
+      const editedTranscript = transcriptEdit ? transcriptEdit.value.trim() : '';
+      const finalTranscript = editedTranscript || soapVoiceTranscript;
+
       const payload = {
         mode: 'soap',
         caseLabel: document.getElementById('caseLabel').value,
@@ -1562,10 +1725,10 @@
         extra: document.getElementById('soapExtra').value,
         externalTranscript: document.getElementById('externalTranscript').value,
         externalTranscriptInclude: document.getElementById('externalTranscriptInclude').checked,
-        voiceTranscript: extra.voiceTranscript || (soapRecorder.isContextSaved() ? soapRecorder.getTranscript() : '')
+        voiceTranscript: extra.voiceTranscript || (soapVoiceContextSaved ? finalTranscript : ''),
+        voiceUseTranscriptInSoap: useTranscript
       };
 
-      // Call backend
       fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1683,13 +1846,15 @@
       setWorkingState(true, 'SOAP helper working…');
       helperOutput.textContent = 'Working on helper output…';
 
+      const transcriptEdit = document.getElementById('voiceTranscriptEdit');
+      const finalTranscript = transcriptEdit ? (transcriptEdit.value.trim() || soapVoiceTranscript) : soapVoiceTranscript;
+
       const payload = {
         mode: 'soap_helper',
         helperPrompt: prompt,
         soapText: mainOutput.textContent || '',
-        // It can also include ext transcript + voice for richer context.
         externalTranscript: document.getElementById('externalTranscript').value,
-        voiceTranscript: soapRecorder.getTranscript()
+        voiceTranscript: finalTranscript
       };
 
       fetch('/api/generate-helper', {
@@ -1730,7 +1895,7 @@
       });
     }
 
-    // --------- Copy buttons (SOAP / Toolbox / Consult) ----------
+    // --------- Copy buttons ----------
     function copyText(text) {
       if (!text) {
         alert('Nothing to copy.');
@@ -1752,8 +1917,7 @@
 
     if (copyPlanMedsAfterBtn) {
       copyPlanMedsAfterBtn.addEventListener('click', () => {
-        // This assumes backend already structures Plan/Meds/Aftercare sections.
-        // Here we just copy whole thing; you can refine later to slice sections.
+        // For now copies entire SOAP; backend already structures sections.
         copyText(mainOutput.textContent);
       });
     }
@@ -1766,17 +1930,56 @@
       copyConsultOutputBtn.addEventListener('click', () => copyText(mainOutput.textContent));
     }
 
-    // --------- Phone ↔ Desktop relay & uploads (UI only; backend hooks stay generic) ----------
+    // --------- Send output to desktop (mobile) ----------
+    function wireSendToDesktop(buttonId) {
+      const btn = document.getElementById(buttonId);
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const text = mainOutput.textContent || '';
+        if (!text.trim()) {
+          alert('No output to send.');
+          return;
+        }
+        setWorkingState(true, 'Sending to desktop…');
+        fetch('/api/send-to-desktop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        }).then(res => {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        }).then(() => {
+          alert('Sent to desktop relay (check desktop receive panel).');
+        }).catch(err => {
+          console.error(err);
+          alert('Error sending to desktop; check backend.');
+        }).finally(() => {
+          setWorkingState(false);
+        });
+      });
+    }
+
+    wireSendToDesktop('sendOutputToDesktopBtn');
+    wireSendToDesktop('sendToolboxOutputToDesktopBtn');
+    wireSendToDesktop('sendConsultOutputToDesktopBtn');
+
+    // --------- Phone ↔ Desktop relay & uploads ----------
     const receiveTextFromPhoneBtn = document.getElementById('receiveTextFromPhoneBtn');
     const receiveFilesFromPhoneBtn = document.getElementById('receiveFilesFromPhoneBtn');
     const uploadFromDeviceBtn = document.getElementById('uploadFromDeviceBtn');
     const hiddenFileInput = document.getElementById('hiddenFileInput');
     const uploadPreview = document.getElementById('uploadPreview');
 
+    const soapMobileUploadBtn = document.getElementById('soapMobileUploadBtn');
+    const toolboxMobileUploadBtn = document.getElementById('toolboxMobileUploadBtn');
+    const consultMobileUploadBtn = document.getElementById('consultMobileUploadBtn');
+
+    function triggerHiddenFileInput() {
+      if (hiddenFileInput) hiddenFileInput.click();
+    }
+
     if (uploadFromDeviceBtn && hiddenFileInput) {
-      uploadFromDeviceBtn.addEventListener('click', () => {
-        hiddenFileInput.click();
-      });
+      uploadFromDeviceBtn.addEventListener('click', triggerHiddenFileInput);
 
       hiddenFileInput.addEventListener('change', () => {
         if (!hiddenFileInput.files || hiddenFileInput.files.length === 0) {
@@ -1785,19 +1988,29 @@
         }
         const names = Array.from(hiddenFileInput.files).map(f => f.name);
         uploadPreview.textContent = 'Attached: ' + names.join(', ');
-        // Actual Vision / upload handling happens on backend when you send them with /api calls.
+        // Real handling happens in backend when you send them with /api calls.
       });
+    }
+
+    if (soapMobileUploadBtn) {
+      soapMobileUploadBtn.addEventListener('click', triggerHiddenFileInput);
+    }
+    if (toolboxMobileUploadBtn) {
+      toolboxMobileUploadBtn.addEventListener('click', triggerHiddenFileInput);
+    }
+    if (consultMobileUploadBtn) {
+      consultMobileUploadBtn.addEventListener('click', triggerHiddenFileInput);
     }
 
     if (receiveTextFromPhoneBtn) {
       receiveTextFromPhoneBtn.addEventListener('click', () => {
-        alert('QR-based receive-from-phone is UI-ready; this version expects your existing QR/relay backend wiring. Keep using your previous server.js logic, this button is a hook for it.');
+        alert('QR-based receive-from-phone UI is ready; this version expects your existing QR/relay backend wiring.');
       });
     }
 
     if (receiveFilesFromPhoneBtn) {
       receiveFilesFromPhoneBtn.addEventListener('click', () => {
-        alert('QR-based file relay from phone is UI-ready; this version expects your existing backend/relay wiring to handle file uploads from phone.');
+        alert('QR-based file relay from phone is UI-ready; hook this to your server-side relay like before.');
       });
     }
 
