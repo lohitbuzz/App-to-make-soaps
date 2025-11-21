@@ -2,1351 +2,1521 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Vet SOAP Studio</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Moksha SOAP · Lohit SOAP App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     :root {
-      --bg: #05070a;
-      --bg-alt: #0d1117;
-      --card: #111827;
-      --accent: #22c55e;
-      --accent-soft: rgba(34, 197, 94, 0.12);
-      --accent-strong: rgba(34, 197, 94, 0.2);
-      --border-subtle: rgba(148, 163, 184, 0.25);
-      --text-main: #e5e7eb;
-      --text-muted: #9ca3af;
-      --danger: #f97373;
+      --bg: #020910;
+      --bg-card: rgba(9, 28, 40, 0.96);
+      --bg-card-soft: rgba(6, 22, 32, 0.9);
+      --accent: #00d18a;
+      --accent-soft: rgba(0, 209, 138, 0.35);
+      --accent-strong: #00b67a;
+      --accent-danger: #ff4b6a;
+      --border-soft: rgba(255, 255, 255, 0.05);
+      --border-strong: rgba(255, 255, 255, 0.12);
+      --text-main: #e9f3ff;
+      --text-soft: #c5d7e0;
+      --text-muted: #7f93a4;
+      --pill-bg: rgba(9, 30, 46, 0.9);
+      --input-bg: rgba(6, 20, 30, 0.9);
+      --input-border: rgba(255, 255, 255, 0.08);
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.65);
       --radius-lg: 18px;
-      --radius-md: 10px;
+      --radius-md: 12px;
       --radius-pill: 999px;
-      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.75);
-      --input-bg: #020617;
-      --input-border: rgba(148, 163, 184, 0.4);
-      --nav-height: 64px;
+      --transition-fast: 0.16s ease-out;
+      --transition-med: 0.22s ease-out;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "SF Pro Display", "Segoe UI", sans-serif;
     }
 
     * {
       box-sizing: border-box;
+    }
+
+    html,
+    body {
       margin: 0;
       padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: var(--font-main);
+      background: radial-gradient(circle at top left, #112437 0, #020910 55%);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
     }
 
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top left, #0f172a, #020617 55%);
-      color: var(--text-main);
-      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: stretch;
       padding: 12px;
     }
 
-    .app-shell {
-      background: linear-gradient(145deg, #020617, #020617);
-      border-radius: 24px;
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      max-width: 1280px;
+    #app-shell {
       width: 100%;
+      max-width: 1320px;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      position: relative;
+      gap: 10px;
     }
+
+    /* HEADER */
 
     .app-header {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      border-bottom: 1px solid rgba(31, 41, 55, 0.9);
-      background:
-        radial-gradient(circle at 0 0, rgba(34, 197, 94, 0.11), transparent 60%),
-        radial-gradient(circle at 100% 0, rgba(59, 130, 246, 0.09), transparent 60%),
-        #020617;
-    }
-
-    .logo-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo-mark {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 0, #bbf7d0, #22c55e 55%, #15803d 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.55);
-      border: 1px solid rgba(15, 23, 42, 0.8);
-    }
-
-    .logo-mark span {
-      font-weight: 800;
-      letter-spacing: 0.03em;
-      font-size: 0.9rem;
-      color: #022c22;
-    }
-
-    .header-text {
+      padding: 12px 18px 4px;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-    }
-
-    .header-text h1 {
-      font-size: 1rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #e5e7eb;
-    }
-
-    .header-text small {
-      font-size: 0.7rem;
-      color: #9ca3af;
-    }
-
-    .header-right {
-      margin-left: auto;
-      display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.75rem;
-      color: #9ca3af;
+      border-radius: 20px;
+      background: linear-gradient(
+        135deg,
+        rgba(0, 37, 71, 0.9),
+        rgba(0, 12, 24, 0.92)
+      );
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);
     }
 
-    .pill {
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      background: rgba(15, 23, 42, 0.85);
-      display: inline-flex;
+    .header-logo-wrap {
+      display: flex;
+      justify-content: center;
       align-items: center;
-      gap: 6px;
     }
 
-    .pill-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.25);
+    .moksha-logo {
+      max-width: 260px;
+      height: auto;
+      display: block;
     }
 
-    .app-main {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 10px;
-      padding-bottom: calc(var(--nav-height) + 8px);
-      background: radial-gradient(circle at top, #020617, #020617 65%, #020617);
-      min-height: 0;
-      flex: 1;
-    }
-
-    .panels {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      height: 100%;
-      min-height: 0;
-    }
-
-    .input-panel,
-    .output-panel {
-      background: radial-gradient(circle at top left, #0b1120, #020617 65%);
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(31, 41, 55, 0.9);
-      padding: 12px;
-      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.9);
-      position: relative;
-    }
-
-    .input-panel::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      pointer-events: none;
-      opacity: 0.4;
-    }
-
-    .panel-header {
+    .header-subtitle-row {
+      width: 100%;
+      max-width: 1200px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
-    }
-
-    .panel-header h2 {
+      gap: 8px;
       font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      color: #9ca3af;
+      color: var(--text-soft);
     }
 
-    .chip-row {
+    .header-subtitle-left {
       display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .header-subtitle-right {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .app-subtitle {
+      opacity: 0.9;
+    }
+
+    .pill {
+      border-radius: var(--radius-pill);
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      background: var(--pill-bg);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: inline-flex;
+      align-items: center;
       gap: 6px;
-      flex-wrap: wrap;
+      white-space: nowrap;
     }
 
-    .chip {
-      font-size: 0.7rem;
-      padding: 3px 8px;
+    .pill-dot {
+      width: 8px;
+      height: 8px;
       border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      background: rgba(15, 23, 42, 0.8);
-      color: #9ca3af;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(0, 209, 138, 0.7);
     }
 
-    .chip-strong {
-      border-color: rgba(34, 197, 94, 0.65);
-      background: rgba(22, 163, 74, 0.18);
-      color: #bbf7d0;
+    .pill-danger-dot {
+      background: var(--accent-danger);
+      box-shadow: 0 0 10px rgba(255, 75, 106, 0.7);
     }
 
-    .chip-strong span {
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+    .version-pill {
+      opacity: 0.95;
     }
 
-    .toggle-group {
+    .main-tabs {
+      margin-top: 6px;
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
 
-    .toggle-pill {
+    .tab-button {
+      border-radius: var(--radius-pill);
+      padding: 6px 16px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--text-soft);
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 3px;
-      border-radius: var(--radius-pill);
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      font-size: 0.7rem;
+      gap: 6px;
+      transition: background var(--transition-fast), color var(--transition-fast),
+        transform 0.08s ease-out;
     }
 
-    .toggle-pill button {
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      padding: 5px 12px;
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      font-size: 0.75rem;
-      font-weight: 500;
+    .tab-button span.emoji {
+      font-size: 1rem;
     }
 
-    .toggle-pill button.active {
-      background: linear-gradient(135deg, #22c55e, #4ade80);
-      color: #022c22;
-      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4),
-        0 10px 25px rgba(34, 197, 94, 0.45);
+    .tab-button:hover {
+      background: rgba(0, 0, 0, 0.6);
+      transform: translateY(-0.5px);
     }
 
-    .subtoggle-label {
-      font-size: 0.7rem;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
+    .tab-button.active {
+      background: var(--accent);
+      color: #021214;
+      font-weight: 600;
     }
 
-    .form-grid {
+    /* LAYOUT */
+
+    .main-layout {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1.38fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-soft);
+      box-shadow: var(--shadow-soft);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--text-soft);
+    }
+
+    .card-title {
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-soft);
+    }
+
+    .card-title span.badge {
+      font-size: 0.75rem;
+      text-transform: none;
+      opacity: 0.85;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(6, 20, 30, 0.9);
+    }
+
+    .card-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* INPUTS */
+
+    .input-grid-top {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
     }
 
-    .form-row {
+    .input-grid-row {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
     }
 
     .field {
       display: flex;
       flex-direction: column;
-      gap: 3px;
-    }
-
-    .field label {
-      font-size: 0.7rem;
-      color: #9ca3af;
-    }
-
-    .field small {
-      font-size: 0.65rem;
-      color: #6b7280;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select,
-    textarea {
-      background: var(--input-bg);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--input-border);
-      color: var(--text-main);
-      padding: 7px 9px;
-      font-size: 0.8rem;
-      outline: none;
-      width: 100%;
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: #4b5563;
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 70px;
-      max-height: 160px;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
-    }
-
-    .inline {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .inline-note {
-      font-size: 0.7rem;
-      color: #6b7280;
-    }
-
-    .checkbox-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 4px;
-      font-size: 0.7rem;
-      color: #9ca3af;
-    }
-
-    .primary-btn {
-      border: none;
-      border-radius: var(--radius-pill);
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      cursor: pointer;
-      background: linear-gradient(135deg, #22c55e, #4ade80);
-      color: #022c22;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 15px 35px rgba(22, 163, 74, 0.6);
-      margin-top: 10px;
-    }
-
-    .primary-btn span {
-      font-size: 1.1rem;
-    }
-
-    .primary-btn:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-
-    .helper-text {
-      margin-top: 6px;
-      font-size: 0.7rem;
-      color: #9ca3af;
-    }
-
-    .feedback-bar {
-      margin-top: 8px;
-      padding: 7px 9px;
-      border-radius: var(--radius-md);
-      background: radial-gradient(circle at 0 0, rgba(34, 197, 94, 0.2), transparent 55%),
-        rgba(15, 23, 42, 0.92);
-      border: 1px dashed rgba(34, 197, 94, 0.6);
-      font-size: 0.7rem;
-      color: #bbf7d0;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .feedback-chips {
-      display: flex;
-      flex-wrap: wrap;
       gap: 4px;
+      font-size: 0.8rem;
+      color: var(--text-soft);
     }
 
-    .feedback-chip {
-      padding: 2px 7px;
-      border-radius: 999px;
-      border: 1px solid rgba(34, 197, 94, 0.5);
-      font-size: 0.65rem;
-      color: #bbf7d0;
-      background: rgba(22, 163, 74, 0.2);
-    }
-
-    .output-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .output-header {
+    .field-label-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 6px;
     }
 
-    .output-header h2 {
-      font-size: 0.85rem;
+    .field label {
+      font-size: 0.78rem;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: #9ca3af;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
     }
 
-    .status-pill {
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 0.7rem;
+    .hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text-main);
+      font-size: 0.85rem;
+      padding: 7px 9px;
+      outline: none;
+      transition: border-color var(--transition-fast),
+        box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #607386;
+    }
+
+    textarea {
+      min-height: 64px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent-soft);
+      box-shadow: 0 0 0 1px rgba(0, 209, 138, 0.25);
+      background: #071824;
+    }
+
+    .inline-toggle-group {
+      display: inline-flex;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+      background: rgba(1, 7, 12, 0.7);
+    }
+
+    .inline-toggle {
+      border: none;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      background: transparent;
+      color: var(--text-soft);
+      min-width: 80px;
+      text-align: center;
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .inline-toggle.active {
+      background: var(--accent-soft);
+      color: #021214;
+      font-weight: 600;
+    }
+
+    .upload-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .upload-btn {
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(10, 30, 40, 0.95);
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      color: var(--text-soft);
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-    }
-
-    .status-pill span {
-      font-size: 0.6rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .status-ok {
-      background: rgba(22, 163, 74, 0.16);
-      border: 1px solid rgba(34, 197, 94, 0.8);
-      color: #bbf7d0;
-    }
-
-    #soapOutput {
-      flex: 1;
-      min-height: 150px;
-      max-height: 320px;
-      background: #020617;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      padding: 8px;
-      font-size: 0.78rem;
-      line-height: 1.45;
-      white-space: pre-wrap;
-      overflow-y: auto;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
-        monospace;
-    }
-
-    .copy-row {
-      display: flex;
-      flex-wrap: wrap;
       gap: 6px;
+      transition: background var(--transition-fast), transform 0.07s ease-out;
+    }
+
+    .upload-btn:hover {
+      background: rgba(12, 40, 58, 0.95);
+      transform: translateY(-0.5px);
+    }
+
+    .upload-btn span.emoji {
+      font-size: 1rem;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
       margin-top: 4px;
     }
 
-    .copy-btn {
+    .checkbox-row input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--accent);
+    }
+
+    /* Vaccines Multi-select */
+
+    .vaccines-row {
+      margin-left: 2px;
+      margin-top: 3px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .pill-button {
       border-radius: var(--radius-pill);
-      border: 1px solid rgba(148, 163, 184, 0.45);
-      background: rgba(15, 23, 42, 0.9);
-      padding: 5px 10px;
-      font-size: 0.7rem;
-      color: #e5e7eb;
+      border: 1px solid var(--input-border);
+      background: rgba(6, 20, 30, 0.9);
+      color: var(--text-soft);
+      font-size: 0.83rem;
+      padding: 6px 10px;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      justify-content: space-between;
+      gap: 6px;
+      width: 100%;
       cursor: pointer;
+      transition: background var(--transition-fast), border-color var(--transition-fast),
+        transform 0.07s ease-out;
     }
 
-    .copy-btn small {
-      font-size: 0.7rem;
-      color: #9ca3af;
+    .pill-button:hover {
+      background: rgba(9, 33, 48, 0.95);
+      border-color: var(--accent-soft);
+      transform: translateY(-0.5px);
     }
 
-    .copy-btn:active {
-      transform: translateY(1px);
+    .pill-button span.label {
+      flex: 1;
+      text-align: left;
     }
 
-    .copy-btn.primary {
-      border-color: rgba(34, 197, 94, 0.7);
-      background: rgba(22, 163, 74, 0.13);
-      color: #bbf7d0;
+    .pill-button span.count {
+      font-size: 0.78rem;
+      opacity: 0.8;
     }
 
-    .copy-toast {
-      margin-top: 3px;
-      font-size: 0.7rem;
-      color: #9ca3af;
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      min-height: 20px;
     }
 
-    .bottom-nav {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: var(--nav-height);
-      border-top: 1px solid rgba(31, 41, 55, 0.9);
-      background: radial-gradient(circle at top, #020617, #020617 60%, #020617);
+    .chip {
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      background: rgba(3, 24, 35, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-soft);
+    }
+
+    /* Anesthesia protocol select */
+
+    .anesthesia-extra-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .small-note {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    /* Collapse helpers */
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Textareas stack */
+
+    .textarea-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    /* ACTION BUTTONS */
+
+    .primary-btn {
+      margin-top: 4px;
+      border-radius: var(--radius-pill);
+      border: none;
+      padding: 9px 18px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #021214;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      align-self: flex-start;
+      box-shadow: 0 12px 25px rgba(0, 209, 138, 0.32);
+      transition: transform 0.08s ease-out, box-shadow 0.08s ease-out,
+        filter 0.08s ease-out;
+    }
+
+    .primary-btn:hover {
+      filter: brightness(1.04);
+      transform: translateY(-1px);
+      box-shadow: 0 17px 34px rgba(0, 209, 138, 0.4);
+    }
+
+    .primary-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 16px rgba(0, 209, 138, 0.3);
+    }
+
+    .primary-btn span.emoji {
+      font-size: 1rem;
+    }
+
+    /* OUTPUT PANEL */
+
+    .output-area {
+      width: 100%;
+      min-height: 200px;
+      max-height: 480px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--input-border);
+      background: var(--bg-card-soft);
+      padding: 10px 11px;
+      font-size: 0.86rem;
+      color: var(--text-main);
+      white-space: pre-wrap;
+      overflow-y: auto;
+    }
+
+    .output-footer-row {
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .bottom-nav-inner {
-      display: inline-flex;
-      background: rgba(15, 23, 42, 0.96);
-      border-radius: 999px;
-      border: 1px solid rgba(55, 65, 81, 0.95);
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.9);
-      overflow: hidden;
+    .output-buttons-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .nav-btn {
-      border: none;
-      background: transparent;
-      padding: 9px 18px;
-      font-size: 0.78rem;
-      color: #9ca3af;
+    .secondary-btn {
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 7px 13px;
+      font-size: 0.84rem;
+      background: rgba(7, 24, 34, 0.98);
+      color: var(--text-soft);
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      cursor: pointer;
-      position: relative;
+      transition: background var(--transition-fast), transform 0.08s ease-out,
+        border-color var(--transition-fast);
     }
 
-    .nav-btn span.icon {
-      font-size: 0.95rem;
+    .secondary-btn:hover {
+      background: rgba(12, 35, 49, 0.98);
+      border-color: rgba(255, 255, 255, 0.18);
+      transform: translateY(-0.5px);
     }
 
-    .nav-btn.active {
-      color: #e5e7eb;
+    .output-status {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .nav-btn.active::before {
-      content: "";
-      position: absolute;
-      inset: 3px;
+    .output-status span.dot {
+      width: 7px;
+      height: 7px;
       border-radius: 999px;
-      background: radial-gradient(circle at top, rgba(34, 197, 94, 0.25), transparent 60%);
-      z-index: -1;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(0, 209, 138, 0.7);
     }
 
-    .nav-indicator {
-      position: absolute;
-      bottom: 6px;
-      height: 3px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #22c55e, #4ade80);
-      transition: transform 0.25s ease, width 0.25s ease;
+    /* FEEDBACK BAR (under output) */
+
+    .feedback-block {
+      margin-top: 6px;
+      border-radius: var(--radius-md);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      padding: 8px 10px;
+      background: rgba(4, 18, 26, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    .tab-panel {
-      display: none;
-    }
-
-    .tab-panel.active {
-      display: block;
-    }
-
-    .coming-soon {
+    .feedback-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
       font-size: 0.8rem;
-      color: #9ca3af;
-      padding-top: 4px;
+      color: var(--text-soft);
     }
 
-    .coming-soon strong {
-      color: #e5e7eb;
+    .feedback-input {
+      border-radius: 8px;
+      border: 1px solid var(--input-border);
+      padding: 6px 8px;
+      min-height: 46px;
+      font-size: 0.82rem;
+      background: rgba(3, 16, 23, 0.96);
+      color: var(--text-main);
+      resize: vertical;
     }
 
-    @media (min-width: 900px) {
-      .app-main {
-        padding: 12px 14px calc(var(--nav-height) + 12px);
+    .feedback-footer-row {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tiny-btn {
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(1, 10, 15, 0.95);
+      color: var(--text-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .chips-missing-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      font-size: 0.76rem;
+    }
+
+    .chip-missing {
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: rgba(8, 30, 40, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-soft);
+    }
+
+    /* DESKTOP RELAY PANEL */
+
+    .relay-panel {
+      margin-top: 8px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-soft);
+      padding: 8px 10px;
+      background: rgba(3, 17, 25, 0.98);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    .relay-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .relay-buttons-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .relay-input-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 0.78rem;
+    }
+
+    .relay-input-row input {
+      max-width: 140px;
+      padding: 4px 7px;
+      font-size: 0.8rem;
+    }
+
+    .relay-status {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* TOOLBOX & CONSULT INPUTS */
+
+    .stacked-card-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .radio-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 0.8rem;
+    }
+
+    .radio-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      cursor: pointer;
+      background: rgba(3, 16, 23, 0.96);
+    }
+
+    .radio-row input[type="radio"] {
+      accent-color: var(--accent);
+    }
+
+    /* OVERLAY for vaccines & anesthesia details (simple modal) */
+
+    .overlay-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.58);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .overlay-backdrop.active {
+      display: flex;
+    }
+
+    .overlay-card {
+      width: min(440px, 92%);
+      max-height: 82vh;
+      background: rgba(2, 14, 22, 0.98);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.85);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .overlay-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--text-soft);
+    }
+
+    .overlay-body {
+      margin-top: 4px;
+      padding-right: 2px;
+      overflow-y: auto;
+      font-size: 0.86rem;
+    }
+
+    .overlay-footer {
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .overlay-footer .secondary-btn {
+      padding-inline: 12px;
+    }
+
+    .list-column {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .list-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .list-row input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    .subtitle-pill {
+      border-radius: 999px;
+      padding: 2px 6px;
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-soft);
+    }
+
+    /* RESPONSIVE */
+
+    @media (max-width: 980px) {
+      body {
+        padding: 8px;
       }
 
-      .panels {
-        flex-direction: row;
-        gap: 12px;
+      .main-layout {
+        grid-template-columns: minmax(0, 1fr);
       }
 
-      .input-panel {
-        flex: 1.4;
+      .card {
+        padding: 12px 12px 11px;
       }
 
-      .output-panel {
-        flex: 1;
+      .output-area {
+        min-height: 180px;
+        max-height: 320px;
       }
 
-      .form-grid {
+      .app-header {
+        padding-inline: 12px;
+      }
+
+      .moksha-logo {
+        max-width: 220px;
+      }
+
+      .input-grid-top,
+      .input-grid-row {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .form-row.two {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      .anesthesia-extra-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .header-subtitle-row {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
       }
 
-      .form-row.three {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+      .header-subtitle-right {
+        justify-content: center;
+      }
+
+      .input-grid-top,
+      .input-grid-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .main-tabs {
+        row-gap: 6px;
       }
     }
   </style>
 </head>
+
 <body>
-  <div class="app-shell">
+  <div id="app-shell">
+    <!-- HEADER -->
     <header class="app-header">
-      <div class="logo-wrap">
-        <div class="logo-mark">
-          <span>MS</span>
+      <div class="header-logo-wrap">
+        <!-- Make sure moksha-logo.png exists next to this file -->
+        <img src="moksha-logo.png" alt="Moksha SOAP logo" class="moksha-logo" />
+      </div>
+
+      <div class="header-subtitle-row">
+        <div class="header-subtitle-left">
+          <span class="app-subtitle">
+            Lohit SOAP App · Moksha SOAP · SOAP · Toolbox · Consult · Phone ↔ Desktop
+          </span>
         </div>
-        <div class="header-text">
-          <h1>Vet SOAP Studio</h1>
-          <small>Main Street Markham • Simcoe Rossland</small>
+        <div class="header-subtitle-right">
+          <span class="pill" id="backend-pill">
+            <span class="pill-dot"></span>
+            Backend reachable
+          </span>
+          <span class="pill version-pill">v1.7.6 · Hybrid UI + Recorder</span>
         </div>
       </div>
-      <div class="header-right">
-        <div class="pill">
-          <div class="pill-dot"></div>
-          <span>Clinic-safe local UI</span>
-        </div>
-      </div>
+
+      <nav class="main-tabs">
+        <button class="tab-button active" data-tab="soap">
+          <span class="emoji">📄</span><span>SOAP</span>
+        </button>
+        <button class="tab-button" data-tab="toolbox">
+          <span class="emoji">🧰</span><span>Toolbox</span>
+        </button>
+        <button class="tab-button" data-tab="consult">
+          <span class="emoji">💭</span><span>Consult</span>
+        </button>
+      </nav>
     </header>
 
-    <main class="app-main">
-      <div class="panels">
-        <!-- LEFT / INPUT SIDE -->
-        <section class="input-panel">
-          <div class="panel-header">
-            <h2>Input</h2>
-            <div class="chip-row">
-              <div class="chip chip-strong"><span>Mode</span> SOAP</div>
-              <div class="chip">QR / Vision ready</div>
+    <!-- MAIN LAYOUT -->
+    <div class="main-layout">
+      <!-- LEFT: INPUT PANEL (SOAP / TOOLBOX / CONSULT) -->
+      <section class="card" id="soap-input-card">
+        <div class="card-header-row">
+          <div class="card-title">
+            SOAP INPUT
+            <span class="badge">Appointment · Surgery · Voice</span>
+          </div>
+          <div class="card-subtitle">Moksha SOAP · v1.7.6 Hybrid</div>
+        </div>
+
+        <!-- Upload row (phone camera / screenshot) -->
+        <div class="upload-row">
+          <button class="upload-btn" id="upload-from-phone-btn">
+            <span class="emoji">📷</span><span>Upload from this phone</span>
+          </button>
+          <input type="file" id="phone-file-input" accept="image/*,application/pdf"
+            multiple style="display: none" />
+          <span class="small-note">
+            Attach screenshots / docs to guide SOAP or Toolbox.
+          </span>
+        </div>
+
+        <!-- Basic signalment + visit flags -->
+        <div class="input-grid-top">
+          <div class="field">
+            <label for="case-label">Case label</label>
+            <input id="case-label" type="text" placeholder="e.g. Bella – Spay recheck" />
+          </div>
+          <div class="field">
+            <label for="patient-name">Patient name</label>
+            <input id="patient-name" type="text" placeholder="e.g. Bella" />
+          </div>
+          <div class="field">
+            <label for="weight-kg">Weight (kg)</label>
+            <input id="weight-kg" type="number" step="0.1" min="0" placeholder="e.g. 6.4" />
+          </div>
+        </div>
+
+        <div class="input-grid-row">
+          <div class="field">
+            <label for="species-select">Species</label>
+            <select id="species-select">
+              <option value="">Select species</option>
+              <option value="canine">Canine</option>
+              <option value="feline">Feline</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sex-select">Sex</label>
+            <select id="sex-select">
+              <option value="">Sex</option>
+              <option value="female-spayed">FS</option>
+              <option value="female-intact">FI</option>
+              <option value="male-neutered">MN</option>
+              <option value="male-intact">MI</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label-row">
+              <label>Visit type</label>
+            </div>
+            <div class="inline-toggle-group" id="visit-type-toggle">
+              <button class="inline-toggle active" data-visit="appointment">Appointment</button>
+              <button class="inline-toggle" data-visit="surgery">Surgery</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-grid-row">
+          <div class="field">
+            <label>Appointment vs Surgery</label>
+            <div class="inline-toggle-group" id="avs-toggle">
+              <button class="inline-toggle active" data-avs="appointment">Appointment</button>
+              <button class="inline-toggle" data-avs="surgery">Surgery</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="asa-select">ASA (surgery)</label>
+            <select id="asa-select">
+              <option value="">Select ASA</option>
+              <option value="1">ASA I</option>
+              <option value="2">ASA II</option>
+              <option value="3">ASA III</option>
+              <option value="4">ASA IV</option>
+              <option value="5">ASA V</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="tpr-notes">TPR / notes</label>
+            <input id="tpr-notes" type="text" placeholder="TPR, BCS, key vitals / comments" />
+          </div>
+        </div>
+
+        <div class="input-grid-row" id="appointment-vs-surgery-row">
+          <div class="field" id="appointment-preset-field">
+            <label for="appointment-preset">Appointment preset</label>
+            <select id="appointment-preset">
+              <option value="custom">Custom / blank</option>
+              <option value="wellness">Wellness / vaccines</option>
+              <option value="gi-upset">GI upset</option>
+              <option value="derm-otitis">Derm / otitis</option>
+              <option value="cough-uri">Cough / URI</option>
+              <option value="lameness">Lameness</option>
+              <option value="senior-multi">Senior / multi-issue</option>
+              <option value="recheck">Recheck</option>
+            </select>
+          </div>
+
+          <div class="field" id="surgery-preset-field">
+            <label for="surgery-preset">Surgery preset</label>
+            <select id="surgery-preset">
+              <option value="custom">Custom surgery</option>
+              <option value="canine-spay">Canine spay</option>
+              <option value="canine-neuter">Canine neuter</option>
+              <option value="feline-spay">Feline spay</option>
+              <option value="feline-neuter">Feline neuter</option>
+              <option value="dental-rads">Dental – COHAT with rads</option>
+              <option value="dental-no-rads">Dental – COHAT (no rads)</option>
+              <option value="mass-removal">Mass removal</option>
+              <option value="cystotomy">Cystotomy</option>
+              <option value="pyometra-spay">Pyometra spay</option>
+              <option value="exploratory-lap">Exploratory laparotomy</option>
+              <option value="enterotomy">Enterotomy</option>
+              <option value="gastrotomy">Gastrotomy</option>
+              <option value="gastropexy">Gastropexy</option>
+              <option value="feline-u-block">Feline urethral unblock</option>
+            </select>
+          </div>
+
+          <div class="field" id="surgery-mode-field">
+            <label>Surgery mode</label>
+            <div class="inline-toggle-group" id="surgery-mode-toggle">
+              <button class="inline-toggle active" data-surgery-mode="simple">Simple</button>
+              <button class="inline-toggle" data-surgery-mode="advanced">Advanced</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vaccines checkbox + multi-select (mostly for wellness) -->
+        <div class="checkbox-row">
+          <input type="checkbox" id="vaccines-today" />
+          <label for="vaccines-today">Vaccines done today</label>
+          <span class="small-note">Auto-open for Wellness; optional otherwise</span>
+        </div>
+
+        <div class="vaccines-row" id="vaccines-picker-row" class="hidden">
+          <button type="button" class="pill-button" id="vaccines-pill-btn">
+            <span class="label">Vaccines</span>
+            <span class="count" id="vaccines-count-label">0 selected</span>
+          </button>
+          <div class="chips-row" id="vaccines-chips"></div>
+        </div>
+
+        <!-- Anesthesia protocol (advanced surgery mode) -->
+        <div id="anesthesia-advanced-block" class="hidden">
+          <div class="field" style="margin-top: 8px;">
+            <div class="field-label-row">
+              <label for="anesthesia-protocol-select">Anesthesia protocol</label>
+              <span class="hint">Simple mode = optional; Advanced = fill this</span>
+            </div>
+            <select id="anesthesia-protocol-select">
+              <option value="">Select protocol</option>
+              <!-- TDK -->
+              <option value="tdk-im">TDK 1:1:1:1 (IM)</option>
+              <option value="tdk-iv">TDK 1:1:1:1 (IV)</option>
+              <!-- Methadone-based -->
+              <option value="meth-midaz-im">Methadone + Midazolam (IM)</option>
+              <option value="meth-midaz-iv">Methadone + Midazolam (IV)</option>
+              <option value="meth-dex-im">Methadone + Dexmed (IM)</option>
+              <option value="meth-dex-iv">Methadone + Dexmed (IV)</option>
+              <option value="meth-alone-im">Methadone alone (IM)</option>
+              <option value="meth-alone-iv">Methadone alone (IV)</option>
+              <!-- Hydromorphone-based -->
+              <option value="hydro-midaz-im">Hydromorphone + Midazolam (IM)</option>
+              <option value="hydro-midaz-iv">Hydromorphone + Midazolam (IV)</option>
+              <option value="hydro-dex-im">Hydromorphone + Dexmed (IM)</option>
+              <option value="hydro-dex-iv">Hydromorphone + Dexmed (IV)</option>
+              <option value="hydro-alone-im">Hydromorphone alone (IM)</option>
+              <option value="hydro-alone-iv">Hydromorphone alone (IV)</option>
+              <!-- Butorphanol-based -->
+              <option value="torb-midaz-im">Torb + Midazolam (IM)</option>
+              <option value="torb-midaz-iv">Torb + Midazolam (IV)</option>
+              <option value="torb-ket-midaz-im">
+                Torb + Ketamine + Midaz (IM)
+              </option>
+              <option value="torb-ket-midaz-iv">
+                Torb + Ketamine + Midaz (IV)
+              </option>
+              <!-- Buprenorphine-based -->
+              <option value="bup-midaz-im">Buprenorphine + Midaz (IM)</option>
+              <option value="bup-midaz-iv">Buprenorphine + Midaz (IV)</option>
+              <option value="bup-dex-im">Buprenorphine + Dexmed (IM)</option>
+              <option value="bup-dex-iv">Buprenorphine + Dexmed (IV)</option>
+              <option value="bup-alone-im">Buprenorphine alone (IM)</option>
+              <option value="bup-alone-iv">Buprenorphine alone (IV)</option>
+              <option value="bup-sr">
+                Buprenorphine SR (IM only – post-op analgesia)
+              </option>
+            </select>
+            <div class="small-note">
+              Simple mode: you can skip this and just use free-text notes below. Advanced:
+              picking a cocktail helps the brain auto-fill mg/kg + mL using your standard
+              doses and concentrations.
             </div>
           </div>
 
-          <!-- TOP TOGGLES -->
-          <div class="toggle-group">
-            <div>
-              <div class="subtoggle-label">Case Type</div>
-              <div class="toggle-pill" id="caseTypeToggle">
-                <button type="button" data-case="surgery" class="active">Surgery</button>
-                <button type="button" data-case="appointment">Appointment</button>
-              </div>
+          <div class="anesthesia-extra-row" style="margin-top: 6px;">
+            <div class="field">
+              <label for="induction-notes">Induction</label>
+              <input id="induction-notes" type="text"
+                placeholder="e.g. Ketamine + diazepam, propofol, alfaxan, mask, etc." />
             </div>
+            <div class="field">
+              <label for="maintenance-notes">Maintenance</label>
+              <input id="maintenance-notes" type="text"
+                placeholder="e.g. Isoflurane / sevoflurane / CRI notes." />
+            </div>
+          </div>
+        </div>
 
-            <div id="surgeryModeWrapper">
-              <div class="subtoggle-label">Surgery Inputs</div>
-              <div class="toggle-pill" id="surgeryModeToggle">
-                <button type="button" data-mode="simple" class="active">Simple</button>
-                <button type="button" data-mode="advanced">Advanced</button>
-              </div>
+        <!-- CORE TEXTAREAS -->
+
+        <div class="textarea-stack">
+          <div class="field">
+            <label for="core-notes">Core notes / history</label>
+            <textarea id="core-notes"
+              placeholder="Why are they here today? Pertinent history, owner concerns, context."></textarea>
+          </div>
+          <div class="field">
+            <label for="pe-objective">PE & diagnostics (data only)</label>
+            <textarea id="pe-objective"
+              placeholder="Include PE systems list, diagnostic results, vitals – values only, no interpretation."></textarea>
+          </div>
+          <div class="field">
+            <label for="assessment-hints">Assessment hints</label>
+            <textarea id="assessment-hints"
+              placeholder="What are you worried about? Rule-outs, problem list, ASA grade for anesthesia cases."></textarea>
+          </div>
+          <div class="field">
+            <label for="plan-hints">Plan & discharge hints</label>
+            <textarea id="plan-hints"
+              placeholder="Diagnostics, treatments, procedures, recheck timing, what you told the owner, activity restrictions."></textarea>
+          </div>
+          <div class="field">
+            <label for="extra-notes">Extra instructions / anything else</label>
+            <textarea id="extra-notes"
+              placeholder="Edge cases, special instructions, inventory notes, anything weird or important."></textarea>
+          </div>
+        </div>
+
+        <!-- Optional external transcript & voice notes -->
+        <details style="margin-top: 6px;">
+          <summary style="cursor: pointer; font-size: 0.82rem; color: var(--text-soft);">
+            External transcript (optional – paste Covet transcript or call log)
+          </summary>
+          <div class="field" style="margin-top: 4px;">
+            <textarea id="external-transcript" placeholder="Paste external transcript here."></textarea>
+          </div>
+        </details>
+
+        <details style="margin-top: 4px;">
+          <summary style="cursor: pointer; font-size: 0.82rem; color: var(--text-soft);">
+            Voice notes (optional – paste transcription or typed notes)
+          </summary>
+          <div class="field" style="margin-top: 4px;">
+            <textarea id="voice-notes" placeholder="Dictation from room / hallway, etc."></textarea>
+          </div>
+        </details>
+
+        <button class="primary-btn" id="generate-soap-btn">
+          <span class="emoji">✨</span>
+          <span>Generate SOAP</span>
+        </button>
+      </section>
+
+      <!-- TOOLBOX INPUT CARD (hidden until toolbox tab) -->
+      <section class="card hidden" id="toolbox-input-card">
+        <div class="card-header-row">
+          <div class="card-title">
+            TOOLBOX INPUT
+            <span class="badge">Bloodwork · Emails · Quick text</span>
+          </div>
+          <div class="card-subtitle">Text-only beta · v1.7.6 Lite</div>
+        </div>
+
+        <div class="stacked-card-inner">
+          <div class="field">
+            <label>Tool</label>
+            <div class="radio-row">
+              <label>
+                <input type="radio" name="toolbox-tool" value="bw-lite" checked />
+                <span>Bloodwork Helper (Lite)</span>
+              </label>
+              <label>
+                <input type="radio" name="toolbox-tool" value="email-helper" />
+                <span>Email / Client communication</span>
+              </label>
             </div>
           </div>
 
-          <!-- TAB PANELS (SOAP / CONSULT / TOOLBOX) -->
-          <div id="tab-soap" class="tab-panel active">
-            <!-- Surgery SIMPLE -->
-            <div id="surgery-simple-form">
-              <div class="form-grid">
-                <div class="field">
-                  <label for="simple-case-label">Case label / patient</label>
-                  <input id="simple-case-label" type="text" placeholder="Eg. Wonton – canine spay" />
-                </div>
-                <div class="field">
-                  <label for="simple-template">Surgery template</label>
-                  <select id="simple-template">
-                    <option value="canine-spay-standard">Canine spay – standard</option>
-                    <option value="canine-neuter-standard">Canine neuter – standard</option>
-                    <option value="feline-spay-standard">Feline spay – standard</option>
-                    <option value="feline-neuter-standard">Feline neuter – standard</option>
-                    <option value="dental-cohat">Dental – COHAT</option>
-                    <option value="mass-removal">Mass removal</option>
-                    <option value="other">Other / custom</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="simple-notes">Key notes (anything you want me to respect)</label>
-                  <textarea id="simple-notes" placeholder="Eg. IV catheter 22g cephalic, fluids 5 ml/kg/hr, 0 Monocryl override, send home Onsior + Gabapentin."></textarea>
-                </div>
-                <div class="field">
-                  <label for="simple-aftercare">Specific aftercare or restrictions (optional)</label>
-                  <textarea id="simple-aftercare" placeholder="Eg. No cone tonight if supervised, strict rest 10–14 days, recheck in 10 days for suture removal."></textarea>
-                </div>
-              </div>
-            </div>
+          <div class="field">
+            <label for="toolbox-input-text">Paste data / request</label>
+            <textarea id="toolbox-input-text"
+              placeholder="Paste bloodwork, cytology, or write what you want (e.g. 'draft a brief email explaining these liver enzymes')."></textarea>
+          </div>
 
-            <!-- Surgery ADVANCED -->
-            <div id="surgery-advanced-form" style="display:none;">
-              <div class="form-grid">
-                <div class="field">
-                  <label for="adv-case-label">Case label / patient</label>
-                  <input id="adv-case-label" type="text" placeholder="Eg. Rocky – canine neuter, rescue" />
-                </div>
-                <div class="field">
-                  <label for="adv-template">Surgery template</label>
-                  <select id="adv-template">
-                    <option value="canine-spay-standard">Canine spay – standard</option>
-                    <option value="canine-spay-rescue">Canine spay – rescue</option>
-                    <option value="canine-neuter-standard">Canine neuter – standard</option>
-                    <option value="canine-neuter-rescue">Canine neuter – rescue</option>
-                    <option value="feline-spay-standard">Feline spay – standard</option>
-                    <option value="feline-spay-rescue">Feline spay – rescue</option>
-                    <option value="feline-neuter-standard">Feline neuter – standard</option>
-                    <option value="dental-rads">Dental – COHAT + rads</option>
-                    <option value="dental-norads">Dental – COHAT (no rads)</option>
-                    <option value="mass-removal">Mass removal</option>
-                    <option value="exploratory">Exploratory laparotomy</option>
-                    <option value="cystotomy">Cystotomy</option>
-                    <option value="pyo-spay">Pyometra spay</option>
-                    <option value="other">Other / custom</option>
-                  </select>
-                </div>
-
-                <div class="field">
-                  <label>Signalment / weight</label>
-                  <input id="adv-signalment" type="text" placeholder="Eg. 3y FS DSH, 4.0 kg" />
-                </div>
-
-                <div class="field">
-                  <label for="adv-asa">ASA status</label>
-                  <select id="adv-asa">
-                    <option value="I">I – healthy</option>
-                    <option value="II">II – mild systemic disease</option>
-                    <option value="III">III – severe systemic disease</option>
-                    <option value="IV">IV – severe disease (life-threatening)</option>
-                    <option value="V">V – moribund</option>
-                  </select>
-                </div>
-
-                <div class="form-row two">
-                  <div class="field">
-                    <label for="adv-ett">ET tube size</label>
-                    <input id="adv-ett" type="text" placeholder="Eg. 7.5 mm" />
-                  </div>
-                  <div class="field">
-                    <label for="adv-cath">IV catheter</label>
-                    <input id="adv-cath" type="text" placeholder="Eg. 22g cephalic, left" />
-                  </div>
-                </div>
-
-                <div class="form-row two">
-                  <div class="field">
-                    <label for="adv-fluids-rate">Fluids (ml/kg/hr)</label>
-                    <input id="adv-fluids-rate" type="number" step="0.1" placeholder="Eg. 5" />
-                    <div class="checkbox-row">
-                      <input id="adv-fluids-declined" type="checkbox" />
-                      <label for="adv-fluids-declined">Fluids declined</label>
-                    </div>
-                  </div>
-                  <div class="field">
-                    <label for="adv-fluids-note">Fluids notes (optional)</label>
-                    <input id="adv-fluids-note" type="text" placeholder="Eg. Cats 3 ml/kg/hr, bolus if needed" />
-                  </div>
-                </div>
-
-                <div class="field">
-                  <label for="adv-premed">Premed combo</label>
-                  <select id="adv-premed">
-                    <option value="">Select or leave blank</option>
-                    <option value="dex-methadone">Dexmedetomidine + Methadone</option>
-                    <option value="methadone-midazolam">Methadone + Midazolam</option>
-                    <option value="tdk">TDK (ketamine + dex + torb + saline)</option>
-                    <option value="bup-single">Buprenorphine only</option>
-                    <option value="torb-dex">Butorphanol + Dexmedetomidine</option>
-                    <option value="other">Other / custom (type below)</option>
-                  </select>
-                  <small>Volumes, exact doses, and routes can go into the free-text details.</small>
-                </div>
-
-                <div class="field">
-                  <label for="adv-premed-notes">Premed details</label>
-                  <textarea id="adv-premed-notes" placeholder="Eg. Dexmed 3 µg/kg IV, Methadone 0.2 ml IV, Bup 0.06 mg/kg IM."></textarea>
-                </div>
-
-                <div class="field">
-                  <label for="adv-induction">Induction / maintenance</label>
-                  <textarea id="adv-induction" placeholder="Eg. Propofol to effect IV, isoflurane in oxygen via ET tube, local blocks as per dental protocol."></textarea>
-                </div>
-
-                <div class="field">
-                  <label for="adv-intraop">Intra-op meds / extras</label>
-                  <textarea id="adv-intraop" placeholder="Eg. Meloxicam, Lidocaine CRI, additional Dexmed 3 µg/kg IV on recovery for dysphoria."></textarea>
-                </div>
-
-                <div class="field">
-                  <label for="adv-procedure-notes">Procedure notes (anything you want explicit)</label>
-                  <textarea id="adv-procedure-notes" placeholder="Eg. Cryptorchid neuter, 0 Monocryl linea, 2-0 Monocryl SQ and intradermal, dental extractions with tension-free flap."></textarea>
-                </div>
-
-                <div class="field">
-                  <label for="adv-postop">Post-op meds / send-home</label>
-                  <textarea id="adv-postop" placeholder="Eg. Gabapentin, Onsior, Trazodone PRN."></textarea>
-                </div>
-
-                <div class="field">
-                  <label for="adv-aftercare">Specific aftercare instructions</label>
-                  <textarea id="adv-aftercare" placeholder="Eg. Activity restriction, E-collar duration, recheck date, monitoring for lethargy, vomiting, swelling."></textarea>
-                </div>
-              </div>
-            </div>
-
-            <!-- Appointment FORM -->
-            <div id="appointment-form" style="display:none;">
-              <div class="form-grid">
-                <div class="field">
-                  <label for="appt-case-label">Case label / patient</label>
-                  <input id="appt-case-label" type="text" placeholder="Eg. Oreo – vomiting & diarrhea" />
-                </div>
-                <div class="field">
-                  <label for="appt-template">Appointment template</label>
-                  <select id="appt-template">
-                    <option value="wellness">Wellness / vaccines</option>
-                    <option value="gi-upset">GI upset</option>
-                    <option value="derm-otitis">Derm / otitis</option>
-                    <option value="lameness">Lameness</option>
-                    <option value="cough-uri">Cough / URI</option>
-                    <option value="weight-consult">Weight consult</option>
-                    <option value="other">Other / custom</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="appt-subjective">Subjective / history</label>
-                  <textarea id="appt-subjective" placeholder="Owner concerns, duration, appetite, drinking, energy, etc."></textarea>
-                </div>
-                <div class="field">
-                  <label for="appt-objective">Objective / PE & diagnostics (data only)</label>
-                  <textarea id="appt-objective" placeholder="TPR, weight, BCS, PE findings, lab/rads data (no interpretation)."></textarea>
-                </div>
-                <div class="field">
-                  <label for="appt-assessment">Assessment / problem list</label>
-                  <textarea id="appt-assessment" placeholder="Problem list, differentials, interpretation of lab findings."></textarea>
-                </div>
-                <div class="field">
-                  <label for="appt-plan">Plan (treatments / follow-up)</label>
-                  <textarea id="appt-plan" placeholder="Diagnostics, treatments, home care, recheck timing."></textarea>
-                </div>
-                <div class="field">
-                  <label for="appt-meds">Meds dispensed (optional)</label>
-                  <textarea id="appt-meds" placeholder="Drug, concentration, dose, route, frequency, duration."></textarea>
-                </div>
-              </div>
-            </div>
-
-            <!-- Generate button + feedback bar -->
-            <button type="button" class="primary-btn" id="generateBtn">
-              <span>⚡</span>
-              Generate SOAP
-            </button>
-
-            <div class="helper-text">
-              I will respect your case type (surgery vs appointment) and keep Objective vs Assessment clean.
-            </div>
-
-            <div class="feedback-bar" id="feedbackBar">
-              <span id="feedbackText">
-                Tip: Adding ET tube size, IV catheter site, and fluids rate will sharpen the surgical Plan.
-              </span>
-              <div class="feedback-chips">
-                <div class="feedback-chip">ETT size</div>
-                <div class="feedback-chip">IV catheter</div>
-                <div class="feedback-chip">Fluids rate</div>
-              </div>
+          <div class="field">
+            <label>Detail level</label>
+            <div class="radio-row">
+              <label>
+                <input type="radio" name="toolbox-detail" value="short" checked />
+                <span>Short</span>
+              </label>
+              <label>
+                <input type="radio" name="toolbox-detail" value="standard" />
+                <span>Standard</span>
+              </label>
+              <label>
+                <input type="radio" name="toolbox-detail" value="expanded" />
+                <span>Expanded</span>
+              </label>
             </div>
           </div>
 
-          <!-- CONSULT TAB PANEL -->
-          <div id="tab-consult" class="tab-panel">
-            <div class="coming-soon">
-              <strong>Consult mode</strong> will be your “mini brain” for quick emails, client handouts, and
-              summaries. For now, you can still use the main SOAP generator and just tell it in the notes what you want.
-            </div>
+          <button class="primary-btn" id="generate-toolbox-btn">
+            <span class="emoji">🧰</span>
+            <span>Run Toolbox</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- CONSULT INPUT CARD (hidden until consult tab) -->
+      <section class="card hidden" id="consult-input-card">
+        <div class="card-header-row">
+          <div class="card-title">
+            CONSULT INPUT
+            <span class="badge">Free-form · Small animal focus</span>
+          </div>
+          <div class="card-subtitle">Ask Moksha SOAP anything case-related</div>
+        </div>
+
+        <div class="stacked-card-inner">
+          <div class="field">
+            <label for="consult-text">Consult prompt</label>
+            <textarea id="consult-text"
+              placeholder="Describe the case, upload screenshots via the header button, and ask for what you need (e.g. 'help structure a weight consult discharge', 'outline a derm workup', etc.)."></textarea>
           </div>
 
-          <!-- TOOLBOX TAB PANEL -->
-          <div id="tab-toolbox" class="tab-panel">
-            <div class="coming-soon">
-              <strong>Toolbox Lite</strong> (bloodwork helper, email helper) will live here. We’ll hook this page into
-              your server later so you can paste labs or type “draft an email” and go.
+          <button class="primary-btn" id="generate-consult-btn">
+            <span class="emoji">💭</span>
+            <span>Generate consult output</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- RIGHT: OUTPUT + RELAY PANEL -->
+      <section class="card">
+        <div class="card-header-row">
+          <div class="card-title">
+            OUTPUT · AI BRAIN – <span id="output-mode-label">SOAP</span>
+          </div>
+          <div class="card-subtitle">
+            <span id="output-chip">Ready</span>
+          </div>
+        </div>
+
+        <div class="output-area" id="output-area">
+          SOAP / Toolbox / Consult output will appear here.
+        </div>
+
+        <div class="output-footer-row">
+          <div class="output-buttons-row">
+            <button class="secondary-btn" id="copy-full-soap-btn">
+              <span class="emoji">📋</span>
+              <span>Copy full SOAP / output</span>
+            </button>
+            <button class="secondary-btn" id="copy-plan-meds-btn">
+              <span class="emoji">💊</span>
+              <span>Copy Plan + Meds + Aftercare</span>
+            </button>
+            <button class="secondary-btn" id="send-to-desktop-btn">
+              <span class="emoji">🖥️</span>
+              <span>Send output to desktop</span>
+            </button>
+          </div>
+          <div class="output-status">
+            <span class="dot"></span>
+            <span id="output-status-text">Ready</span>
+          </div>
+        </div>
+
+        <!-- Feedback bar -->
+        <div class="feedback-block">
+          <div class="feedback-header-row">
+            <span>Feedback to Moksha SOAP</span>
+            <span class="subtitle-pill">Brain tuning (local only)</span>
+          </div>
+          <textarea id="feedback-input" class="feedback-input"
+            placeholder="What would you change in this output? Missing details, tone, formatting, etc."></textarea>
+          <div class="feedback-footer-row">
+            <button class="tiny-btn" id="apply-feedback-btn">
+              <span class="emoji">🔁</span><span>Apply feedback & refine</span>
+            </button>
+            <div class="chips-missing-row" id="missing-chips-row">
+              <!-- Filled dynamically after a run -->
             </div>
           </div>
-        </section>
+        </div>
 
-        <!-- RIGHT / OUTPUT SIDE -->
-        <section class="output-panel">
-          <div class="output-header">
-            <h2>SOAP Output</h2>
-            <div class="status-pill status-ok">
-              <span>Ready</span>
-              <div style="width:6px;height:6px;border-radius:999px;background:#22c55e;"></div>
+        <!-- Desktop relay panel -->
+        <div class="relay-panel">
+          <div class="relay-header-row">
+            <span>Phone ↔ Desktop relay · Uploads</span>
+            <span class="subtitle-pill">Clinic-only</span>
+          </div>
+          <div class="relay-input-row">
+            <span>Relay ID</span>
+            <input type="text" id="relay-id-input" placeholder="auto" />
+            <button class="tiny-btn" id="new-relay-id-btn">New</button>
+          </div>
+
+          <div class="relay-buttons-row">
+            <button class="tiny-btn" id="receive-text-btn">
+              <span class="emoji">📩</span><span>Receive text from phone</span>
+            </button>
+            <button class="tiny-btn" id="receive-files-btn" disabled>
+              <span class="emoji">📁</span><span>Receive files from phone</span>
+            </button>
+            <button class="tiny-btn" id="upload-from-desktop-btn">
+              <span class="emoji">🖼️</span><span>Upload from this device</span>
+            </button>
+            <input type="file" id="desktop-file-input" accept="image/*,application/pdf"
+              multiple style="display: none" />
+          </div>
+          <div class="relay-status" id="relay-status-text">
+            No files uploaded yet. Use Send output to desktop from your phone, then Receive text here.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Vaccines overlay -->
+    <div class="overlay-backdrop" id="vaccines-overlay">
+      <div class="overlay-card">
+        <div class="overlay-header-row">
+          <span>Vaccines today</span>
+          <button class="tiny-btn" type="button" id="close-vaccines-overlay-btn">
+            ✕ Close
+          </button>
+        </div>
+        <div class="overlay-body">
+          <div class="list-column">
+            <div class="list-row">
+              <input type="checkbox" data-vaccine="da2pp-1" id="v-da2pp-1" />
+              <label for="v-da2pp-1">DA2PP – 1-year (SQ LH)</label>
+            </div>
+            <div class="list-row">
+              <input type="checkbox" data-vaccine="da2pp-3" id="v-da2pp-3" />
+              <label for="v-da2pp-3">DA2PP – 3-year (SQ LH)</label>
+            </div>
+            <div class="list-row">
+              <input type="checkbox" data-vaccine="rabies-1" id="v-rabies-1" />
+              <label for="v-rabies-1">Rabies – 1-year (SQ RH)</label>
+            </div>
+            <div class="list-row">
+              <input type="checkbox" data-vaccine="rabies-3" id="v-rabies-3" />
+              <label for="v-rabies-3">Rabies – 3-year (SQ RH)</label>
+            </div>
+            <div class="list-row">
+              <input type="checkbox" data-vaccine="lyme" id="v-lyme" />
+              <label for="v-lyme">Lyme (SQ LF)</label>
+            </div>
+            <div class="list-row">
+              <input type="checkbox" data-vaccine="lepto" id="v-lepto" />
+              <label for="v-lepto">Leptospirosis (SQ RF)</label>
+            </div>
+            <div class="list-row">
+              <input type="checkbox" data-vaccine="bord-inj" id="v-bord-inj" />
+              <label for="v-bord-inj">
+                Bordetella – injectable (SQ dorsum)
+              </label>
+            </div>
+            <div class="list-row">
+              <input type="checkbox" data-vaccine="bord-oral" id="v-bord-oral" />
+              <label for="v-bord-oral">Bordetella – oral</label>
+            </div>
+            <div class="list-row">
+              <input type="checkbox" data-vaccine="feline-rccp" id="v-rccp" />
+              <label for="v-rccp">FVRCP (cats)</label>
+            </div>
+            <div class="list-row">
+              <input type="checkbox" data-vaccine="felv" id="v-felv" />
+              <label for="v-felv">FeLV</label>
             </div>
           </div>
-          <pre id="soapOutput">Waiting for input...
-- Choose Surgery vs Appointment
-- Fill in a few key fields
-- Hit “Generate SOAP”</pre>
-
-          <div class="copy-row">
-            <button type="button" class="copy-btn primary" id="copyFull">
-              <span>📋 Full SOAP</span>
-            </button>
-            <button type="button" class="copy-btn" id="copySubjective">
-              <span>📋 S</span><small>Subjective</small>
-            </button>
-            <button type="button" class="copy-btn" id="copyObjective">
-              <span>📋 O</span><small>Objective</small>
-            </button>
-            <button type="button" class="copy-btn" id="copyAssessment">
-              <span>📋 A</span><small>Assessment</small>
-            </button>
-            <button type="button" class="copy-btn" id="copyPlan">
-              <span>📋 P</span><small>Plan</small>
-            </button>
-            <button type="button" class="copy-btn" id="copyPlanMedsAftercare">
-              <span>📋 P + M + After</span>
-            </button>
-          </div>
-          <div class="copy-toast" id="copyToast"></div>
-        </section>
+        </div>
+        <div class="overlay-footer">
+          <span class="small-note">
+            Selections are used to help Plan & inventory wording, nothing is billed here.
+          </span>
+          <button class="secondary-btn" type="button" id="vaccines-apply-btn">
+            ✓ Done
+          </button>
+        </div>
       </div>
-    </main>
-
-    <!-- BOTTOM NAV -->
-    <nav class="bottom-nav">
-      <div class="bottom-nav-inner" id="bottomNav">
-        <button type="button" class="nav-btn active" data-tab="soap">
-          <span class="icon">📝</span>
-          <span>SOAP</span>
-        </button>
-        <button type="button" class="nav-btn" data-tab="consult">
-          <span class="icon">💬</span>
-          <span>Consult</span>
-        </button>
-        <button type="button" class="nav-btn" data-tab="toolbox">
-          <span class="icon">🧰</span>
-          <span>Toolbox</span>
-        </button>
-        <div class="nav-indicator" id="navIndicator"></div>
-      </div>
-    </nav>
+    </div>
   </div>
 
   <script>
-    // ---------- TAB NAV ----------
-    const navButtons = Array.from(document.querySelectorAll(".nav-btn"));
-    const navIndicator = document.getElementById("navIndicator");
-    const tabPanels = {
-      soap: document.getElementById("tab-soap"),
-      consult: document.getElementById("tab-consult"),
-      toolbox: document.getElementById("tab-toolbox"),
-    };
+    // ---------- UTILS ----------
 
-    function updateNavIndicator() {
-      const active = document.querySelector(".nav-btn.active");
-      if (!active) return;
-      const rect = active.getBoundingClientRect();
-      const parentRect = active.parentElement.getBoundingClientRect();
-      const width = rect.width - 16;
-      const left = rect.left - parentRect.left + 8;
-      navIndicator.style.width = width + "px";
-      navIndicator.style.transform = `translateX(${left}px)`;
+    function $(id) {
+      return document.getElementById(id);
     }
 
-    function setActiveTab(tab) {
-      navButtons.forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.tab === tab);
+    function copyToClipboard(text) {
+      if (!navigator.clipboard) {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        document.body.removeChild(temp);
+        return;
+      }
+      navigator.clipboard.writeText(text).catch(console.error);
+    }
+
+    function setOutputStatus(text, busy) {
+      const status = $("output-status-text");
+      const chip = $("output-chip");
+      status.textContent = text;
+      chip.textContent = busy ? "Working…" : "Ready";
+    }
+
+    function getActiveTab() {
+      const btn = document.querySelector(".tab-button.active");
+      return btn ? btn.dataset.tab : "soap";
+    }
+
+    // ---------- TAB SWITCHING ----------
+
+    const tabButtons = document.querySelectorAll(".tab-button");
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        tabButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const tab = btn.dataset.tab;
+        $("output-mode-label").textContent = tab.toUpperCase();
+
+        // toggle cards
+        $("soap-input-card").classList.toggle("hidden", tab !== "soap");
+        $("toolbox-input-card").classList.toggle("hidden", tab !== "toolbox");
+        $("consult-input-card").classList.toggle("hidden", tab !== "consult");
       });
-      Object.entries(tabPanels).forEach(([key, panel]) => {
-        panel.classList.toggle("active", key === tab);
-      });
-      updateNavIndicator();
-    }
-
-    navButtons.forEach((btn) => {
-      btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
     });
 
-    window.addEventListener("resize", updateNavIndicator);
-    window.addEventListener("load", updateNavIndicator);
+    // ---------- VISIT TYPE / AVS / SURGERY MODE ----------
 
-    // ---------- CASE TYPE + SURGERY MODE ----------
-    const caseTypeToggle = document.getElementById("caseTypeToggle");
-    const surgeryModeToggle = document.getElementById("surgeryModeToggle");
-    const surgeryModeWrapper = document.getElementById("surgeryModeWrapper");
-    const surgerySimpleForm = document.getElementById("surgery-simple-form");
-    const surgeryAdvancedForm = document.getElementById("surgery-advanced-form");
-    const appointmentForm = document.getElementById("appointment-form");
-
-    function setCaseType(caseType) {
-      const buttons = Array.from(caseTypeToggle.querySelectorAll("button"));
-      buttons.forEach((b) => b.classList.toggle("active", b.dataset.case === caseType));
-
-      if (caseType === "surgery") {
-        surgeryModeWrapper.style.display = "";
-        appointmentForm.style.display = "none";
-        const mode = getSurgeryMode();
-        setSurgeryMode(mode);
-      } else {
-        surgeryModeWrapper.style.display = "none";
-        surgerySimpleForm.style.display = "none";
-        surgeryAdvancedForm.style.display = "none";
-        appointmentForm.style.display = "";
-      }
-      updateFeedbackBar();
-    }
-
-    function getCaseType() {
-      const active = caseTypeToggle.querySelector("button.active");
-      return active ? active.dataset.case : "surgery";
-    }
-
-    function setSurgeryMode(mode) {
-      const buttons = Array.from(surgeryModeToggle.querySelectorAll("button"));
-      buttons.forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
-
-      if (mode === "advanced") {
-        surgerySimpleForm.style.display = "none";
-        surgeryAdvancedForm.style.display = "";
-      } else {
-        surgerySimpleForm.style.display = "";
-        surgeryAdvancedForm.style.display = "none";
-      }
-      updateFeedbackBar();
-    }
-
-    function getSurgeryMode() {
-      const active = surgeryModeToggle.querySelector("button.active");
-      return active ? active.dataset.mode : "simple";
-    }
-
-    caseTypeToggle.addEventListener("click", (e) => {
-      if (e.target.tagName !== "BUTTON") return;
-      setCaseType(e.target.dataset.case);
-    });
-
-    surgeryModeToggle.addEventListener("click", (e) => {
-      if (e.target.tagName !== "BUTTON") return;
-      setSurgeryMode(e.target.dataset.mode);
-    });
-
-    // Initialize default state
-    setCaseType("surgery");
-    setSurgeryMode("simple");
-
-    // ---------- FEEDBACK BAR ----------
-    const feedbackBar = document.getElementById("feedbackBar");
-    const feedbackText = document.getElementById("feedbackText");
-
-    function updateFeedbackBar() {
-      const caseType = getCaseType();
-      const mode = getSurgeryMode();
-
-      if (caseType === "appointment") {
-        feedbackText.textContent =
-          "Tip: A clear problem list in Assessment makes it easy to build a strong Plan.";
-      } else if (mode === "advanced") {
-        feedbackText.textContent =
-          "Advanced mode: ET tube, IV catheter, fluids, and specific drug combos will tighten the anesthesia Plan for you.";
-      } else {
-        feedbackText.textContent =
-          "Simple mode: A few key notes are enough — I’ll fill in the standard spay/neuter or dental details.";
-      }
-    }
-
-    updateFeedbackBar();
-
-    // ---------- FORM COLLECTION ----------
-    function collectFormData() {
-      const caseType = getCaseType();
-      const surgeryMode = getSurgeryMode();
-
-      if (caseType === "appointment") {
-        return {
-          caseType,
-          surgeryMode: null,
-          appointment: {
-            caseLabel: document.getElementById("appt-case-label").value.trim(),
-            template: document.getElementById("appt-template").value,
-            subjective: document.getElementById("appt-subjective").value.trim(),
-            objective: document.getElementById("appt-objective").value.trim(),
-            assessment: document.getElementById("appt-assessment").value.trim(),
-            plan: document.getElementById("appt-plan").value.trim(),
-            meds: document.getElementById("appt-meds").value.trim(),
-          },
-        };
-      }
-
-      if (surgeryMode === "advanced") {
-        return {
-          caseType,
-          surgeryMode,
-          surgery: {
-            caseLabel: document.getElementById("adv-case-label").value.trim(),
-            template: document.getElementById("adv-template").value,
-            signalment: document.getElementById("adv-signalment").value.trim(),
-            asa: document.getElementById("adv-asa").value,
-            ett: document.getElementById("adv-ett").value.trim(),
-            catheter: document.getElementById("adv-cath").value.trim(),
-            fluidsRate: document.getElementById("adv-fluids-rate").value,
-            fluidsDeclined: document.getElementById("adv-fluids-declined").checked,
-            fluidsNote: document.getElementById("adv-fluids-note").value.trim(),
-            premedChoice: document.getElementById("adv-premed").value,
-            premedNotes: document.getElementById("adv-premed-notes").value.trim(),
-            induction: document.getElementById("adv-induction").value.trim(),
-            intraop: document.getElementById("adv-intraop").value.trim(),
-            procedureNotes: document.getElementById("adv-procedure-notes").value.trim(),
-            postopMeds: document.getElementById("adv-postop").value.trim(),
-            aftercare: document.getElementById("adv-aftercare").value.trim(),
-          },
-        };
-      } else {
-        return {
-          caseType,
-          surgeryMode,
-          surgery: {
-            caseLabel: document.getElementById("simple-case-label").value.trim(),
-            template: document.getElementById("simple-template").value,
-            notes: document.getElementById("simple-notes").value.trim(),
-            aftercare: document.getElementById("simple-aftercare").value.trim(),
-          },
-        };
-      }
-    }
-
-    // ---------- GENERATE SOAP ----------
-    const generateBtn = document.getElementById("generateBtn");
-    const soapOutput = document.getElementById("soapOutput");
-
-    async function generateSoap() {
-      const payload = collectFormData();
-      const originalText = soapOutput.textContent;
-
-      generateBtn.disabled = true;
-      generateBtn.innerHTML = "<span>⏳</span> Working...";
-      soapOutput.textContent = "Generating SOAP from your inputs...";
-
-      try {
-        // If your server.js exposes a compatible endpoint, this will use it.
-        const res = await fetch("/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mode: "soap",
-            payload,
-          }),
+    function initToggleGroup(groupId, onChange) {
+      const group = $(groupId);
+      if (!group) return;
+      group.querySelectorAll(".inline-toggle").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          group.querySelectorAll(".inline-toggle").forEach((b) =>
+            b.classList.remove("active")
+          );
+          btn.classList.add("active");
+          if (onChange) onChange(btn.dataset);
         });
-
-        if (res.ok) {
-          const data = await res.json();
-          // Expecting either data.soap, data.text, or something similar.
-          const text =
-            data.soap ||
-            data.text ||
-            data.output ||
-            "Server responded, but no SOAP text field was found.";
-          soapOutput.textContent = text.trim();
-        } else {
-          // If your endpoint path/name is different, we fall back instead of crashing.
-          soapOutput.textContent =
-            "Server returned an error (" +
-            res.status +
-            "). I’ll show a local placeholder SOAP so you can still copy/paste:\n\n" +
-            buildLocalSoap(payload);
-        }
-      } catch (err) {
-        soapOutput.textContent =
-          "Could not reach the server. Using local placeholder SOAP so you can keep working:\n\n" +
-          buildLocalSoap(payload);
-      } finally {
-        generateBtn.disabled = false;
-        generateBtn.innerHTML = '<span>⚡</span> Generate SOAP';
-      }
-    }
-
-    function buildLocalSoap(payload) {
-      // Very simple offline fallback so the UI never feels “dead”.
-      const caseType = payload.caseType;
-      if (caseType === "appointment") {
-        const a = payload.appointment;
-        return [
-          "Subjective:",
-          a.subjective || "(not recorded – fill in client concerns/history).",
-          "",
-          "Objective:",
-          a.objective || "(not recorded – vitals/PE/labs go here).",
-          "",
-          "Assessment:",
-          a.assessment || "(not recorded – problem list and interpretation).",
-          "",
-          "Plan:",
-          a.plan || "(not recorded – diagnostics, treatments, follow-up).",
-          "",
-          "Medications Dispensed:",
-          a.meds || "(none recorded).",
-          "",
-          "Aftercare:",
-          "(See plan and medications above; adjust in Avimark as needed.)",
-        ].join("\n");
-      }
-
-      const s = payload.surgery || {};
-      return [
-        "Subjective:",
-        s.caseLabel || "(surgery case – label not recorded).",
-        "",
-        "Objective:",
-        "Pre-op exam within normal limits unless otherwise stated. Vitals recorded on anesthesia sheet.",
-        "",
-        "Assessment:",
-        s.template
-          ? "Scheduled for " + s.template.replace(/-/g, " ") + "."
-          : "Surgical patient.",
-        "",
-        "Plan:",
-        "- IV Catheter / Fluids: As per anesthesia sheet.",
-        "- Pre-medications: See anesthesia record.",
-        "- Induction / Maintenance: As per protocol.",
-        "- Surgical Prep: Standard aseptic prep.",
-        "- Surgical Procedure: See surgical notes; closure in routine fashion.",
-        "- Intra-op Medications: As per anesthesia record.",
-        "- Recovery: Monitored until standing and stable.",
-        "- Medications Dispensed: See discharge.",
-        "- Aftercare: Rest, cone, incision monitoring, recheck as scheduled.",
-        "",
-        "Medications Dispensed:",
-        s.postopMeds || "(record in Avimark).",
-        "",
-        "Aftercare:",
-        s.aftercare ||
-          "(Standard post-operative instructions: strict rest, E-collar, monitor incision, emergency contact if concerns.)",
-      ].join("\n");
-    }
-
-    generateBtn.addEventListener("click", generateSoap);
-
-    // ---------- COPY BUTTONS ----------
-    const copyToast = document.getElementById("copyToast");
-
-    function showToast(msg) {
-      copyToast.textContent = msg;
-      setTimeout(() => {
-        if (copyToast.textContent === msg) copyToast.textContent = "";
-      }, 2500);
-    }
-
-    function splitSoapSections(text) {
-      // Very lightweight splitter based on headings. Works with both server and local text.
-      const sections = {
-        subjective: "",
-        objective: "",
-        assessment: "",
-        plan: "",
-        meds: "",
-        aftercare: "",
-      };
-
-      const lines = text.split(/\r?\n/);
-      let current = null;
-
-      lines.forEach((line) => {
-        const lower = line.trim().toLowerCase();
-        if (lower.startsWith("subjective:")) {
-          current = "subjective";
-          sections.subjective += line + "\n";
-        } else if (lower.startsWith("objective:")) {
-          current = "objective";
-          sections.objective += line + "\n";
-        } else if (lower.startsWith("assessment:")) {
-          current = "assessment";
-          sections.assessment += line + "\n";
-        } else if (lower.startsWith("plan:")) {
-          current = "plan";
-          sections.plan += line + "\n";
-        } else if (lower.startsWith("medications dispensed:")) {
-          current = "meds";
-          sections.meds += line + "\n";
-        } else if (lower.startsWith("aftercare:")) {
-          current = "aftercare";
-          sections.aftercare += line + "\n";
-        } else if (current) {
-          sections[current] += line + "\n";
-        }
       });
-
-      return sections;
     }
 
-    async function copyText(text) {
-      try {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } catch {
-        return false;
+    // Appointment vs surgery
+    initToggleGroup("avs-toggle", (data) => {
+      const isAppointment = data.avs === "appointment";
+      $("appointment-preset-field").style.display = isAppointment ? "block" : "none";
+      $("surgery-preset-field").style.display = isAppointment ? "none" : "block";
+      $("surgery-mode-field").style.display = isAppointment ? "none" : "block";
+      if (isAppointment) {
+        $("anesthesia-advanced-block").classList.add("hidden");
       }
-    }
-
-    document.getElementById("copyFull").addEventListener("click", async () => {
-      const ok = await copyText(soapOutput.textContent || "");
-      showToast(ok ? "Full SOAP copied for Avimark." : "Could not copy to clipboard.");
     });
 
-    document.getElementById("copySubjective").addEventListener("click", async () => {
-      const sections = splitSoapSections(soapOutput.textContent || "");
-      const ok = await copyText(sections.subjective.trim() || soapOutput.textContent || "");
-      showToast(ok ? "Subjective copied." : "Could not copy.");
+    // Seed initial AVS state
+    (function () {
+      const active = document.querySelector(
+        "#avs-toggle .inline-toggle.active"
+      );
+      if (active) {
+        const ev = new Event("click");
+        active.dispatchEvent(ev);
+      }
+    })();
+
+    // Surgery mode: simple vs advanced => show/hide anesthesia block
+    initToggleGroup("surgery-mode-toggle", (data) => {
+      const isAdvanced = data["surgery-mode"] === "advanced";
+      $("anesthesia-advanced-block").classList.toggle("hidden", !isAdvanced);
     });
 
-    document.getElementById("copyObjective").addEventListener("click", async () => {
-      const sections = splitSoapSections(soapOutput.textContent || "");
-      const ok = await copyText(sections.objective.trim() || soapOutput.textContent || "");
-      showToast(ok ? "Objective copied." : "Could not copy.");
-    });
+    // ---------- VACCINES MULTI-SELECT ----------
 
-    document.getElementById("copyAssessment").addEventListener("click", async () => {
-      const sections = splitSoapSections(soapOutput.textContent || "");
-      const ok = await copyText(sections.assessment.trim() || soapOutput.textContent || "");
-      showToast(ok ? "Assessment copied." : "Could not copy.");
-    });
+    const vaccinesOverlay = $("vaccines-overlay");
+    const vaccinesBtn = $("vaccines-pill-btn");
+    const vaccinesApplyBtn = $("vaccines-apply-btn");
+    const vaccinesCloseBtn = $("close-vaccines-overlay-btn");
+    const vaccinesTodayCheckbox = $("vaccines-today");
 
-    document.getElementById("copyPlan").addEventListener("click", async () => {
-      const sections = splitSoapSections(soapOutput.textContent || "");
-      const ok = await copyText(sections.plan.trim() || soapOutput.textContent || "");
-      showToast(ok ? "Plan copied." : "Could not copy.");
-    });
-
-    document.getElementById("copyPlanMedsAftercare").addEventListener("click", async () => {
-      const sections = splitSoapSections(soapOutput.textContent || "");
-      const combined =
-        (sections.plan || "").trim() +
-        "\n\n" +
-        (sections.meds || "").trim() +
-        "\n\n" +
-        (sections.aftercare || "").trim();
-      const ok = await copyText(combined.trim() || soapOutput.textContent || "");
-      showToast(ok ? "Plan + Meds + Aftercare copied." : "Could not copy.");
-    });
-  </script>
-</body>
-</html>
+    function updateVaccinesSummary() {
+      const checks = vaccines
