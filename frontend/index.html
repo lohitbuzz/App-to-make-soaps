@@ -2,1120 +2,545 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lohit SOAP App v1.7.2</title>
+  <title>Lohit SOAP App v1.7.3</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
-      --bg: #050811;
-      --bg-alt: #09121f;
-      --card: #101726;
-      --card-alt: #151f33;
-      --border: #28354d;
-      --accent: #18a4b8;
-      --accent-soft: rgba(24, 164, 184, 0.18);
-      --accent-strong: rgba(24, 164, 184, 0.85);
-      --text: #ecf3ff;
-      --text-soft: #aeb7cc;
-      --danger: #ff5b6a;
-      --radius: 10px;
-      --shadow-soft: 0 16px 40px rgba(0, 0, 0, 0.4);
-      --font: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "Segoe UI", sans-serif;
+      --bg: #020617;
+      --bg-elevated: #020819;
+      --border-subtle: #1f2937;
+      --accent: #06b6d4;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --success: #22c55e;
+      --radius-lg: 20px;
+      --radius-pill: 999px;
     }
-
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing:border-box; }
     body {
-      margin: 0;
-      font-family: var(--font);
-      background: radial-gradient(circle at top, #182742 0, #050811 50%, #020309 100%);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      margin:0;
+      font-family:system-ui,-apple-system,"SF Pro Text","Segoe UI",sans-serif;
+      background:radial-gradient(circle at top,#020617 0,#020617 40%,#000 100%);
+      color:var(--text-main);
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      padding:16px;
     }
-
     .app-shell {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 12px 12px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      width:100%;
+      max-width:1160px;
+      background:radial-gradient(circle at top left,#020617 0,#020617 40%,#000 100%);
+      border-radius:24px;
+      border:1px solid rgba(148,163,184,.2);
+      box-shadow:0 22px 60px rgba(15,23,42,.85);
+      padding:16px 18px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px;
-      background: linear-gradient(120deg, rgba(24, 164, 184, 0.12), rgba(6, 12, 26, 0.9));
-      border-radius: 999px;
-      border: 1px solid rgba(24, 164, 184, 0.4);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(18px);
-      position: sticky;
-      top: 6px;
-      z-index: 10;
+    .header-row {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
     }
-
-    header h1 {
-      font-size: 16px;
-      margin: 0;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+    .app-title {
+      font-weight:700;
+      letter-spacing:.08em;
+      font-size:13px;
+      text-transform:uppercase;
+      padding:8px 14px;
+      border-radius:var(--radius-pill);
+      border:1px solid rgba(148,163,184,.25);
+      background:radial-gradient(circle at top left,rgba(56,189,248,.24),rgba(15,23,42,.9));
+      box-shadow:0 0 18px rgba(6,182,212,.3);
     }
-
-    header .badges {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      font-size: 11px;
-      color: var(--text-soft);
+    .pill-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .chip{
+      font-size:11px;border-radius:var(--radius-pill);padding:6px 12px;
+      border:1px solid var(--border-subtle);color:var(--text-muted);
+      background:rgba(15,23,42,.85);
     }
-
-    .badge {
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(0, 0, 0, 0.3);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
+    .chip-strong{
+      border-color:rgba(56,189,248,.55);
+      background:radial-gradient(circle at top,rgba(56,189,248,.27),rgba(15,23,42,.95));
+      color:var(--text-main);box-shadow:0 0 18px rgba(8,145,178,.65);
     }
-
-    .badge.accent {
-      border-color: rgba(24, 164, 184, 0.6);
-      background: rgba(24, 164, 184, 0.1);
+    .chip span.label{font-weight:600;margin-right:4px;text-transform:uppercase;letter-spacing:.05em;font-size:10px;}
+    .body-row{
+      display:grid;
+      grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr);
+      gap:12px;
     }
-
-    main {
-      display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-      gap: 12px;
+    @media(max-width:860px){.body-row{grid-template-columns:minmax(0,1fr);}}
+    .card{
+      background:linear-gradient(to bottom right,rgba(15,23,42,.98),rgba(2,6,23,.98));
+      border-radius:var(--radius-lg);
+      border:1px solid rgba(30,64,175,.4);
+      box-shadow:0 18px 45px rgba(15,23,42,.8);
+      padding:14px 14px 12px;
+      display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;
     }
-
-    @media (max-width: 880px) {
-      main {
-        grid-template-columns: 1fr;
-      }
+    .card::before{
+      content:"";position:absolute;inset:0;
+      background:radial-gradient(circle at top right,rgba(56,189,248,.08),transparent 58%);
+      pointer-events:none;
     }
-
-    .panel {
-      background: radial-gradient(circle at top left, rgba(24, 164, 184, 0.12), rgba(10, 15, 30, 0.98));
-      border-radius: 20px;
-      border: 1px solid rgba(24, 164, 184, 0.25);
-      box-shadow: var(--shadow-soft);
-      padding: 16px 14px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+    .card-header{display:flex;align-items:center;justify-content:space-between;gap:8px;position:relative;z-index:1;}
+    .card-title{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);font-weight:600;}
+    .tab-row,.mode-row{
+      display:inline-flex;border-radius:var(--radius-pill);padding:2px;
+      background:radial-gradient(circle at top,rgba(15,23,42,.9),rgba(15,23,42,.99));
+      border:1px solid rgba(51,65,85,.9);
     }
-
-    .tabs-row {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-bottom: 4px;
+    .tab-btn,.mode-btn{
+      border-radius:var(--radius-pill);border:none;padding:4px 11px;font-size:11px;
+      color:var(--text-muted);background:transparent;cursor:pointer;transition:.16s;
     }
-
-    .tab-pill {
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-size: 12px;
-      border: 1px solid transparent;
-      background: rgba(5, 10, 22, 0.9);
-      color: var(--text-soft);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.15s ease;
+    .tab-btn.active,.mode-btn.active{
+      background:radial-gradient(circle at top,rgba(56,189,248,.25),rgba(15,23,42,1));
+      color:var(--text-main);box-shadow:0 0 12px rgba(8,145,178,.6);
     }
-
-    .tab-pill span.dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.22);
+    .card-body{position:relative;z-index:1;display:flex;flex-direction:column;gap:8px;font-size:12px;}
+    .field-row{display:flex;gap:8px;flex-wrap:wrap;}
+    .field{flex:1;min-width:120px;display:flex;flex-direction:column;gap:3px;}
+    label{font-size:11px;color:var(--text-muted);}
+    input[type=text],input[type=number],select,textarea{
+      border-radius:10px;border:1px solid rgba(30,64,175,.7);
+      background:radial-gradient(circle at top left,rgba(15,23,42,.98),rgba(2,6,23,.98));
+      color:var(--text-main);font-size:12px;padding:7px 9px;outline:none;
     }
-
-    .tab-pill.active {
-      border-color: var(--accent-strong);
-      background: linear-gradient(130deg, rgba(24, 164, 184, 0.26), rgba(4, 10, 24, 1));
-      color: var(--text);
+    textarea{min-height:64px;resize:vertical;}
+    input::placeholder,textarea::placeholder{color:#4b5563;}
+    .helper-text{font-size:10px;color:var(--text-muted);}
+    .button-row{display:flex;justify-content:flex-start;gap:8px;margin-top:4px;flex-wrap:wrap;}
+    .btn-main{
+      border-radius:var(--radius-pill);border:none;padding:8px 18px;font-size:12px;font-weight:600;
+      cursor:pointer;background:radial-gradient(circle at top,rgba(56,189,248,.8),rgba(8,47,73,1));
+      color:#0b1120;box-shadow:0 12px 22px rgba(8,145,178,.6);
     }
-
-    .tab-pill.active span.dot {
-      background: var(--accent);
-      box-shadow: 0 0 0 4px var(--accent-soft);
+    .btn-secondary{
+      border-radius:var(--radius-pill);border:1px solid rgba(51,65,85,.9);
+      padding:6px 14px;font-size:11px;cursor:pointer;
+      background:rgba(15,23,42,.95);color:var(--text-muted);
     }
-
-    .inline-toggle-group {
-      display: inline-flex;
-      border-radius: 999px;
-      padding: 2px;
-      background: rgba(2, 7, 18, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      gap: 4px;
-      margin-left: 8px;
+    .btn-secondary.positive{border-color:rgba(34,197,94,.7);color:#bbf7d0;}
+    .output-box{
+      border-radius:14px;border:1px solid rgba(30,64,175,.9);
+      background:radial-gradient(circle at top left,rgba(15,23,42,1),rgba(2,6,23,1));
+      padding:10px;min-height:170px;max-height:360px;overflow-y:auto;
+      white-space:pre-wrap;font-size:12px;
+      font-family:"SF Mono",ui-monospace,Menlo,Consolas,"Courier New",monospace;
     }
-
-    .inline-toggle {
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 11px;
-      border: none;
-      background: transparent;
-      color: var(--text-soft);
-      cursor: pointer;
+    .output-header-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--text-muted);}
+    .status-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--text-muted);}
+    .status-pill{
+      display:inline-flex;align-items:center;gap:6px;border-radius:var(--radius-pill);
+      padding:3px 10px;border:1px solid rgba(148,163,184,.4);background:rgba(15,23,42,.96);
     }
-
-    .inline-toggle.active {
-      background: rgba(24, 164, 184, 0.2);
-      color: var(--accent);
+    .dot{width:8px;height:8px;border-radius:999px;background:#f97373;}
+    .dot.ok{background:var(--success);}
+    .qr-panel{
+      border-radius:14px;border:1px dashed rgba(148,163,184,.5);padding:8px;margin-top:8px;
+      display:none;align-items:center;gap:10px;font-size:11px;color:var(--text-muted);
     }
-
-    .section-title-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+    .qr-container{
+      width:120px;height:120px;border-radius:10px;background:#020617;
+      display:flex;align-items:center;justify-content:center;border:1px solid rgba(30,64,175,.8);
     }
-
-    .section-title-row h2 {
-      margin: 0;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-soft);
+    .attachments-panel{
+      border-radius:10px;border:1px solid rgba(30,64,175,.8);padding:8px;margin-top:6px;
+      max-height:150px;overflow-y:auto;font-size:11px;
     }
-
-    .help-note {
-      font-size: 11px;
-      color: var(--text-soft);
-      opacity: 0.85;
-    }
-
-    .field-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 2px;
-    }
-
-    @media (max-width: 700px) {
-      .field-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    label.field {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    label.field span {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .field input,
-    .field select,
-    .field textarea {
-      border-radius: 9px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(1, 4, 14, 0.96);
-      color: var(--text);
-      padding: 6px 8px;
-      font-size: 12px;
-      font-family: inherit;
-      outline: none;
-      resize: vertical;
-      min-height: 30px;
-    }
-
-    .field textarea {
-      min-height: 80px;
-    }
-
-    .field input:focus,
-    .field select:focus,
-    .field textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent-soft);
-    }
-
-    .badge-chip {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 10px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .generate-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .btn-primary {
-      border-radius: 999px;
-      border: none;
-      padding: 8px 18px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--accent-strong), #44d0e4);
-      color: #021014;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: default;
-      box-shadow: none;
-    }
-
-    .btn-secondary {
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 6px 12px;
-      font-size: 11px;
-      cursor: pointer;
-      background: rgba(1, 3, 12, 0.9);
-      color: var(--text-soft);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-
-    .btn-secondary:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
-
-    .output-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .output-header-row h2 {
-      margin: 0;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-soft);
-    }
-
-    #mainOutputText {
-      width: 100%;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: radial-gradient(circle at top left, rgba(24, 164, 184, 0.12), rgba(2, 5, 16, 0.96));
-      color: var(--text);
-      min-height: 260px;
-      padding: 10px 10px;
-      font-size: 12px;
-      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono",
-        "Courier New", monospace;
-      resize: vertical;
-      outline: none;
-    }
-
-    #mainOutputText:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent-soft);
-    }
-
-    .feedback-box {
-      margin-top: 6px;
-      border-radius: 12px;
-      border: 1px dashed rgba(255, 255, 255, 0.15);
-      background: rgba(3, 7, 18, 0.9);
-      padding: 8px 10px;
-      font-size: 11px;
-      color: var(--text-soft);
-      min-height: 52px;
-    }
-
-    .feedback-box strong {
-      color: var(--accent);
-    }
-
-    .toolbox-desktop-paste {
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      background: rgba(2, 6, 18, 0.96);
-      padding: 10px 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    .toolbox-desktop-paste h3 {
-      margin: 0;
-      font-size: 12px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--text-soft);
-    }
-
-    .toolbox-desktop-paste p.hint {
-      margin: 0;
-      font-size: 11px;
-      color: var(--text-soft);
-      opacity: 0.9;
-    }
-
-    #desktopPasteInbox {
-      width: 100%;
-      border-radius: 9px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(1, 4, 14, 0.96);
-      color: var(--text);
-      padding: 6px 8px;
-      font-size: 12px;
-      min-height: 80px;
-      resize: vertical;
-      outline: none;
-    }
-
-    .toolbox-desktop-paste-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 4px;
-    }
-
-    .vision-intake {
-      border-radius: 14px;
-      border: 1px dashed rgba(255, 255, 255, 0.17);
-      background: rgba(1, 4, 14, 0.95);
-      padding: 8px 10px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .vision-preview {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 4px;
-    }
-
-    .vision-preview-image {
-      max-width: 120px;
-      max-height: 90px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      object-fit: cover;
-    }
-
-    .status-bar {
-      font-size: 11px;
-      color: var(--text-soft);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-      margin-top: 4px;
-    }
-
-    .status-pill {
-      padding: 2px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(1, 4, 14, 0.9);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-    }
-
-    .status-pill span.dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #26d37c;
-      box-shadow: 0 0 0 4px rgba(38, 211, 124, 0.28);
-    }
-
-    .status-pill.error span.dot {
-      background: var(--danger);
-      box-shadow: 0 0 0 4px rgba(255, 91, 106, 0.32);
+    .thumb{max-width:120px;max-height:120px;border-radius:8px;border:1px solid rgba(55,65,81,.9);}
+    .footer{
+      display:flex;justify-content:space-between;align-items:center;font-size:10px;
+      color:var(--text-muted);padding-top:2px;border-top:1px dashed rgba(31,41,55,.9);
     }
   </style>
 </head>
 <body>
   <div class="app-shell">
-    <header>
-      <h1>Lohit SOAP App v1.7.2</h1>
-      <div class="badges">
-        <div class="badge accent">
-          <span>Privacy</span>
-          <span>Clinic-safe text only</span>
+    <div class="header-row">
+      <div class="app-title">LOHIT<br />SOAP APP v1.7.3</div>
+      <div class="pill-row">
+        <div class="chip chip-strong"><span class="label">Privacy</span>Clinic-safe text only</div>
+        <div class="chip"><span class="label">Backend</span><span id="backendLabel">lohit-soap-app.onrender.com</span></div>
+      </div>
+    </div>
+
+    <div class="body-row">
+      <!-- INPUT -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Input · Doctor side</div>
+          <div class="tab-row" id="modeTabs">
+            <button class="tab-btn active" data-tab="soap">SOAP</button>
+            <button class="tab-btn" data-tab="toolbox">Toolbox</button>
+            <button class="tab-btn" data-tab="consult">Consult</button>
+          </div>
         </div>
-        <div class="badge">
-          <span>Backend:</span>
-          <span>lohit-soap-app.onrender.com</span>
+        <div class="card-body">
+          <div class="field-row">
+            <div class="field">
+              <label>Case label / Patient (local only)</label>
+              <input id="caseLabel" type="text" placeholder="eg. Milo dental normal" />
+            </div>
+            <div class="field" style="max-width:90px;">
+              <label>Species</label>
+              <select id="species">
+                <option value="">–</option>
+                <option>Canine</option>
+                <option>Feline</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field" style="max-width:90px;">
+              <label>Weight (kg)</label>
+              <input id="weight" type="number" step="0.1" />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field" style="max-width:110px;">
+              <label>ASA</label>
+              <input id="asa" type="text" placeholder="eg. 2" />
+            </div>
+            <div class="field">
+              <label>TPR / notes (optional)</label>
+              <input id="tpr" type="text" placeholder="eg. 38.5°C, 100 bpm, 28 rpm" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Core notes / history / PE / diagnostics</label>
+            <textarea id="coreNotes" placeholder="History, PE, CBC/chem, urinalysis, rads, treatments, etc."></textarea>
+          </div>
+          <div class="field">
+            <label>Assessment hints (optional)</label>
+            <textarea id="assessmentHints" placeholder="Problem list or your thoughts. Brain will refine."></textarea>
+          </div>
+          <div class="field">
+            <label>Plan hints / discharge requests (optional)</label>
+            <textarea id="planHints" placeholder="Treatments, meds, discharge instructions you want included."></textarea>
+          </div>
+          <div class="field">
+            <label>Extra instructions to AI (optional)</label>
+            <textarea id="extraInstructions" placeholder="eg. Keep language simple; emphasize dental charting; include recheck."></textarea>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;">
+            <div class="mode-row" id="brainMode">
+              <button class="mode-btn active" data-mode="help">Help me (default)</button>
+              <button class="mode-btn" data-mode="strict">Strict (no guessing)</button>
+            </div>
+            <div class="button-row">
+              <button id="generateBtn" class="btn-main">Generate</button>
+            </div>
+          </div>
+          <div class="helper-text">
+            Help me = safe templated normals. Strict = no invention; blanks where info is missing.
+          </div>
         </div>
       </div>
-    </header>
 
-    <main>
-      <!-- LEFT: INPUT -->
-      <section class="panel" id="inputPanel">
-        <div class="tabs-row">
-          <button class="tab-pill active" data-main-tab="soap">
-            <span class="dot"></span>
-            <span>SOAP</span>
-          </button>
-          <button class="tab-pill" data-main-tab="toolbox">
-            <span class="dot"></span>
-            <span>Toolbox</span>
-          </button>
-          <button class="tab-pill" data-main-tab="consult">
-            <span class="dot"></span>
-            <span>Consult</span>
-          </button>
-
-          <div class="inline-toggle-group" id="soapCaseTypeToggle">
-            <button class="inline-toggle active" data-case-type="appointment">Appointment</button>
-            <button class="inline-toggle" data-case-type="surgery">Surgery</button>
-          </div>
-
-          <div class="inline-toggle-group" id="surgeryLayoutToggle">
-            <button class="inline-toggle active" data-surgery-layout="simple">Simple</button>
-            <button class="inline-toggle" data-surgery-layout="advanced">Advanced</button>
-          </div>
-
-          <div class="inline-toggle-group" id="brainModeToggle">
-            <button class="inline-toggle active" data-brain-mode="help">Help Me</button>
-            <button class="inline-toggle" data-brain-mode="strict">Strict</button>
+      <!-- OUTPUT + RELAY -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Output · AI brain</div>
+          <div class="button-row">
+            <button id="copyFullBtn" class="btn-secondary">Copy full text</button>
           </div>
         </div>
-
-        <!-- BASICS -->
-        <div class="section-title-row">
-          <h2>Basics</h2>
-          <span class="help-note">Case label is local only • Weight & ASA help refine output</span>
-        </div>
-
-        <div class="field-grid">
-          <label class="field">
-            <span>
-              Case label / patient name
-              <span class="badge-chip">Local only</span>
-            </span>
-            <input id="caseLabel" placeholder="eg. Milo dental, itchy dog, PU cat" />
-          </label>
-          <label class="field">
-            <span>Species</span>
-            <select id="species">
-              <option value="">--</option>
-              <option value="canine">Canine</option>
-              <option value="feline">Feline</option>
-              <option value="other">Other</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>Weight (kg)</span>
-            <input id="weightKg" type="number" step="0.01" min="0" placeholder="kg" />
-          </label>
-          <label class="field">
-            <span>ASA</span>
-            <select id="asa">
-              <option value="">--</option>
-              <option value="ASA I">ASA I</option>
-              <option value="ASA II">ASA II</option>
-              <option value="ASA III">ASA III</option>
-              <option value="ASA IV">ASA IV</option>
-              <option value="ASA V">ASA V</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>TPR (note, optional)</span>
-            <input id="tpr" placeholder="eg. 38.6°C, 100 bpm, 28 rpm" />
-          </label>
-        </div>
-
-        <!-- SOAP FIELDS -->
-        <div id="soapFieldsSection">
-          <div class="section-title-row" style="margin-top:10px;">
-            <h2>SOAP inputs</h2>
-            <span class="help-note" id="soapModeHint">Appointment mode: reason, history, exam, diagnostics</span>
+        <div class="card-body">
+          <div class="output-header-row">
+            <span>Main output</span>
+            <span id="generationStatus" class="helper-text">Idle</span>
           </div>
+          <div id="mainOutput" class="output-box"></div>
 
-          <!-- Appointment-specific -->
-          <div id="appointmentFields">
-            <div class="field-grid">
-              <label class="field">
-                <span>Appointment reason</span>
-                <input id="appointmentReason" placeholder="eg. cough, diarrhea, itchy ears, wellness exam" />
-              </label>
-              <label class="field">
-                <span>History (short)</span>
-                <input id="history" placeholder="What the owner told you / tech notes" />
-              </label>
+          <div class="status-row" style="margin-top:4px;">
+            <div class="status-pill">
+              <span id="backendDot" class="dot"></span>
+              <span id="backendStatus">Not connected to backend</span>
+            </div>
+            <div style="font-size:10px;color:var(--text-muted);">
+              QR relay sends text & redacted docs from phone → this desktop.
             </div>
           </div>
 
-          <!-- Surgery-specific -->
-          <div id="surgeryFields" style="display:none;">
-            <div class="field-grid">
-              <label class="field">
-                <span>Surgery preset</span>
-                <select id="surgeryPreset">
-                  <option value="">--</option>
-                  <option value="canine spay">Canine spay</option>
-                  <option value="canine neuter">Canine neuter</option>
-                  <option value="feline spay">Feline spay</option>
-                  <option value="feline neuter">Feline neuter</option>
-                  <option value="dental cohat">Dental - COHAT</option>
-                  <option value="mass removal">Mass removal</option>
-                  <option value="cystotomy">Cystotomy</option>
-                  <option value="pyometra spay">Pyometra spay</option>
-                  <option value="exploratory laparotomy">Exploratory laparotomy</option>
-                  <option value="other">Other</option>
-                </select>
-              </label>
-              <label class="field">
-                <span>Anesthesia quick summary</span>
-                <input id="anesthesiaQuick" placeholder="eg. Dex + But, Propofol, Iso, fluids 5 ml/kg/hr" />
-              </label>
+          <div style="margin-top:8px;">
+            <button id="receiveTextBtn" class="btn-secondary positive">Receive text from phone</button>
+            <button id="receiveFileBtn" class="btn-secondary">Receive document from phone</button>
+          </div>
+
+          <div id="qrTextPanel" class="qr-panel">
+            <div class="qr-container"><div id="qrText"></div></div>
+            <div>
+              <div style="font-weight:500;color:#e5e7eb;">Text relay</div>
+              <div>1. On desktop, open this panel.</div>
+              <div>2. On phone, scan QR with camera.</div>
+              <div>3. Phone opens "Send text" page → paste text → Send.</div>
             </div>
-            <label class="field">
-              <span>Core surgery notes</span>
-              <textarea id="surgicalNotes" placeholder="Key events, teeth extracted, masses removed, complications, etc."></textarea>
-            </label>
           </div>
 
-          <!-- Shared -->
-          <label class="field">
-            <span>Exam findings (raw text, optional)</span>
-            <textarea id="examFindings" placeholder="You can leave this blank and let the brain build a templated normal exam."></textarea>
-          </label>
-
-          <label class="field">
-            <span>Diagnostics (data only, no interpretation)</span>
-            <textarea id="diagnosticsData" placeholder="eg. CBC/chem numbers, SNAP, urinalysis, radiograph summary headings"></textarea>
-          </label>
-
-          <div class="field-grid">
-            <label class="field">
-              <span>Assessment hints (optional)</span>
-              <textarea id="assessmentHints" placeholder="Your problem list or thoughts. Brain will refine."></textarea>
-            </label>
-            <label class="field">
-              <span>Plan hints (optional)</span>
-              <textarea id="planHints" placeholder="Treatments, meds, discharge notes you want included."></textarea>
-            </label>
-          </div>
-
-          <label class="field">
-            <span>Extra instructions to AI (optional)</span>
-            <textarea id="extraInstructions" placeholder="eg. Keep language simple for new grad; emphasize dental charting; include recheck in 7–10 days."></textarea>
-          </label>
-        </div>
-
-        <!-- TOOLBOX FIELDS -->
-        <div id="toolboxFieldsSection" style="display:none;">
-          <div class="section-title-row" style="margin-top:10px;">
-            <h2>Toolbox input</h2>
-            <span class="help-note">Paste bloodwork, notes, or “please write an email about …”</span>
-          </div>
-          <label class="field">
-            <span>Core notes / request</span>
-            <textarea id="toolboxCoreNotes" placeholder="Type or paste anything: bloodwork, brief history, what you want written."></textarea>
-          </label>
-          <label class="field">
-            <span>Extra instructions to AI (optional)</span>
-            <textarea id="toolboxExtra" placeholder="eg. Short summary vs long explanation, client-friendly vs doctor-only, etc."></textarea>
-          </label>
-
-          <div class="vision-intake">
-            <span style="font-size:11px;color:var(--text-soft);">Upload screenshots / photos (for now this is local preview + blur only)</span>
-            <input type="file" id="visionFiles" accept="image/*" multiple />
-            <div class="vision-actions">
-              <button class="btn-secondary" id="blurImagesBtn" type="button" disabled>
-                Blur / pixelate images before sending
-              </button>
+          <div id="qrFilePanel" class="qr-panel">
+            <div class="qr-container"><div id="qrFile"></div></div>
+            <div>
+              <div style="font-weight:500;color:#e5e7eb;">Document relay</div>
+              <div>1. On desktop, open this panel.</div>
+              <div>2. On phone, scan QR.</div>
+              <div>3. Choose photo, draw black boxes over PII → Send.</div>
             </div>
-            <div id="visionPreview" class="vision-preview"></div>
+          </div>
+
+          <div class="attachments-panel">
+            <div style="margin-bottom:4px;font-weight:500;color:#e5e7eb;">Attachments from phone</div>
+            <div id="attachmentsEmpty" class="helper-text">No documents received yet.</div>
+            <div id="attachmentsList" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- CONSULT FIELDS -->
-        <div id="consultFieldsSection" style="display:none;">
-          <div class="section-title-row" style="margin-top:10px;">
-            <h2>Consult question</h2>
-            <span class="help-note">Short summary + focused question; brain answers for you only</span>
-          </div>
-          <label class="field">
-            <span>Patient summary</span>
-            <textarea id="consultSummary" placeholder="Signalment, main problems, key diagnostics so far."></textarea>
-          </label>
-          <label class="field">
-            <span>Question for brain</span>
-            <textarea id="consultQuestion" placeholder="eg. Differentials? How hard should I recommend surgery? Dosing options?"></textarea>
-          </label>
-        </div>
-
-        <!-- GENERATE ROW -->
-        <div class="generate-row">
-          <button class="btn-primary" id="generateBtn">
-            <span>Generate</span>
-          </button>
-          <span class="help-note" id="statusMessage">Ready when you are.</span>
-        </div>
-      </section>
-
-      <!-- RIGHT: OUTPUT -->
-      <section class="panel" id="outputPanel">
-        <div class="output-header-row">
-          <h2>Main output</h2>
-          <button class="btn-secondary" id="copyFullOutputBtn" type="button" disabled>
-            Copy full text
-          </button>
-        </div>
-        <textarea id="mainOutputText" readonly></textarea>
-
-        <div class="feedback-box" id="feedbackBox">
-          <strong>Feedback & next inputs will appear here.</strong>
-          <div style="margin-top:4px;">
-            After each run, the brain will suggest what was missing, what it assumed, and what to add next.
-          </div>
-        </div>
-
-        <!-- TOOLBOX desktop paste inbox -->
-        <div class="toolbox-desktop-paste" id="toolboxDesktopPaste">
-          <h3>Paste from phone (Toolbox inbox)</h3>
-          <p class="hint">
-            On your phone, tap “Copy full text”, send it to yourself (iMessage / email / notes), then paste it here.
-            Click “Move to main output” to bring it into the big output box.
-          </p>
-          <textarea id="desktopPasteInbox" placeholder="Paste text here from your phone..."></textarea>
-          <div class="toolbox-desktop-paste-actions">
-            <button class="btn-secondary" id="desktopPasteToOutputBtn" type="button">
-              Move to main output
-            </button>
-          </div>
-        </div>
-
-        <div class="status-bar">
-          <div class="status-pill" id="connectionStatusPill">
-            <span class="dot"></span>
-            <span id="connectionStatusText">Connected to backend</span>
-          </div>
-          <span id="errorText"></span>
-        </div>
-      </section>
-    </main>
+    <div class="footer">
+      <span>v1.7.3 · QR relay + redaction prototype</span>
+      <span>Keep this tab open on Avimark desktop as your brain console.</span>
+    </div>
   </div>
 
   <script>
     const API_BASE = 'https://lohit-soap-app.onrender.com';
-    const API_GENERATE = `${API_BASE}/generate`;
 
-    // Tabs
-    const tabButtons = document.querySelectorAll('.tab-pill[data-main-tab]');
-    const caseTypeToggleButtons = document.querySelectorAll('#soapCaseTypeToggle .inline-toggle');
-    const surgeryLayoutButtons = document.querySelectorAll('#surgeryLayoutToggle .inline-toggle');
-    const brainModeButtons = document.querySelectorAll('#brainModeToggle .inline-toggle');
+    const modeTabs = document.getElementById('modeTabs');
+    const tabButtons = modeTabs.querySelectorAll('.tab-btn');
+    const brainModeEl = document.getElementById('brainMode');
+    const brainModeButtons = brainModeEl.querySelectorAll('.mode-btn');
 
-    let activeMainTab = 'soap'; // 'soap' | 'toolbox' | 'consult'
-    let activeCaseType = 'appointment'; // 'appointment' | 'surgery'
-    let activeSurgeryLayout = 'simple'; // 'simple' | 'advanced'
-    let brainMode = 'help'; // 'help' | 'strict'
-
-    const soapFieldsSection = document.getElementById('soapFieldsSection');
-    const toolboxFieldsSection = document.getElementById('toolboxFieldsSection');
-    const consultFieldsSection = document.getElementById('consultFieldsSection');
-    const appointmentFields = document.getElementById('appointmentFields');
-    const surgeryFields = document.getElementById('surgeryFields');
-    const soapModeHint = document.getElementById('soapModeHint');
-    const statusMessage = document.getElementById('statusMessage');
-    const connectionStatusPill = document.getElementById('connectionStatusPill');
-    const connectionStatusText = document.getElementById('connectionStatusText');
-    const errorText = document.getElementById('errorText');
-
-    function setMainTab(tab) {
-      activeMainTab = tab;
-      tabButtons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.mainTab === tab);
-      });
-
-      // Show/hide sections
-      soapFieldsSection.style.display = tab === 'soap' ? '' : 'none';
-      toolboxFieldsSection.style.display = tab === 'toolbox' ? '' : 'none';
-      consultFieldsSection.style.display = tab === 'consult' ? '' : 'none';
-
-      // Only show Appointment/Surgery toggles when SOAP is active
-      document.getElementById('soapCaseTypeToggle').style.display =
-        tab === 'soap' ? 'inline-flex' : 'none';
-      document.getElementById('surgeryLayoutToggle').style.display =
-        tab === 'soap' && activeCaseType === 'surgery' ? 'inline-flex' : 'none';
-
-      // Toolbox desktop paste box always visible, but label makes most sense there
-      const pasteBox = document.getElementById('toolboxDesktopPaste');
-      pasteBox.style.opacity = tab === 'toolbox' ? '1' : '0.6';
-
-      updateSoapModeHint();
-    }
-
-    function setCaseType(type) {
-      activeCaseType = type;
-      caseTypeToggleButtons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.caseType === type);
-      });
-
-      appointmentFields.style.display = type === 'appointment' ? '' : 'none';
-      surgeryFields.style.display = type === 'surgery' ? '' : 'none';
-      document.getElementById('surgeryLayoutToggle').style.display =
-        type === 'surgery' && activeMainTab === 'soap' ? 'inline-flex' : 'none';
-
-      updateSoapModeHint();
-    }
-
-    function setSurgeryLayout(layout) {
-      activeSurgeryLayout = layout;
-      surgeryLayoutButtons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.surgeryLayout === layout);
-      });
-    }
-
-    function setBrainMode(mode) {
-      brainMode = mode;
-      brainModeButtons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.brainMode === mode);
-      });
-    }
-
-    function updateSoapModeHint() {
-      if (activeMainTab !== 'soap') {
-        soapModeHint.textContent = 'Toolbox / Consult don\'t use SOAP fields.';
-        return;
-      }
-      if (activeCaseType === 'surgery') {
-        soapModeHint.textContent =
-          'Surgery mode: preset + anesthesia summary + core notes; brain builds full surgical SOAP.';
-      } else {
-        soapModeHint.textContent =
-          'Appointment mode: reason, history, exam, diagnostics.';
-      }
-    }
-
-    tabButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        setMainTab(btn.dataset.mainTab);
-      });
-    });
-
-    caseTypeToggleButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        setCaseType(btn.dataset.caseType);
-      });
-    });
-
-    surgeryLayoutButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        setSurgeryLayout(btn.dataset.surgeryLayout);
-      });
-    });
-
-    brainModeButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        setBrainMode(btn.dataset.brainMode);
-      });
-    });
-
-    setMainTab('soap');
-    setCaseType('appointment');
-    setSurgeryLayout('simple');
-    setBrainMode('help');
-
-    // --- Output + copy full text ---
-    const mainOutputText = document.getElementById('mainOutputText');
-    const copyFullOutputBtn = document.getElementById('copyFullOutputBtn');
-    const feedbackBox = document.getElementById('feedbackBox');
-
-    function updateCopyButtonState() {
-      if (!copyFullOutputBtn || !mainOutputText) return;
-      const hasText = mainOutputText.value.trim().length > 0;
-      copyFullOutputBtn.disabled = !hasText;
-    }
-
-    copyFullOutputBtn.addEventListener('click', async () => {
-      if (!mainOutputText.value.trim()) return;
-      try {
-        await navigator.clipboard.writeText(mainOutputText.value);
-        const old = copyFullOutputBtn.textContent;
-        copyFullOutputBtn.textContent = 'Copied!';
-        setTimeout(() => {
-          copyFullOutputBtn.textContent = old;
-        }, 1400);
-      } catch (err) {
-        console.error('Clipboard error:', err);
-        alert('Could not copy to clipboard. Please select text and copy manually.');
-      }
-    });
-
-    // Desktop paste inbox → main output
-    const desktopPasteInbox = document.getElementById('desktopPasteInbox');
-    const desktopPasteToOutputBtn = document.getElementById('desktopPasteToOutputBtn');
-
-    desktopPasteToOutputBtn.addEventListener('click', () => {
-      const text = desktopPasteInbox.value;
-      if (!text.trim()) return;
-      mainOutputText.value = text;
-      updateCopyButtonState();
-    });
-
-    // --- Vision / blur (front-end only) ---
-    const visionFilesInput = document.getElementById('visionFiles');
-    const blurImagesBtn = document.getElementById('blurImagesBtn');
-    const visionPreview = document.getElementById('visionPreview');
-    let blurredImageDataUrls = [];
-
-    function resetVisionState() {
-      blurredImageDataUrls = [];
-      if (visionPreview) visionPreview.innerHTML = '';
-      if (blurImagesBtn) {
-        blurImagesBtn.disabled = !(visionFilesInput && visionFilesInput.files.length);
-        blurImagesBtn.textContent = 'Blur / pixelate images before sending';
-      }
-    }
-
-    async function pixelateImageFile(file, pixelFactor = 0.1) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          const w = img.width;
-          const h = img.height;
-          const smallCanvas = document.createElement('canvas');
-          smallCanvas.width = Math.max(1, Math.floor(w * pixelFactor));
-          smallCanvas.height = Math.max(1, Math.floor(h * pixelFactor));
-          const sctx = smallCanvas.getContext('2d');
-          sctx.imageSmoothingEnabled = false;
-          sctx.drawImage(img, 0, 0, smallCanvas.width, smallCanvas.height);
-
-          const bigCanvas = document.createElement('canvas');
-          bigCanvas.width = w;
-          bigCanvas.height = h;
-          const bctx = bigCanvas.getContext('2d');
-          bctx.imageSmoothingEnabled = false;
-          bctx.drawImage(smallCanvas, 0, 0, smallCanvas.width, smallCanvas.height, 0, 0, w, h);
-
-          const dataUrl = bigCanvas.toDataURL('image/jpeg', 0.85);
-          resolve(dataUrl);
-        };
-        img.onerror = (e) => reject(e);
-
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          img.src = ev.target.result;
-        };
-        reader.onerror = (e) => reject(e);
-        reader.readAsDataURL(file);
-      });
-    }
-
-    if (visionFilesInput) {
-      visionFilesInput.addEventListener('change', () => {
-        resetVisionState();
-      });
-    }
-
-    if (blurImagesBtn) {
-      blurImagesBtn.addEventListener('click', async () => {
-        const files = Array.from(visionFilesInput.files || []);
-        if (!files.length) return;
-
-        blurImagesBtn.disabled = true;
-        blurImagesBtn.textContent = 'Blurring...';
-
-        try {
-          blurredImageDataUrls = [];
-          if (visionPreview) visionPreview.innerHTML = '';
-
-          for (const file of files) {
-            const url = await pixelateImageFile(file, 0.12);
-            blurredImageDataUrls.push(url);
-            const imgEl = document.createElement('img');
-            imgEl.src = url;
-            imgEl.className = 'vision-preview-image';
-            visionPreview.appendChild(imgEl);
-          }
-
-          blurImagesBtn.textContent = 'Images blurred (local preview only)';
-        } catch (err) {
-          console.error('Blur error:', err);
-          alert('Problem blurring images; please double-check before sending.');
-          blurImagesBtn.textContent = 'Blur / pixelate images before sending';
-        } finally {
-          blurImagesBtn.disabled = false;
-        }
-      });
-    }
-
-    // --- Generate ---
     const generateBtn = document.getElementById('generateBtn');
+    const copyFullBtn = document.getElementById('copyFullBtn');
+    const mainOutputEl = document.getElementById('mainOutput');
+    const generationStatusEl = document.getElementById('generationStatus');
 
-    async function callBackend(payload) {
-      const res = await fetch(API_GENERATE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+    const backendDot = document.getElementById('backendDot');
+    const backendStatus = document.getElementById('backendStatus');
+
+    const receiveTextBtn = document.getElementById('receiveTextBtn');
+    const receiveFileBtn = document.getElementById('receiveFileBtn');
+    const qrTextPanel = document.getElementById('qrTextPanel');
+    const qrFilePanel = document.getElementById('qrFilePanel');
+    const qrTextContainer = document.getElementById('qrText');
+    const qrFileContainer = document.getElementById('qrFile');
+
+    const attachmentsEmpty = document.getElementById('attachmentsEmpty');
+    const attachmentsList = document.getElementById('attachmentsList');
+
+    const caseLabel = document.getElementById('caseLabel');
+    const species = document.getElementById('species');
+    const weight = document.getElementById('weight');
+    const asa = document.getElementById('asa');
+    const tpr = document.getElementById('tpr');
+    const coreNotes = document.getElementById('coreNotes');
+    const assessmentHints = document.getElementById('assessmentHints');
+    const planHints = document.getElementById('planHints');
+    const extraInstructions = document.getElementById('extraInstructions');
+
+    let currentTab = 'soap';
+    let currentMode = 'help';
+    let textCaseId = null;
+    let textPollInterval = null;
+    let fileCaseId = null;
+    let filePollInterval = null;
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTab = btn.dataset.tab || 'soap';
       });
+    });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Backend error ${res.status}: ${text}`);
+    brainModeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        brainModeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode || 'help';
+      });
+    });
+
+    async function pingBackend() {
+      try {
+        const res = await fetch(API_BASE + '/', { method: 'GET' });
+        if (res.ok) {
+          backendDot.classList.add('ok');
+          backendStatus.textContent = 'Backend reachable';
+        } else {
+          backendDot.classList.remove('ok');
+          backendStatus.textContent = 'Backend error ' + res.status;
+        }
+      } catch (err) {
+        backendDot.classList.remove('ok');
+        backendStatus.textContent = 'Cannot reach backend';
       }
-      return res.json();
     }
+    pingBackend();
 
     generateBtn.addEventListener('click', async () => {
-      statusMessage.textContent = 'Generating...';
-      errorText.textContent = '';
-      connectionStatusPill.classList.remove('error');
-      connectionStatusText.textContent = 'Connected to backend';
+      generationStatusEl.textContent = 'Working…';
       generateBtn.disabled = true;
+      mainOutputEl.textContent = '';
 
-      // Basics
-      const caseLabel = document.getElementById('caseLabel').value.trim();
-      const species = document.getElementById('species').value;
-      const weightKg = document.getElementById('weightKg').value.trim();
-      const asa = document.getElementById('asa').value;
-      const tpr = document.getElementById('tpr').value.trim();
-
-      const basics = { caseLabel, species, weightKg, asa, tpr };
-
-      // SOAP fields
-      const appointmentReason = document.getElementById('appointmentReason').value.trim();
-      const history = document.getElementById('history').value.trim();
-      const examFindings = document.getElementById('examFindings').value.trim();
-      const diagnosticsData = document.getElementById('diagnosticsData').value.trim();
-      const assessmentNotes = document.getElementById('assessmentHints').value.trim();
-      const planNotes = document.getElementById('planHints').value.trim();
-      const extraInstructions = document.getElementById('extraInstructions').value.trim();
-      const surgeryPreset = document.getElementById('surgeryPreset').value;
-      const anesthesiaQuickSummary = document.getElementById('anesthesiaQuick').value.trim();
-      const surgicalNotes = document.getElementById('surgicalNotes').value.trim();
-
-      const soapFields = {
-        appointmentReason,
-        history,
-        examFindings,
-        diagnosticsData,
-        assessmentNotes,
-        planNotes,
-        extraInstructions,
-        surgeryPreset,
-        anesthesiaQuickSummary,
-        surgicalNotes,
-      };
-
-      // Toolbox fields
-      const toolboxCoreNotes = document.getElementById('toolboxCoreNotes').value.trim();
-      const toolboxExtra = document.getElementById('toolboxExtra').value.trim();
-      const toolboxFields = {
-        coreNotes: toolboxCoreNotes,
-        extraInstructions: toolboxExtra,
-      };
-
-      // Consult fields
-      const consultSummary = document.getElementById('consultSummary').value.trim();
-      const consultQuestion = document.getElementById('consultQuestion').value.trim();
-      const consultFields = {
-        patientSummary: consultSummary,
-        question: consultQuestion,
-      };
-
-      const payload = {
-        mode: activeMainTab,
-        caseType: activeCaseType,
-        surgeryLayout: activeSurgeryLayout,
-        brainMode,
-        basics,
-        soapFields,
-        toolboxFields,
-        consultFields,
-      };
+      const lines = [];
+      lines.push('Tab: ' + currentTab.toUpperCase());
+      if (caseLabel.value.trim()) lines.push('Case label: ' + caseLabel.value.trim());
+      if (species.value) lines.push('Species: ' + species.value);
+      if (weight.value) lines.push('Weight: ' + weight.value + ' kg');
+      if (asa.value.trim()) lines.push('ASA: ' + asa.value.trim());
+      if (tpr.value.trim()) lines.push('TPR / notes: ' + tpr.value.trim());
+      if (coreNotes.value.trim()) {
+        lines.push('');
+        lines.push('Core notes / history / PE / diagnostics:');
+        lines.push(coreNotes.value.trim());
+      }
+      if (assessmentHints.value.trim()) {
+        lines.push('');
+        lines.push('Assessment hints:');
+        lines.push(assessmentHints.value.trim());
+      }
+      if (planHints.value.trim()) {
+        lines.push('');
+        lines.push('Plan hints / discharge requests:');
+        lines.push(planHints.value.trim());
+      }
+      const intake = lines.join('\n');
+      const context = extraInstructions.value.trim();
 
       try {
-        const json = await callBackend(payload);
-        if (!json.ok) {
-          throw new Error(json.error || 'Unknown backend error');
-        }
-        mainOutputText.value = json.output || '';
-        updateCopyButtonState();
-
-        // Minimal feedback bar
-        const missingBits = [];
-        if (activeMainTab === 'soap') {
-          if (!weightKg) missingBits.push('weight');
-          if (!asa) missingBits.push('ASA');
-          if (activeCaseType === 'surgery' && !anesthesiaQuickSummary) {
-            missingBits.push('anesthesia quick summary');
-          }
-        } else if (activeMainTab === 'toolbox') {
-          if (!toolboxCoreNotes) missingBits.push('core notes');
-        } else if (activeMainTab === 'consult') {
-          if (!consultSummary) missingBits.push('patient summary');
-          if (!consultQuestion) missingBits.push('consult question');
-        }
-
-        let fb = '<strong>Feedback & next inputs.</strong><br />';
-        if (missingBits.length) {
-          fb += 'Helpful next fields: ' + missingBits.join(', ') + '.';
+        const res = await fetch(API_BASE + '/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: currentMode, intake, context }),
+        });
+        const json = await res.json();
+        if (!res.ok || !json.ok) {
+          const errMsg = (json && json.error) || ('Backend error ' + res.status);
+          mainOutputEl.textContent = 'There was a backend error:\n' + errMsg;
+          generationStatusEl.textContent = 'Error';
         } else {
-          fb += 'You provided enough info. Refine if you want different emphasis or tone.';
+          mainOutputEl.textContent = json.text;
+          generationStatusEl.textContent = 'Done';
         }
-        feedbackBox.innerHTML = fb;
-        statusMessage.textContent = 'Done.';
       } catch (err) {
-        console.error(err);
-        mainOutputText.value = '';
-        updateCopyButtonState();
-        feedbackBox.innerHTML =
-          '<strong>There was an error.</strong><br />Please check the console or try again.';
-        statusMessage.textContent = 'Error.';
-        connectionStatusPill.classList.add('error');
-        connectionStatusText.textContent = 'Error talking to backend';
-        errorText.textContent = err.message || 'Unknown error.';
+        mainOutputEl.textContent = 'Error talking to backend:\n' + (err.message || err);
+        generationStatusEl.textContent = 'Error';
       } finally {
         generateBtn.disabled = false;
       }
     });
 
-    // Initial copy button state
-    updateCopyButtonState();
+    copyFullBtn.addEventListener('click', async () => {
+      const text = mainOutputEl.textContent || '';
+      if (!text.trim()) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyFullBtn.textContent = 'Copied ✓';
+        setTimeout(() => (copyFullBtn.textContent = 'Copy full text'), 1000);
+      } catch {
+        copyFullBtn.textContent = 'Copy failed';
+        setTimeout(() => (copyFullBtn.textContent = 'Copy full text'), 1000);
+      }
+    });
+
+    // TEXT RELAY
+    receiveTextBtn.addEventListener('click', async () => {
+      try {
+        const res = await fetch(API_BASE + '/relay/init-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Error init text relay');
+        textCaseId = json.caseId;
+      } catch (err) {
+        alert('Could not start text relay: ' + (err.message || err));
+        return;
+      }
+
+      qrFilePanel.style.display = 'none';
+      qrTextPanel.style.display = 'flex';
+      qrTextContainer.innerHTML = '';
+      const urlForPhone = API_BASE + '/relay/text-page?caseId=' + encodeURIComponent(textCaseId);
+      new QRCode(qrTextContainer, { text: urlForPhone, width: 110, height: 110 });
+
+      if (textPollInterval) clearInterval(textPollInterval);
+      textPollInterval = setInterval(async () => {
+        if (!textCaseId) return;
+        try {
+          const res = await fetch(API_BASE + '/relay/poll-text/' + encodeURIComponent(textCaseId));
+          if (!res.ok) return;
+          const json = await res.json();
+          if (!json.ok) return;
+          const data = json.data || {};
+          if (data.text && data.text.trim()) {
+            mainOutputEl.textContent = data.text;
+            generationStatusEl.textContent = 'Text received from phone';
+            clearInterval(textPollInterval);
+            textPollInterval = null;
+          }
+        } catch (err) {
+          console.error('Text relay poll error', err);
+        }
+      }, 1500);
+    });
+
+    // FILE RELAY
+    receiveFileBtn.addEventListener('click', async () => {
+      try {
+        const res = await fetch(API_BASE + '/relay/init-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Error init file relay');
+        fileCaseId = json.caseId;
+      } catch (err) {
+        alert('Could not start document relay: ' + (err.message || err));
+        return;
+      }
+
+      qrTextPanel.style.display = 'none';
+      qrFilePanel.style.display = 'flex';
+      qrFileContainer.innerHTML = '';
+      const urlForPhone = API_BASE + '/relay/file-page?caseId=' + encodeURIComponent(fileCaseId);
+      new QRCode(qrFileContainer, { text: urlForPhone, width: 110, height: 110 });
+
+      if (filePollInterval) clearInterval(filePollInterval);
+      filePollInterval = setInterval(async () => {
+        if (!fileCaseId) return;
+        try {
+          const res = await fetch(API_BASE + '/relay/poll-file/' + encodeURIComponent(fileCaseId));
+          if (!res.ok) return;
+          const json = await res.json();
+          if (!json.ok) return;
+          const data = json.data || {};
+          if (data.dataUrl && data.dataUrl.startsWith('data:image')) {
+            attachmentsEmpty.style.display = 'none';
+            const img = document.createElement('img');
+            img.className = 'thumb';
+            img.src = data.dataUrl;
+            attachmentsList.appendChild(img);
+            clearInterval(filePollInterval);
+            filePollInterval = null;
+          }
+        } catch (err) {
+          console.error('File relay poll error', err);
+        }
+      }, 2000);
+    });
   </script>
 </body>
 </html>
