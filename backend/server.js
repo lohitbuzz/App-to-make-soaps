@@ -1,2021 +1,422 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Lohit SOAP App v1.7.5</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    :root {
-      --bg: #071018;
-      --bg-elevated: #101b27;
-      --bg-elevated-soft: #131f2c;
-      --border-subtle: #1f2a38;
-      --accent: #19b4a5;
-      --accent-soft: rgba(25, 180, 165, 0.15);
-      --accent-bright: #24dcc8;
-      --danger: #ff5f5f;
-      --text-main: #f7fbff;
-      --text-muted: #a7b4c6;
-      --text-soft: #7f8ca0;
-      --pill-bg: #151f2b;
-      --shadow-soft: 0 16px 40px rgba(0,0,0,0.45);
-      --radius-lg: 18px;
-      --radius-md: 12px;
-      --radius-pill: 999px;
-      --input-bg: #121d29;
-      --input-border: #273445;
-      --input-focus: #30f1dd;
-      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "Segoe UI", sans-serif;
+// server.js – Lohit SOAP App v1.7.5 backend
+// Node: CommonJS style (require). Run with: node server.js
+
+const path = require('path');
+const express = require('express');
+const cors = require('cors');
+const OpenAI = require('openai');
+
+const app = express();
+
+// ---------- CONFIG ----------
+const PORT = process.env.PORT || 3000;
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5.1-mini';
+
+// Create OpenAI client (expects OPENAI_API_KEY in env)
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// ---------- MIDDLEWARE ----------
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+
+// Serve static assets from current dir (index.html, etc.)
+app.use(express.static(__dirname));
+
+// Root -> index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// ---------- HELPERS ----------
+
+// Safely extract text from Responses API output
+function extractResponseText(response) {
+  try {
+    if (!response || !Array.isArray(response.output) || response.output.length === 0) {
+      return 'No output returned.';
     }
 
-    * {
-      box-sizing: border-box;
+    // The docs’ simple example: response.output[0].content[0].text
+    const first = response.output[0];
+    if (!first || !Array.isArray(first.content) || first.content.length === 0) {
+      return 'No output content found.';
     }
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: var(--font-main);
-      background: radial-gradient(circle at top, #1c2937 0, #02060b 60%);
-      color: var(--text-main);
-      -webkit-font-smoothing: antialiased;
-    }
+    // Try the simple path
+    const c0 = first.content[0];
+    if (typeof c0 === 'string') return c0.trim();
+    if (c0 && typeof c0.text === 'string') return c0.text.trim();
 
-    .app-shell {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding: 16px;
-      gap: 12px;
-    }
-
-    .app-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 16px;
-      border-radius: var(--radius-lg);
-      background: linear-gradient(120deg, rgba(25,180,165,0.15), rgba(7,16,24,0.95));
-      border: 1px solid rgba(25,180,165,0.35);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .app-header-left {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .app-title {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-    }
-
-    .app-subtitle {
-      font-size: 12px;
-      color: var(--text-soft);
-    }
-
-    .app-header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    .pill {
-      padding: 4px 10px;
-      border-radius: var(--radius-pill);
-      background: var(--pill-bg);
-      border: 1px solid rgba(255,255,255,0.05);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-    }
-
-    .pill-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #3ee88a;
-      box-shadow: 0 0 0 4px rgba(62,232,138,0.2);
-    }
-
-    .pill-version {
-      color: var(--text-soft);
-    }
-
-    .app-main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .top-tabs {
-      display: inline-flex;
-      border-radius: var(--radius-pill);
-      background: rgba(6,12,20,0.9);
-      padding: 4px;
-      border: 1px solid rgba(255,255,255,0.06);
-      box-shadow: var(--shadow-soft);
-      align-self: center;
-    }
-
-    .top-tab-btn {
-      border: none;
-      background: transparent;
-      color: var(--text-soft);
-      font-size: 13px;
-      padding: 6px 16px;
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.15s ease;
-    }
-
-    .top-tab-btn span.icon {
-      font-size: 14px;
-    }
-
-    .top-tab-btn.active {
-      background: var(--accent-soft);
-      color: var(--accent-bright);
-    }
-
-    .top-tab-btn:not(.active):hover {
-      background: rgba(255,255,255,0.03);
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-      gap: 12px;
-      align-items: flex-start;
-    }
-
-    @media (max-width: 900px) {
-      .content-grid {
-        grid-template-columns: minmax(0, 1fr);
+    // Fallback: concatenate anything that smells like text
+    let text = '';
+    for (const chunk of first.content) {
+      if (!chunk) continue;
+      if (typeof chunk === 'string') {
+        text += chunk;
+      } else if (typeof chunk.text === 'string') {
+        text += chunk.text;
+      } else if (chunk.type === 'output_text' && chunk.text && typeof chunk.text.value === 'string') {
+        text += chunk.text.value;
       }
     }
 
-    .panel {
-      background: radial-gradient(circle at top left, rgba(25,180,165,0.14), #050a12 52%);
-      border-radius: var(--radius-lg);
-      border: 1px solid #151f2b;
-      box-shadow: var(--shadow-soft);
-      padding: 12px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .panel-title {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--text-soft);
-    }
-
-    .panel-chip {
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: var(--radius-pill);
-      background: rgba(255,255,255,0.03);
-      color: var(--text-soft);
-      border: 1px solid rgba(255,255,255,0.04);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .panel-body {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .field-row {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .field {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .field-label {
-      font-size: 11px;
-      color: var(--text-soft);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .field-label span.hint {
-      font-size: 10px;
-      color: var(--text-muted);
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select,
-    textarea {
-      background: var(--input-bg);
-      border-radius: 9px;
-      border: 1px solid var(--input-border);
-      color: var(--text-main);
-      padding: 6px 8px;
-      font-size: 12px;
-      outline: none;
-      width: 100%;
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: #5e6a7c;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--input-focus);
-      box-shadow: 0 0 0 1px rgba(48,241,221,0.3);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 64px;
-      max-height: 220px;
-    }
-
-    .chip-toggle-group {
-      display: inline-flex;
-      border-radius: var(--radius-pill);
-      overflow: hidden;
-      background: var(--pill-bg);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .chip-toggle {
-      border: none;
-      background: transparent;
-      color: var(--text-soft);
-      font-size: 11px;
-      padding: 4px 10px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .chip-toggle.active {
-      background: var(--accent-soft);
-      color: var(--accent-bright);
-    }
-
-    .vaccine-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .checkbox-inline {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      color: var(--text-soft);
-      cursor: pointer;
-    }
-
-    .checkbox-inline input {
-      width: 12px;
-      height: 12px;
-      accent-color: var(--accent);
-    }
-
-    .pill-small {
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: var(--radius-pill);
-      background: rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: var(--text-soft);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .btn {
-      border-radius: var(--radius-pill);
-      padding: 6px 14px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03);
-      color: var(--text-main);
-      font-size: 12px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .btn-primary {
-      background: linear-gradient(120deg, var(--accent), var(--accent-bright));
-      border-color: rgba(255,255,255,0.15);
-      color: #03100f;
-      font-weight: 600;
-    }
-
-    .btn-soft {
-      background: rgba(255,255,255,0.06);
-    }
-
-    .btn-danger {
-      border-color: rgba(255,95,95,0.8);
-      color: var(--danger);
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-
-    .btn:hover:not(:disabled) {
-      transform: translateY(-0.5px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    }
-
-    .collapse-toggle {
-      font-size: 11px;
-      color: var(--text-soft);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      user-select: none;
-    }
-
-    .collapse-toggle span.chevron {
-      font-size: 10px;
-      transition: transform 0.15s ease;
-    }
-
-    .collapse-toggle.open span.chevron {
-      transform: rotate(90deg);
-    }
-
-    .collapse-body {
-      margin-top: 4px;
-      border-radius: 10px;
-      border: 1px dashed rgba(255,255,255,0.08);
-      padding: 6px;
-      background: rgba(0,0,0,0.28);
-    }
-
-    .output-main {
-      min-height: 160px;
-      max-height: 420px;
-      overflow-y: auto;
-      border-radius: 10px;
-      background: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.06);
-      padding: 8px;
-      font-size: 12px;
-      white-space: pre-wrap;
-      color: var(--text-muted);
-    }
-
-    .output-main::-webkit-scrollbar,
-    .scroll-area::-webkit-scrollbar {
-      width: 6px;
-    }
-    .output-main::-webkit-scrollbar-thumb,
-    .scroll-area::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.12);
-      border-radius: 999px;
-    }
-
-    .scroll-area {
-      max-height: 180px;
-      overflow-y: auto;
-      border-radius: 8px;
-      background: rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.06);
-      padding: 6px;
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    .status-line {
-      font-size: 11px;
-      color: var(--text-soft);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-
-    .status-left {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #3ee88a;
-    }
-
-    .status-dot.offline {
-      background: #f15f72;
-    }
-
-    /* Recorder */
-
-    .recorder-strip {
-      margin-top: 4px;
-      border-radius: 11px;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.06);
-      padding: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .rec-top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .rec-status {
-      font-size: 11px;
-      color: var(--text-soft);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .rec-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--danger);
-      opacity: 0;
-    }
-
-    .rec-dot.recording {
-      animation: rec-blink 1s infinite;
-      opacity: 1;
-    }
-
-    @keyframes rec-blink {
-      0%, 50% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,95,95,0.6); }
-      100% { opacity: 0.2; box-shadow: 0 0 0 4px rgba(255,95,95,0.0); }
-    }
-
-    .rec-list {
-      font-size: 11px;
-      color: var(--text-soft);
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .rec-list-entry {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .rec-actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .helper-console {
-      margin-top: 8px;
-      border-radius: 11px;
-      border: 1px solid rgba(255,255,255,0.06);
-      background: rgba(0,0,0,0.4);
-      padding: 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .helper-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .helper-title {
-      font-size: 11px;
-      color: var(--text-soft);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .helper-icon {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      color: var(--accent-bright);
-      background: rgba(25,180,165,0.1);
-    }
-
-    .helper-output {
-      max-height: 220px;
-      overflow-y: auto;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(0,0,0,0.35);
-      padding: 6px;
-      font-size: 12px;
-      color: var(--text-muted);
-      white-space: pre-wrap;
-    }
-
-    .right-bottom-card {
-      margin-top: 8px;
-      border-radius: 12px;
-      background: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.06);
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    .right-bottom-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .right-bottom-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .tiny {
-      font-size: 10px;
-      color: var(--text-soft);
-    }
-
-    /* Mobile vs desktop helpers */
-    .mobile-only {
-      display: none;
-    }
-    .desktop-only {
-      display: inline-flex;
-    }
-
-    @media (max-width: 900px) {
-      .desktop-only {
-        display: none !important;
-      }
-      .mobile-only {
-        display: inline-flex;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="app-shell">
-    <header class="app-header">
-      <div class="app-header-left">
-        <div class="app-title">Lohit SOAP App</div>
-        <div class="app-subtitle">SOAP · Toolbox · Consult · Phone ↔ Desktop</div>
-      </div>
-      <div class="app-header-right">
-        <div class="pill">
-          <span class="pill-dot"></span>
-          <span>Backend reachable</span>
-        </div>
-        <div class="pill pill-version">
-          v1.7.5 · Hybrid UI + Recorder
-        </div>
-      </div>
-    </header>
-
-    <div class="app-main">
-      <div class="top-tabs">
-        <button class="top-tab-btn active" data-tab="soap">
-          <span class="icon">🧾</span> SOAP
-        </button>
-        <button class="top-tab-btn" data-tab="toolbox">
-          <span class="icon">🧰</span> Toolbox
-        </button>
-        <button class="top-tab-btn" data-tab="consult">
-          <span class="icon">💭</span> Consult
-        </button>
-      </div>
-
-      <div class="content-grid">
-        <!-- LEFT SIDE PANELS -->
-        <div id="left-column">
-          <!-- SOAP SECTION -->
-          <div id="soap-section" class="panel">
-            <div class="panel-header">
-              <div class="panel-title">SOAP Input</div>
-              <div class="panel-chip">Appointment · Surgery · Voice</div>
-            </div>
-            <div class="panel-body">
-              <!-- Mobile upload shortcut -->
-              <div class="button-row mobile-only">
-                <button class="btn btn-soft" id="soapMobileUploadBtn">
-                  📷 Upload from this phone
-                </button>
-              </div>
-
-              <!-- Row 1: Case / patient -->
-              <div class="field-row">
-                <div class="field">
-                  <label class="field-label">Case label</label>
-                  <input type="text" id="caseLabel" placeholder="e.g. Bella – Spay recheck" />
-                </div>
-                <div class="field">
-                  <label class="field-label">Patient name</label>
-                  <input type="text" id="patientName" placeholder="e.g. Bella" />
-                </div>
-              </div>
-
-              <div class="field-row">
-                <div class="field">
-                  <label class="field-label">Species</label>
-                  <select id="species">
-                    <option value="">Select species</option>
-                    <option value="canine">Canine</option>
-                    <option value="feline">Feline</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label class="field-label">Sex</label>
-                  <select id="sex">
-                    <option value="">Sex</option>
-                    <option value="M">Male</option>
-                    <option value="MN">Male neutered</option>
-                    <option value="F">Female</option>
-                    <option value="FS">Female spayed</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label class="field-label">Weight (kg)</label>
-                  <input type="number" id="weightKg" step="0.1" placeholder="e.g. 6.4" />
-                </div>
-              </div>
-
-              <!-- Row 2: Visit type + ASA + TPR -->
-              <div class="field-row">
-                <div class="field" style="flex: 0.9;">
-                  <label class="field-label">
-                    Visit type
-                    <span class="hint">Appointment vs Surgery</span>
-                  </label>
-                  <div class="chip-toggle-group">
-                    <button class="chip-toggle active" id="visitTypeAppointment">Appointment</button>
-                    <button class="chip-toggle" id="visitTypeSurgery">Surgery</button>
-                  </div>
-                </div>
-                <div class="field" id="asaField" style="flex: 0.6; display: none;">
-                  <label class="field-label">ASA (surgery)</label>
-                  <select id="asaStatus">
-                    <option value="">Select ASA</option>
-                    <option value="I">ASA I</option>
-                    <option value="II">ASA II</option>
-                    <option value="III">ASA III</option>
-                    <option value="IV">ASA IV</option>
-                    <option value="V">ASA V</option>
-                  </select>
-                </div>
-                <div class="field" id="tprField">
-                  <label class="field-label">
-                    TPR / notes
-                    <span class="hint">Vitals, BCS, key PE</span>
-                  </label>
-                  <input type="text" id="tprNotes" placeholder="TPR, BCS, key vitals / comments" />
-                </div>
-              </div>
-
-              <!-- Row 3: Appointment preset / Surgery preset + vaccines -->
-              <div class="field-row" id="appointmentPresetRow">
-                <div class="field">
-                  <label class="field-label">
-                    Appointment preset
-                    <span class="hint">Steer SOAP style</span>
-                  </label>
-                  <select id="appointmentPreset">
-                    <option value="">Custom / blank</option>
-                    <option value="wellness">Wellness / vaccines</option>
-                    <option value="gi">GI upset</option>
-                    <option value="derm">Derm / otitis</option>
-                    <option value="cough">Cough / URI</option>
-                    <option value="lameness">Lameness</option>
-                    <option value="senior">Senior / multi-issue</option>
-                    <option value="recheck">Recheck</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="field-row" id="surgeryPresetRow" style="display:none;">
-                <div class="field">
-                  <label class="field-label">
-                    Surgery preset
-                    <span class="hint">Procedure template</span>
-                  </label>
-                  <select id="surgeryPreset">
-                    <option value="">Custom surgery</option>
-                    <option value="dog_spay">Canine spay – client</option>
-                    <option value="dog_spay_rescue">Canine spay – rescue</option>
-                    <option value="dog_neuter">Canine neuter – client</option>
-                    <option value="dog_neuter_rescue">Canine neuter – rescue</option>
-                    <option value="cat_spay">Feline spay – client</option>
-                    <option value="cat_spay_rescue">Feline spay – rescue</option>
-                    <option value="cat_neuter">Feline neuter – client</option>
-                    <option value="cat_neuter_rescue">Feline neuter – rescue</option>
-                    <option value="pyometra">Pyometra spay</option>
-                    <option value="cystotomy">Cystotomy</option>
-                    <option value="exploratory">Exploratory laparotomy</option>
-                    <option value="enterotomy">Enterotomy</option>
-                    <option value="gastrotomy">Gastrotomy</option>
-                    <option value="gastropexy">Gastropexy</option>
-                    <option value="feline_unblock">Feline urethral unblock</option>
-                    <option value="mass_removal">Mass removal</option>
-                    <option value="laceration">Laceration repair</option>
-                    <option value="amputation">Limb amputation</option>
-                    <option value="dental_cohat_no_rads">Dental – COHAT (no rads)</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label class="field-label">
-                    Surgery mode
-                  </label>
-                  <div class="chip-toggle-group">
-                    <button class="chip-toggle active" id="surgeryModeSimple">Simple</button>
-                    <button class="chip-toggle" id="surgeryModeAdvanced">Advanced</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Vaccines -->
-              <div class="vaccine-row">
-                <label class="checkbox-inline">
-                  <input type="checkbox" id="vaccinesToday" />
-                  <span>Vaccines done today</span>
-                </label>
-                <span class="tiny">Auto-open for Wellness; optional otherwise</span>
-              </div>
-              <div class="field-row" id="vaccineSelectorRow" style="display:none;">
-                <div class="field">
-                  <label class="field-label">
-                    Vaccines
-                    <span class="hint">Select all that apply</span>
-                  </label>
-                  <select id="vaccineSelector" multiple size="5">
-                    <!-- options populated via JS based on species -->
-                  </select>
-                </div>
-              </div>
-
-              <!-- Main SOAP text inputs -->
-              <div class="field">
-                <label class="field-label">Core notes / history</label>
-                <textarea id="soapCoreNotes" placeholder="Why are they here today? Pertinent history, owner concerns, context."></textarea>
-              </div>
-              <div class="field">
-                <label class="field-label">PE & diagnostics (data only)</label>
-                <textarea id="soapPE" placeholder="Include PE systems list, diagnostic results, vitals – values only, no interpretation."></textarea>
-              </div>
-              <div class="field">
-                <label class="field-label">Assessment hints</label>
-                <textarea id="soapAssessmentHints" placeholder="What are you worried about? Rule-outs, problem list, ASA grade for anesthesia cases."></textarea>
-              </div>
-              <div class="field">
-                <label class="field-label">Plan & discharge hints</label>
-                <textarea id="soapPlanHints" placeholder="Diagnostics, treatments, procedures, recheck timing, what you told the owner, activity restrictions."></textarea>
-              </div>
-              <div class="field">
-                <label class="field-label">Extra instructions / anything else</label>
-                <textarea id="soapExtra" placeholder="Edge cases, special instructions, inventory notes, anything weird or important."></textarea>
-              </div>
-
-              <!-- External transcript (Covet) -->
-              <div>
-                <div class="collapse-toggle" id="extTranscriptToggle">
-                  <span class="chevron">▶</span>
-                  <span>External transcript (optional – paste Covet transcript or call log)</span>
-                </div>
-                <div class="collapse-body" id="extTranscriptBody" style="display:none;">
-                  <div class="field">
-                    <textarea id="externalTranscript" placeholder="Paste Covet transcript or long call summary here. It will be used as context to improve the SOAP."></textarea>
-                  </div>
-                  <label class="checkbox-inline">
-                    <input type="checkbox" id="externalTranscriptInclude" />
-                    <span>Also include a structured communication summary in the SOAP output</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Recorder strip -->
-              <div>
-                <div class="collapse-toggle" id="voiceToggle">
-                  <span class="chevron">▶</span>
-                  <span>Voice notes (optional)</span>
-                </div>
-                <div id="voiceBody" class="recorder-strip" style="display:none;">
-                  <div class="rec-top-row">
-                    <button class="btn btn-soft" id="recBtn">
-                      <span id="recBtnIcon">🎙</span>
-                      <span id="recBtnLabel">Record</span>
-                    </button>
-                    <div class="rec-status">
-                      <span id="recDot" class="rec-dot"></span>
-                      <span id="recStatusText">Not recording</span>
-                    </div>
-                  </div>
-                  <div class="rec-list" id="recList">
-                    <!-- recording entries placeholder; we treat it as single-session transcript -->
-                    <div class="rec-list-entry">
-                      <span id="recSummaryText">No recordings in this session yet.</span>
-                    </div>
-                  </div>
-                  <div class="rec-actions">
-                    <button class="btn btn-soft" id="recSaveRecordingBtn">Save recording (context only)</button>
-                    <button class="btn btn-primary" id="recSaveTranscribeBtn">Save &amp; transcribe</button>
-                    <button class="btn btn-danger" id="recClearBtn">Clear recordings</button>
-                  </div>
-
-                  <!-- Transcript panel -->
-                  <div>
-                    <div class="collapse-toggle" id="transcriptToggle">
-                      <span class="chevron">▶</span>
-                      <span>Transcript (optional – edit before SOAP)</span>
-                    </div>
-                    <div id="transcriptBody" class="collapse-body" style="display:none;">
-                      <label class="checkbox-inline" style="margin-bottom:4px;">
-                        <input type="checkbox" id="useTranscriptForSoap" />
-                        <span>Use transcript text when generating SOAP</span>
-                      </label>
-                      <textarea
-                        id="voiceTranscriptEdit"
-                        class="scroll-area"
-                        style="min-height:80px;"
-                        placeholder="Transcript will appear here after recording stops. You can edit before generating SOAP.">
-                      </textarea>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Generate SOAP -->
-              <div class="button-row">
-                <button class="btn btn-primary" id="generateSoapBtn">
-                  <span>Generate SOAP</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- TOOLBOX SECTION -->
-          <div id="toolbox-section" class="panel" style="display:none;">
-            <div class="panel-header">
-              <div class="panel-title">Toolbox</div>
-              <div class="panel-chip">Bloodwork · Email · Handout · Covet Fixer · Freeform</div>
-            </div>
-            <div class="panel-body">
-              <!-- Mobile upload shortcut -->
-              <div class="button-row mobile-only">
-                <button class="btn btn-soft" id="toolboxMobileUploadBtn">
-                  📷 Upload from this phone
-                </button>
-              </div>
-
-              <div class="field-row">
-                <div class="field">
-                  <label class="field-label">Tool</label>
-                  <select id="toolboxMode">
-                    <option value="bloodwork">Bloodwork Helper Lite</option>
-                    <option value="email">Email / Client Update Helper</option>
-                    <option value="handout">Client Handout Helper</option>
-                    <option value="snippet">SOAP Snippet Helper</option>
-                    <option value="covetFixer">Covet Fixer (improve Covet SOAP)</option>
-                    <option value="freeform">Freeform mode</option>
-                    <option value="summaryRecorder">Client Summary Recorder</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="field">
-                <label class="field-label">
-                  Core text / notes
-                  <span class="hint">Paste bloodwork, Covet SOAP, or type instructions here</span>
-                </label>
-                <textarea id="toolboxInput" placeholder="Paste lab values, Covet output, or type what you want the tool to generate."></textarea>
-              </div>
-
-              <!-- Toolbox external transcript (share same pattern) -->
-              <div>
-                <div class="collapse-toggle" id="toolboxExtTranscriptToggle">
-                  <span class="chevron">▶</span>
-                  <span>External transcript (optional)</span>
-                </div>
-                <div class="collapse-body" id="toolboxExtTranscriptBody" style="display:none;">
-                  <div class="field">
-                    <textarea id="toolboxExternalTranscript" placeholder="Paste call transcript, handwritten notes, or any text you'd like to include as context."></textarea>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Toolbox recorder -->
-              <div>
-                <div class="collapse-toggle" id="toolboxVoiceToggle">
-                  <span class="chevron">▶</span>
-                  <span>Voice notes (optional)</span>
-                </div>
-                <div id="toolboxVoiceBody" class="recorder-strip" style="display:none;">
-                  <div class="rec-top-row">
-                    <button class="btn btn-soft" id="toolboxRecBtn">
-                      <span id="toolboxRecBtnIcon">🎙</span>
-                      <span id="toolboxRecBtnLabel">Record</span>
-                    </button>
-                    <div class="rec-status">
-                      <span id="toolboxRecDot" class="rec-dot"></span>
-                      <span id="toolboxRecStatusText">Not recording</span>
-                    </div>
-                  </div>
-                  <div class="rec-list">
-                    <div class="rec-list-entry">
-                      <span id="toolboxRecSummaryText">No recordings in this tool yet.</span>
-                    </div>
-                  </div>
-                  <div class="rec-actions">
-                    <button class="btn btn-soft" id="toolboxRecSaveContextBtn">Save (use as context)</button>
-                    <button class="btn btn-primary" id="toolboxGenerateBtn">Generate tool output</button>
-                    <button class="btn btn-danger" id="toolboxRecClearBtn">Clear recordings</button>
-                  </div>
-                  <div>
-                    <div class="collapse-toggle" id="toolboxTranscriptToggle">
-                      <span class="chevron">▶</span>
-                      <span>View transcript</span>
-                    </div>
-                    <div id="toolboxTranscriptBody" class="collapse-body" style="display:none;">
-                      <div class="scroll-area" id="toolboxTranscriptView">
-                        Transcript will appear here after recording stops.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="button-row">
-                <button class="btn btn-primary" id="toolboxGenerateMainBtn">
-                  <span>Generate from toolbox</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- CONSULT SECTION -->
-          <div id="consult-section" class="panel" style="display:none;">
-            <div class="panel-header">
-              <div class="panel-title">Consult Input</div>
-              <div class="panel-chip">Reasoning · Differentials · Plans</div>
-            </div>
-            <div class="panel-body">
-              <!-- Mobile upload shortcut -->
-              <div class="button-row mobile-only">
-                <button class="btn btn-soft" id="consultMobileUploadBtn">
-                  📷 Upload from this phone
-                </button>
-              </div>
-
-              <div class="field">
-                <label class="field-label">
-                  Consult question
-                  <span class="hint">What do you want the brain to help with?</span>
-                </label>
-                <textarea id="consultQuestion" placeholder="e.g. Help me rank differentials and next-step tests for this chronic diarrhea case."></textarea>
-              </div>
-              <div class="field">
-                <label class="field-label">
-                  Case context
-                  <span class="hint">Signalment, key history, summary of findings</span>
-                </label>
-                <textarea id="consultContext" placeholder="Age, breed, main problems, key labs, relevant imaging, what you've tried so far."></textarea>
-              </div>
-
-              <!-- Consult external transcript -->
-              <div>
-                <div class="collapse-toggle" id="consultExtTranscriptToggle">
-                  <span class="chevron">▶</span>
-                  <span>External transcript (optional)</span>
-                </div>
-                <div class="collapse-body" id="consultExtTranscriptBody" style="display:none;">
-                  <div class="field">
-                    <textarea id="consultExternalTranscript" placeholder="Paste call notes, recording transcripts, or exam-room dictations here."></textarea>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Consult recorder -->
-              <div>
-                <div class="collapse-toggle" id="consultVoiceToggle">
-                  <span class="chevron">▶</span>
-                  <span>Voice notes (optional)</span>
-                </div>
-                <div id="consultVoiceBody" class="recorder-strip" style="display:none;">
-                  <div class="rec-top-row">
-                    <button class="btn btn-soft" id="consultRecBtn">
-                      <span id="consultRecBtnIcon">🎙</span>
-                      <span id="consultRecBtnLabel">Record</span>
-                    </button>
-                    <div class="rec-status">
-                      <span id="consultRecDot" class="rec-dot"></span>
-                      <span id="consultRecStatusText">Not recording</span>
-                    </div>
-                  </div>
-                  <div class="rec-list">
-                    <div class="rec-list-entry">
-                      <span id="consultRecSummaryText">No recordings in this consult yet.</span>
-                    </div>
-                  </div>
-                  <div class="rec-actions">
-                    <button class="btn btn-soft" id="consultRecSaveContextBtn">Save (use as context)</button>
-                    <button class="btn btn-primary" id="consultGenerateBtn">Generate consult</button>
-                    <button class="btn btn-danger" id="consultRecClearBtn">Clear recordings</button>
-                  </div>
-                  <div>
-                    <div class="collapse-toggle" id="consultTranscriptToggle">
-                      <span class="chevron">▶</span>
-                      <span>View transcript</span>
-                    </div>
-                    <div id="consultTranscriptBody" class="collapse-body" style="display:none;">
-                      <div class="scroll-area" id="consultTranscriptView">
-                        Transcript will appear here after recording stops.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="button-row">
-                <button class="btn btn-primary" id="consultGenerateMainBtn">
-                  <span>Generate consult output</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- RIGHT SIDE PANELS -->
-        <div id="right-column">
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title" id="outputPanelTitle">OUTPUT · AI BRAIN – SOAP</div>
-              <div class="panel-chip" id="outputPanelChip">Ready</div>
-            </div>
-            <div class="panel-body">
-              <div class="output-main" id="mainOutput">
-                SOAP / Toolbox / Consult output will appear here.
-              </div>
-              <div class="button-row" id="outputButtonsSoap">
-                <button class="btn btn-primary" id="copyFullSoapBtn">Copy full SOAP</button>
-                <button class="btn btn-soft" id="copyPlanMedsAfterBtn">Copy Plan + Meds + Aftercare</button>
-                <button class="btn btn-soft mobile-only" id="sendOutputToDesktopBtn">
-                  📤 Send output to desktop
-                </button>
-              </div>
-              <div class="button-row" id="outputButtonsToolbox" style="display:none;">
-                <button class="btn btn-primary" id="copyToolboxOutputBtn">Copy toolbox output</button>
-                <button class="btn btn-soft mobile-only" id="sendToolboxOutputToDesktopBtn">
-                  📤 Send output to desktop
-                </button>
-              </div>
-              <div class="button-row" id="outputButtonsConsult" style="display:none;">
-                <button class="btn btn-primary" id="copyConsultOutputBtn">Copy consult output</button>
-                <button class="btn btn-soft mobile-only" id="sendConsultOutputToDesktopBtn">
-                  📤 Send output to desktop
-                </button>
-              </div>
-
-              <!-- SOAP Helper Console -->
-              <div id="soapHelperConsole" class="helper-console">
-                <div class="helper-header">
-                  <div class="helper-title">
-                    <div class="helper-icon">🧠</div>
-                    <span>SOAP helper console</span>
-                  </div>
-                  <div class="collapse-toggle" id="helperToggle">
-                    <span class="chevron">▶</span>
-                    <span>Open helper</span>
-                  </div>
-                </div>
-                <div id="helperBody" style="display:none; margin-top:4px;">
-                  <div class="field">
-                    <label class="field-label">
-                      Helper prompt
-                      <span class="hint">What do you want from this SOAP?</span>
-                    </label>
-                    <textarea id="helperPrompt" placeholder='e.g. "Make a client discharge for today&apos;s surgery" or "Create a brief call log summary".'></textarea>
-                  </div>
-                  <div class="button-row">
-                    <button class="btn btn-primary" id="helperGenerateBtn">Generate helper output</button>
-                    <button class="btn btn-soft" id="helperClearBtn">Clear helper output</button>
-                  </div>
-                  <div class="field">
-                    <label class="field-label">Helper output</label>
-                    <div class="helper-output" id="helperOutput">
-                      When you generate, helper output (discharge, email, summary, etc.) will appear here.
-                    </div>
-                  </div>
-                  <div class="button-row">
-                    <button class="btn btn-soft" id="helperCopyBtn">Copy helper text</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Right bottom: Phone ↔ Desktop, uploads, status -->
-              <div class="right-bottom-card">
-                <div class="right-bottom-row">
-                  <div class="status-left">
-                    <div class="status-dot" id="backendStatusDot"></div>
-                    <span id="backendStatusText">Backend reachable</span>
-                  </div>
-                  <span class="tiny">Phone ↔ Desktop relay · Uploads</span>
-                </div>
-                <div class="right-bottom-buttons">
-                  <button class="btn btn-soft desktop-only" id="receiveTextFromPhoneBtn">
-                    📲 Receive text from phone
-                  </button>
-                  <button class="btn btn-soft desktop-only" id="receiveFilesFromPhoneBtn">
-                    🗂 Receive files from phone
-                  </button>
-                  <button class="btn btn-soft" id="uploadFromDeviceBtn">
-                    💻 Upload from this device
-                  </button>
-                </div>
-                <input type="file" id="hiddenFileInput" multiple style="display:none;" />
-                <div id="uploadPreview" class="tiny">
-                  No files uploaded yet.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div> <!-- end right-column -->
-      </div> <!-- end content-grid -->
-    </div> <!-- end app-main -->
-  </div> <!-- end app-shell -->
-
-  <script>
-    // --------- Tab switching ----------
-    const tabButtons = document.querySelectorAll('.top-tab-btn');
-    const soapSection = document.getElementById('soap-section');
-    const toolboxSection = document.getElementById('toolbox-section');
-    const consultSection = document.getElementById('consult-section');
-    const outputPanelTitle = document.getElementById('outputPanelTitle');
-    const outputPanelChip = document.getElementById('outputPanelChip');
-    const outputButtonsSoap = document.getElementById('outputButtonsSoap');
-    const outputButtonsToolbox = document.getElementById('outputButtonsToolbox');
-    const outputButtonsConsult = document.getElementById('outputButtonsConsult');
-    const mainOutput = document.getElementById('mainOutput');
-    const soapHelperConsole = document.getElementById('soapHelperConsole');
-
-    let currentTab = 'soap';
-
-    function showTab(tab) {
-      currentTab = tab;
-      tabButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tab);
-      });
-
-      soapSection.style.display = tab === 'soap' ? 'block' : 'none';
-      toolboxSection.style.display = tab === 'toolbox' ? 'block' : 'none';
-      consultSection.style.display = tab === 'consult' ? 'block' : 'none';
-
-      if (tab === 'soap') {
-        outputPanelTitle.textContent = 'OUTPUT · AI BRAIN – SOAP';
-        outputPanelChip.textContent = 'Ready';
-        outputButtonsSoap.style.display = 'flex';
-        outputButtonsToolbox.style.display = 'none';
-        outputButtonsConsult.style.display = 'none';
-        soapHelperConsole.style.display = 'flex';
-      } else if (tab === 'toolbox') {
-        outputPanelTitle.textContent = 'OUTPUT · AI BRAIN – TOOLBOX';
-        outputPanelChip.textContent = 'Tool output';
-        outputButtonsSoap.style.display = 'none';
-        outputButtonsToolbox.style.display = 'flex';
-        outputButtonsConsult.style.display = 'none';
-        soapHelperConsole.style.display = 'none';
-      } else {
-        outputPanelTitle.textContent = 'OUTPUT · AI BRAIN – CONSULT';
-        outputPanelChip.textContent = 'Consult output';
-        outputButtonsSoap.style.display = 'none';
-        outputButtonsToolbox.style.display = 'none';
-        outputButtonsConsult.style.display = 'flex';
-        soapHelperConsole.style.display = 'none';
-      }
-    }
-
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => showTab(btn.dataset.tab));
+    return text.trim() || 'No text output found.';
+  } catch (err) {
+    console.error('Error extracting response text:', err);
+    return 'Error extracting response text.';
+  }
+}
+
+// Core “brain” rules for SOAP output
+const SOAP_BRAIN_SYSTEM_PROMPT = `
+You are the dedicated SOAP brain for Dr. Lohit Busanelli's small animal clinics.
+
+Global rules:
+- Species: dogs and cats (mostly general practice; sometimes more complex surgery).
+- Output MUST be Avimark-compatible plain text (no markdown, no bullets unless explicitly hinted).
+- Always structure SOAP as:
+  Subjective:
+  Objective:
+  Assessment:
+  Plan:
+
+Subjective:
+- Concise summary of presenting complaint, history, and owner communication.
+- Include relevant Covet / phone-call context only if provided.
+
+Objective:
+- Systems-based PE list in this order: General, Vitals, Eyes, Ears, Oral cavity, Nose, Respiratory, Cardiovascular,
+  Abdomen, Urogenital, Musculoskeletal, Neurological, Integument, Lymphatic, Diagnostics.
+- For surgery/dentistry, include anesthesia status and monitoring in Objective as data-only, but keep interpretations for Assessment.
+- Bloodwork and diagnostics here are "data only" (numbers and factual findings). No interpretation here.
+
+Assessment:
+- Problem list and differentials, plus concise interpretation of bloodwork and diagnostics.
+- For anesthesia/surgery, include ASA grade and any peri-anesthetic risk commentary here.
+- Be clinically realistic and conservative; do not over-diagnose.
+
+Plan:
+- For medical/appointment cases: diagnostics, treatments, medications, home care, recheck timing.
+- For surgical/anesthetic cases, ALWAYS structure Plan as numbered categories in this exact order,
+  with a line break only between these main categories (Avimark friendly):
+
+  1. IV Catheter / Fluids
+  2. Pre-medications
+  3. Induction / Maintenance
+  4. Surgical Prep
+  5. Surgical Procedure
+  6. Intra-op Medications
+  7. Recovery
+  8. Medications Dispensed
+  9. Aftercare
+
+- Within each category, single-space text, no blank lines between sentences.
+- Mention ET tube, IV catheter placement, and fluids under appropriate categories (1, 3, 7) for anesthesia cases.
+- For surgery: describe the procedure clearly, including closure layers and suture material (Monocryl by default; 0 Monocryl for dogs >35 kg for neuters as per clinic rules).
+- For dental extractions: mention AAHA/AVDC standards and standard closure phrase:
+  "tension-free flap, no denuded bone, suture line not over defect" with 4-0 Monocryl simple interrupted.
+
+Drug & formatting rules:
+- Every time you mention a drug in the Plan or Medications Dispensed, include the concentration in brackets immediately after the drug name (e.g. "Midazolam [5 mg/ml]").
+- Do NOT include exact administration times; only drug, dose, route, and frequency as appropriate.
+- Midazolam concentration is always 5 mg/ml.
+- Record fluids as ml/kg/hr where relevant.
+- For local oral nerve blocks in dental cases, use lidocaine up to 4 mg/kg (dogs) or 2 mg/kg (cats) only when clearly indicated by the input.
+
+Vaccines:
+- If vaccines are provided as structured input, include them under Assessment/Plan in a brief, clean format, with site and duration (1-year vs 3-year) where obvious from the codes.
+- Do not invent vaccines not listed.
+
+Tone & style:
+- Write like a busy, competent GP vet in Ontario writing for Avimark.
+- No legal disclaimers unless explicitly requested.
+- Be concise but not cryptic; avoid purple prose.
+- If key data are missing, you may use gentle, generic phrasing, but do not fabricate very specific findings.
+- When in doubt, be conservative and safe.
+
+IMPORTANT:
+- Do NOT echo the instructions above.
+- Do NOT add headings other than: Subjective:, Objective:, Assessment:, Plan:
+- Output MUST be a single plain-text block ready to paste into Avimark.
+`;
+
+// Toolbox brain
+const TOOLBOX_SYSTEM_PROMPT = `
+You are the Toolbox brain for a small-animal veterinary clinic (dogs and cats).
+You help with:
+- Bloodwork Helper Lite: short or standard written summaries for vets and client-friendly wording.
+- Email / Client Update helper: clear, empathetic emails summarizing plans and estimates.
+- Client Handout helper: brief, structured client handouts (Avimark/email friendly, no heavy formatting).
+- SOAP Snippet helper: concise text snippets to paste into parts of a SOAP.
+- Covet Fixer: clean up and structure Covet-generated SOAPs into Avimark-ready text, following clinic style.
+- Freeform mode: respond to whatever the vet asks, but still write as a real clinic vet.
+- Client Summary Recorder: turn rambly notes into tight client summaries.
+
+General rules:
+- Audience may be either veterinary staff or pet owners; adjust tone based on the request.
+- DO NOT fabricate lab values or specifics that are not in the input.
+- Keep formatting plain-text and Avimark/email friendly.
+- If the user doesn't specify, default to a practical, moderate-length answer rather than a wall of text.
+`;
+
+// Consult brain
+const CONSULT_SYSTEM_PROMPT = `
+You are a veterinary internal-medicine/general-practice consultant for dogs and cats.
+Your job:
+- Read the provided question + case context (signalment, history, exam, labs, imaging).
+- Suggest differentials, prioritize them, and recommend next steps (diagnostics and treatment options).
+- Be practical for a busy GP clinic in Ontario (cost-aware, realistic about what can be done in-house).
+
+Rules:
+- Structure your answer with short, labeled sections (e.g. "Top differentials", "Key rule-outs", "Recommended next steps", "Client communication notes").
+- Do not give drug doses unless the user explicitly asks.
+- Do not contradict clear facts in the case; if data are missing, say so and outline what you’d want.
+- Keep language clear and calm; the reader is a vet, not a client.
+`;
+
+// ---------- ROUTES ----------
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, message: 'Lohit SOAP App backend running.' });
+});
+
+// ----- SOAP GENERATION -----
+app.post('/api/generate', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const visitType = body.visitType || 'appointment';
+
+    // Build a structured user prompt summarizing the form
+    const prompt = `
+You are generating a complete SOAP note for a small-animal case.
+
+Structured input:
+- Case label: ${body.caseLabel || '(none)'}
+- Patient name: ${body.patientName || '(unknown)'}
+- Species: ${body.species || '(unknown)'}
+- Sex: ${body.sex || '(unknown)'}
+- Weight (kg): ${body.weightKg || '(not provided)'}
+- Visit type: ${visitType}
+- ASA (if surgery): ${body.asa || '(n/a)'}
+- TPR / notes: ${body.tprNotes || '(not provided)'}
+
+Appointment preset: ${body.appointmentPreset || '(none)'}
+Surgery preset: ${body.surgeryPreset || '(none)'}
+Surgery mode: ${body.surgeryMode || '(simple/unspecified)'}
+
+Vaccines today: ${body.vaccinesToday ? 'Yes' : 'No'}
+Selected vaccine codes: ${Array.isArray(body.vaccineSelections) && body.vaccineSelections.length > 0 ? body.vaccineSelections.join(', ') : '(none)'}
+
+Core notes / history:
+${body.coreNotes || '(none)'}
+
+PE & diagnostics (data only):
+${body.pe || '(none)'}
+
+Assessment hints (vet thinking / concerns):
+${body.assessmentHints || '(none)'}
+
+Plan & discharge hints:
+${body.planHints || '(none)'}
+
+Extra instructions / anything else:
+${body.extra || '(none)'}
+
+External transcript (e.g. Covet / call log) – include structured communication summary?: ${body.externalTranscriptInclude ? 'Yes' : 'No'}
+${body.externalTranscript || '(none)'}
+
+Voice transcript (if provided, may be rambly dictation):
+${body.voiceUseTranscriptInSoap && body.voiceTranscript ? body.voiceTranscript : '(none or context-only)'}
+
+Task:
+- Using the system rules, generate a single complete SOAP ready to paste into Avimark.
+- Respect all structure rules (Subjective, Objective, Assessment, Plan and Plan 1–9 order for surgery/anesthesia cases).
+- If data are thin, make safe, generic assumptions; do not fabricate very detailed PE findings or lab numbers.
+    `.trim();
+
+    const response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      input: [
+        { role: 'system', content: SOAP_BRAIN_SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.4,
     });
 
-    // --------- Visit type & ASA & vaccines ----------
-    const visitTypeAppointmentBtn = document.getElementById('visitTypeAppointment');
-    const visitTypeSurgeryBtn = document.getElementById('visitTypeSurgery');
-    const asaField = document.getElementById('asaField');
-    const appointmentPresetRow = document.getElementById('appointmentPresetRow');
-    const surgeryPresetRow = document.getElementById('surgeryPresetRow');
-    const surgeryModeSimpleBtn = document.getElementById('surgeryModeSimple');
-    const surgeryModeAdvancedBtn = document.getElementById('surgeryModeAdvanced');
-    const vaccinesTodayCheckbox = document.getElementById('vaccinesToday');
-    const vaccineSelectorRow = document.getElementById('vaccineSelectorRow');
-    const vaccineSelector = document.getElementById('vaccineSelector');
-    const speciesSelect = document.getElementById('species');
-    const appointmentPreset = document.getElementById('appointmentPreset');
+    const text = extractResponseText(response);
+    res.json({ output: text });
+  } catch (err) {
+    console.error('Error in /api/generate:', err);
+    res.status(500).json({ error: 'Error generating SOAP.' });
+  }
+});
 
-    function updateVisitType(type) {
-      if (type === 'appointment') {
-        visitTypeAppointmentBtn.classList.add('active');
-        visitTypeSurgeryBtn.classList.remove('active');
-        asaField.style.display = 'none';
-        appointmentPresetRow.style.display = 'flex';
-        surgeryPresetRow.style.display = 'none';
-      } else {
-        visitTypeAppointmentBtn.classList.remove('active');
-        visitTypeSurgeryBtn.classList.add('active');
-        asaField.style.display = 'flex';
-        appointmentPresetRow.style.display = 'none';
-        surgeryPresetRow.style.display = 'flex';
-      }
-    }
+// ----- TOOLBOX GENERATION -----
+app.post('/api/generate-toolbox', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const mode = body.toolboxMode || 'freeform';
 
-    visitTypeAppointmentBtn.addEventListener('click', () => updateVisitType('appointment'));
-    visitTypeSurgeryBtn.addEventListener('click', () => updateVisitType('surgery'));
+    const prompt = `
+Toolbox mode: ${mode}
 
-    function updateSurgeryMode(mode) {
-      if (mode === 'simple') {
-        surgeryModeSimpleBtn.classList.add('active');
-        surgeryModeAdvancedBtn.classList.remove('active');
-      } else {
-        surgeryModeSimpleBtn.classList.remove('active');
-        surgeryModeAdvancedBtn.classList.add('active');
-      }
-    }
-    surgeryModeSimpleBtn.addEventListener('click', () => updateSurgeryMode('simple'));
-    surgeryModeAdvancedBtn.addEventListener('click', () => updateSurgeryMode('advanced'));
+Core text / notes:
+${body.text || '(none provided)'}
 
-    function populateVaccineOptions() {
-      const species = speciesSelect.value;
-      vaccineSelector.innerHTML = '';
+External transcript (if any):
+${body.externalTranscript || '(none)'}
 
-      if (!species) return;
+Voice transcript context:
+${body.voiceTranscript || '(none)'}
 
-      const add = (value, label) => {
-        const opt = document.createElement('option');
-        opt.value = value;
-        opt.textContent = label;
-        vaccineSelector.appendChild(opt);
-      };
+Instructions:
+- Use the selected toolbox mode to interpret the above content.
+- Bloodwork helper: summarise lab abnormalities and give a short, clinically useful interpretation for the vet and (if appropriate) a client-friendly explanation.
+- Email helper: produce a clear, polite, empathetic email body.
+- Handout helper: produce a simple, structured client handout in plain text.
+- SOAP snippet helper: produce only the snippet requested (e.g. Assessment, Plan, or discharge).
+- Covet Fixer: clean up and restructure the text into Avimark-ready format in Dr. Lohit’s style.
+- Freeform: do whatever task the user text is asking for, as long as it’s veterinary-clinic related.
+- Client Summary Recorder: turn messy dictation into a tight, readable summary for the medical record or client communication.
 
-      if (species === 'canine') {
-        add('da2pp_1', 'DA2PP – 1-year (SQ LH)');
-        add('da2pp_3', 'DA2PP – 3-year (SQ LH)');
-        add('rabies_1_dog', 'Rabies – 1-year (SQ RH)');
-        add('rabies_3_dog', 'Rabies – 3-year (SQ RH)');
-        add('lyme', 'Lyme (SQ LF)');
-        add('lepto', 'Leptospirosis (SQ RF)');
-        add('bord_inj', 'Bordetella – injectable (SQ dorsum neck)');
-        add('bord_oral', 'Bordetella – oral');
-        add('bord_nasal', 'Bordetella – intranasal');
-      } else if (species === 'feline') {
-        add('fvrcp_1', 'FVRCP – 1-year (SQ LH)');
-        add('fvrcp_3', 'FVRCP – 3-year (SQ LH)');
-        add('rabies_1_cat', 'Rabies – 1-year (SQ RH)');
-        add('rabies_3_cat', 'Rabies – 3-year (SQ RH)');
-        add('felv', 'FeLV (SQ LF)');
-      }
-    }
+Keep the output plain-text, no markdown.
+    `.trim();
 
-    speciesSelect.addEventListener('change', () => {
-      populateVaccineOptions();
+    const response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      input: [
+        { role: 'system', content: TOOLBOX_SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.5,
     });
 
-    vaccinesTodayCheckbox.addEventListener('change', () => {
-      vaccineSelectorRow.style.display = vaccinesTodayCheckbox.checked ? 'flex' : 'none';
+    const text = extractResponseText(response);
+    res.json({ output: text });
+  } catch (err) {
+    console.error('Error in /api/generate-toolbox:', err);
+    res.status(500).json({ error: 'Error generating toolbox output.' });
+  }
+});
+
+// ----- CONSULT GENERATION -----
+app.post('/api/generate-consult', async (req, res) => {
+  try {
+    const body = req.body || {};
+
+    const prompt = `
+Consult question:
+${body.question || '(none)'}
+
+Case context (signalment, history, PE, diagnostics):
+${body.context || '(none)'}
+
+External transcript:
+${body.externalTranscript || '(none)'}
+
+Voice transcript context:
+${body.voiceTranscript || '(none)'}
+
+Task:
+- Answer the consult question as a vet-to-vet internal-medicine / GP consult.
+- Provide prioritized differentials, key rule-outs, suggested further diagnostics, treatment options, and client communication notes.
+- Assume this is a busy Ontario GP practice with limited time and moderate budget.
+    `.trim();
+
+    const response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      input: [
+        { role: 'system', content: CONSULT_SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.4,
     });
 
-    appointmentPreset.addEventListener('change', () => {
-      if (appointmentPreset.value === 'wellness') {
-        vaccinesTodayCheckbox.checked = true;
-        vaccineSelectorRow.style.display = 'flex';
-      }
+    const text = extractResponseText(response);
+    res.json({ output: text });
+  } catch (err) {
+    console.error('Error in /api/generate-consult:', err);
+    res.status(500).json({ error: 'Error generating consult output.' });
+  }
+});
+
+// ----- SOAP HELPER CONSOLE -----
+app.post('/api/generate-helper', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const helperPrompt = body.helperPrompt || '';
+    const soapText = body.soapText || '';
+    const externalTranscript = body.externalTranscript || '';
+    const voiceTranscript = body.voiceTranscript || '';
+
+    const prompt = `
+You are the SOAP helper console attached to a completed SOAP note.
+
+Helper request:
+${helperPrompt || '(none)'}
+
+Current SOAP text:
+${soapText || '(no SOAP text provided)'}
+
+External transcript:
+${externalTranscript || '(none)'}
+
+Voice transcript context:
+${voiceTranscript || '(none)'}
+
+Task:
+- Use the helper request plus the SOAP and transcripts to create exactly what is asked:
+  e.g. discharge instructions, email body, call log summary, brief weight consult, etc.
+- Keep it Avimark/email friendly plain-text.
+- Do not reprint the entire SOAP unless explicitly requested.
+    `.trim();
+
+    const response = await openai.responses.create({
+      model: OPENAI_MODEL,
+      input: [
+        { role: 'system', content: SOAP_BRAIN_SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.5,
     });
 
-    // Initial state
-    updateVisitType('appointment');
-    updateSurgeryMode('simple');
-
-    // --------- Collapses ----------
-    function wireCollapse(toggleId, bodyId) {
-      const toggle = document.getElementById(toggleId);
-      const body = document.getElementById(bodyId);
-      if (!toggle || !body) return;
-      toggle.addEventListener('click', () => {
-        const open = body.style.display !== 'none';
-        body.style.display = open ? 'none' : 'block';
-        toggle.classList.toggle('open', !open);
-      });
-    }
-    wireCollapse('extTranscriptToggle', 'extTranscriptBody');
-    wireCollapse('voiceToggle', 'voiceBody');
-    wireCollapse('transcriptToggle', 'transcriptBody');
-    wireCollapse('toolboxExtTranscriptToggle', 'toolboxExtTranscriptBody');
-    wireCollapse('toolboxVoiceToggle', 'toolboxVoiceBody');
-    wireCollapse('toolboxTranscriptToggle', 'toolboxTranscriptBody');
-    wireCollapse('consultExtTranscriptToggle', 'consultExtTranscriptBody');
-    wireCollapse('consultVoiceToggle', 'consultVoiceBody');
-    wireCollapse('consultTranscriptToggle', 'consultTranscriptBody');
-    wireCollapse('helperToggle', 'helperBody');
-
-    // --------- SOAP recorder (custom logic) ----------
-    let soapVoiceTranscript = '';
-    let soapVoiceContextSaved = false;
-
-    (function setupSoapRecorder() {
-      const recBtn = document.getElementById('recBtn');
-      const recBtnIcon = document.getElementById('recBtnIcon');
-      const recBtnLabel = document.getElementById('recBtnLabel');
-      const recDot = document.getElementById('recDot');
-      const recStatus = document.getElementById('recStatusText');
-      const recSummary = document.getElementById('recSummaryText');
-      const saveRecordingBtn = document.getElementById('recSaveRecordingBtn');
-      const saveTranscribeBtn = document.getElementById('recSaveTranscribeBtn');
-      const clearBtn = document.getElementById('recClearBtn');
-      const transcriptEdit = document.getElementById('voiceTranscriptEdit');
-      const useTranscriptCheckbox = document.getElementById('useTranscriptForSoap');
-      const transcriptToggle = document.getElementById('transcriptToggle');
-      const transcriptBody = document.getElementById('transcriptBody');
-
-      let mediaRecorder = null;
-      let chunks = [];
-
-      function setRecState(isRecording) {
-        if (isRecording) {
-          recBtnIcon.textContent = '⏹';
-          recBtnLabel.textContent = 'Stop';
-          recDot.classList.add('recording');
-          recStatus.textContent = 'Recording in progress…';
-        } else {
-          recBtnIcon.textContent = '🎙';
-          recBtnLabel.textContent = 'Record';
-          recDot.classList.remove('recording');
-          if (soapVoiceTranscript) {
-            recStatus.textContent = 'Recording finished.';
-          } else {
-            recStatus.textContent = 'Not recording';
-          }
-        }
-      }
-
-      async function startRecording() {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          chunks = [];
-
-          mediaRecorder.ondataavailable = e => {
-            if (e.data.size > 0) chunks.push(e.data);
-          };
-
-          mediaRecorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'audio/webm' });
-            // Stub transcript – real STT happens on backend.
-            soapVoiceTranscript = '[Voice note recorded – transcript to be generated by backend].';
-            transcriptEdit.value = soapVoiceTranscript;
-            if (recSummary) {
-              recSummary.textContent = '1 recording captured in this session.';
-            }
-            setRecState(false);
-          };
-
-          mediaRecorder.start();
-          setRecState(true);
-        } catch (err) {
-          console.error('Error starting recorder', err);
-          alert('Unable to access microphone. Please check browser permissions.');
-        }
-      }
-
-      function stopRecording() {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          mediaRecorder.stop();
-        }
-      }
-
-      if (recBtn) {
-        recBtn.addEventListener('click', () => {
-          if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-            startRecording();
-          } else {
-            stopRecording();
-          }
-        });
-      }
-
-      if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-          soapVoiceTranscript = '';
-          soapVoiceContextSaved = false;
-          transcriptEdit.value = '';
-          if (recSummary) recSummary.textContent = 'No recordings in this session yet.';
-          setRecState(false);
-        });
-      }
-
-      if (saveRecordingBtn) {
-        saveRecordingBtn.addEventListener('click', () => {
-          if (!soapVoiceTranscript) {
-            alert('No recording yet. Record and stop at least once first.');
-            return;
-          }
-          soapVoiceContextSaved = true;
-          alert('Recording saved as context (transcript use is optional).');
-        });
-      }
-
-      if (saveTranscribeBtn) {
-        saveTranscribeBtn.addEventListener('click', () => {
-          if (!soapVoiceTranscript) {
-            alert('No recording yet. Record and stop at least once first.');
-            return;
-          }
-          soapVoiceContextSaved = true;
-          useTranscriptCheckbox.checked = true;
-          // Open transcript panel
-          if (transcriptBody && transcriptToggle) {
-            transcriptBody.style.display = 'block';
-            transcriptToggle.classList.add('open');
-          }
-          alert('Recording saved and transcript will be used for SOAP (unless you uncheck the box).');
-        });
-      }
-
-    })();
-
-    // --------- Generic recorder for Toolbox / Consult ----------
-    function makeRecorder(config) {
-      const {
-        recBtnId,
-        recBtnIconId,
-        recBtnLabelId,
-        recDotId,
-        recStatusId,
-        recSummaryId,
-        transcriptViewId,
-        saveBtnId,
-        generateBtnId,
-        clearBtnId,
-        onGenerate
-      } = config;
-
-      const recBtn = document.getElementById(recBtnId);
-      const recBtnIcon = document.getElementById(recBtnIconId);
-      const recBtnLabel = document.getElementById(recBtnLabelId);
-      const recDot = document.getElementById(recDotId);
-      const recStatus = document.getElementById(recStatusId);
-      const recSummary = document.getElementById(recSummaryId);
-      const transcriptView = document.getElementById(transcriptViewId);
-      const saveBtn = document.getElementById(saveBtnId);
-      const generateBtn = document.getElementById(generateBtnId);
-      const clearBtn = document.getElementById(clearBtnId);
-
-      let mediaRecorder = null;
-      let chunks = [];
-      let transcriptText = '';
-      let contextSaved = false;
-
-      function setRecordingState(isRecording) {
-        if (isRecording) {
-          recBtnIcon.textContent = '⏹';
-          recBtnLabel.textContent = 'Stop';
-          recDot.classList.add('recording');
-          recStatus.textContent = 'Recording in progress…';
-        } else {
-          recBtnIcon.textContent = '🎙';
-          recBtnLabel.textContent = 'Record';
-          recDot.classList.remove('recording');
-          if (transcriptText) {
-            recStatus.textContent = 'Recording finished.';
-          } else {
-            recStatus.textContent = 'Not recording';
-          }
-        }
-      }
-
-      async function startRecording() {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          chunks = [];
-
-          mediaRecorder.ondataavailable = e => {
-            if (e.data.size > 0) chunks.push(e.data);
-          };
-
-          mediaRecorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'audio/webm' });
-            transcriptText = '[Voice note recorded – transcript to be generated by backend].';
-            if (transcriptView) {
-              transcriptView.textContent = transcriptText;
-            }
-            if (recSummary) {
-              recSummary.textContent = '1 recording captured in this session.';
-            }
-            setRecordingState(false);
-          };
-
-          mediaRecorder.start();
-          setRecordingState(true);
-        } catch (err) {
-          console.error('Error starting recorder', err);
-          alert('Unable to access microphone. Please check browser permissions.');
-        }
-      }
-
-      function stopRecording() {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          mediaRecorder.stop();
-        }
-      }
-
-      if (recBtn) {
-        recBtn.addEventListener('click', () => {
-          if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-            startRecording();
-          } else {
-            stopRecording();
-          }
-        });
-      }
-
-      if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-          transcriptText = '';
-          contextSaved = false;
-          if (transcriptView) transcriptView.textContent = 'Transcript will appear here after recording stops.';
-          if (recSummary) recSummary.textContent = 'No recordings in this session yet.';
-          setRecordingState(false);
-        });
-      }
-
-      if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-          if (!transcriptText) {
-            alert('No transcript yet. Record and stop at least once first.');
-            return;
-          }
-          contextSaved = true;
-          alert('Voice transcript will be used as hidden context for this run.');
-        });
-      }
-
-      if (generateBtn && typeof onGenerate === 'function') {
-        generateBtn.addEventListener('click', () => {
-          if (!transcriptText) {
-            alert('No transcript yet. Record and stop at least once first.');
-            return;
-          }
-          contextSaved = true;
-          onGenerate(transcriptText);
-        });
-      }
-
-      return {
-        getTranscript: () => transcriptText,
-        isContextSaved: () => contextSaved
-      };
-    }
-
-    const toolboxRecorder = makeRecorder({
-      recBtnId: 'toolboxRecBtn',
-      recBtnIconId: 'toolboxRecBtnIcon',
-      recBtnLabelId: 'toolboxRecBtnLabel',
-      recDotId: 'toolboxRecDot',
-      recStatusId: 'toolboxRecStatusText',
-      recSummaryId: 'toolboxRecSummaryText',
-      transcriptViewId: 'toolboxTranscriptView',
-      saveBtnId: 'toolboxRecSaveContextBtn',
-      generateBtnId: 'toolboxGenerateBtn',
-      clearBtnId: 'toolboxRecClearBtn',
-      onGenerate: (transcript) => {
-        generateToolbox({ voiceTranscript: transcript });
-      }
-    });
-
-    const consultRecorder = makeRecorder({
-      recBtnId: 'consultRecBtn',
-      recBtnIconId: 'consultRecBtnIcon',
-      recBtnLabelId: 'consultRecBtnLabel',
-      recDotId: 'consultRecDot',
-      recStatusId: 'consultRecStatusText',
-      recSummaryId: 'consultRecSummaryText',
-      transcriptViewId: 'consultTranscriptView',
-      saveBtnId: 'consultRecSaveContextBtn',
-      generateBtnId: 'consultGenerateBtn',
-      clearBtnId: 'consultRecClearBtn',
-      onGenerate: (transcript) => {
-        generateConsult({ voiceTranscript: transcript });
-      }
-    });
-
-    // --------- SOAP generation ----------
-    const generateSoapBtn = document.getElementById('generateSoapBtn');
-    const backendStatusDot = document.getElementById('backendStatusDot');
-    const backendStatusText = document.getElementById('backendStatusText');
-
-    function gatherSelectedVaccines() {
-      return Array.from(vaccineSelector.selectedOptions).map(o => o.value);
-    }
-
-    function setWorkingState(isWorking, label) {
-      outputPanelChip.textContent = isWorking ? (label || 'Working…') : 'Ready';
-    }
-
-    function generateSOAP(extra = {}) {
-      setWorkingState(true, 'Generating SOAP…');
-      mainOutput.textContent = 'Working on SOAP…';
-
-      const useTranscriptCheckbox = document.getElementById('useTranscriptForSoap');
-      const transcriptEdit = document.getElementById('voiceTranscriptEdit');
-      const useTranscript = useTranscriptCheckbox && useTranscriptCheckbox.checked;
-      const editedTranscript = transcriptEdit ? transcriptEdit.value.trim() : '';
-      const finalTranscript = editedTranscript || soapVoiceTranscript;
-
-      const payload = {
-        mode: 'soap',
-        caseLabel: document.getElementById('caseLabel').value,
-        patientName: document.getElementById('patientName').value,
-        species: document.getElementById('species').value,
-        sex: document.getElementById('sex').value,
-        weightKg: document.getElementById('weightKg').value,
-        visitType: visitTypeAppointmentBtn.classList.contains('active') ? 'appointment' : 'surgery',
-        asa: document.getElementById('asaStatus').value,
-        tprNotes: document.getElementById('tprNotes').value,
-        appointmentPreset: document.getElementById('appointmentPreset').value,
-        surgeryPreset: document.getElementById('surgeryPreset').value,
-        surgeryMode: surgeryModeSimpleBtn.classList.contains('active') ? 'simple' : 'advanced',
-        vaccinesToday: vaccinesTodayCheckbox.checked,
-        vaccineSelections: gatherSelectedVaccines(),
-        coreNotes: document.getElementById('soapCoreNotes').value,
-        pe: document.getElementById('soapPE').value,
-        assessmentHints: document.getElementById('soapAssessmentHints').value,
-        planHints: document.getElementById('soapPlanHints').value,
-        extra: document.getElementById('soapExtra').value,
-        externalTranscript: document.getElementById('externalTranscript').value,
-        externalTranscriptInclude: document.getElementById('externalTranscriptInclude').checked,
-        voiceTranscript: extra.voiceTranscript || (soapVoiceContextSaved ? finalTranscript : ''),
-        voiceUseTranscriptInSoap: useTranscript
-      };
-
-      fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      }).then(data => {
-        mainOutput.textContent = data.output || 'No output returned.';
-      }).catch(err => {
-        console.error(err);
-        mainOutput.textContent = 'Error generating SOAP. Please check server console.';
-        backendStatusDot.classList.add('offline');
-        backendStatusText.textContent = 'Backend error';
-      }).finally(() => {
-        setWorkingState(false);
-      });
-    }
-
-    if (generateSoapBtn) {
-      generateSoapBtn.addEventListener('click', () => generateSOAP());
-    }
-
-    // --------- Toolbox generation ----------
-    const toolboxGenerateMainBtn = document.getElementById('toolboxGenerateMainBtn');
-    const toolboxModeSelect = document.getElementById('toolboxMode');
-    const toolboxInput = document.getElementById('toolboxInput');
-
-    function generateToolbox(extra = {}) {
-      setWorkingState(true, 'Toolbox working…');
-      mainOutput.textContent = 'Working on toolbox output…';
-
-      const payload = {
-        mode: 'toolbox',
-        toolboxMode: toolboxModeSelect.value,
-        text: toolboxInput.value,
-        externalTranscript: document.getElementById('toolboxExternalTranscript').value,
-        voiceTranscript: extra.voiceTranscript || (toolboxRecorder.isContextSaved() ? toolboxRecorder.getTranscript() : '')
-      };
-
-      fetch('/api/generate-toolbox', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      }).then(data => {
-        mainOutput.textContent = data.output || 'No toolbox output returned.';
-      }).catch(err => {
-        console.error(err);
-        mainOutput.textContent = 'Error generating toolbox output.';
-        backendStatusDot.classList.add('offline');
-        backendStatusText.textContent = 'Backend error';
-      }).finally(() => {
-        setWorkingState(false);
-      });
-    }
-
-    if (toolboxGenerateMainBtn) {
-      toolboxGenerateMainBtn.addEventListener('click', () => generateToolbox());
-    }
-
-    // --------- Consult generation ----------
-    const consultGenerateMainBtn = document.getElementById('consultGenerateMainBtn');
-
-    function generateConsult(extra = {}) {
-      setWorkingState(true, 'Consult working…');
-      mainOutput.textContent = 'Working on consult output…';
-
-      const payload = {
-        mode: 'consult',
-        question: document.getElementById('consultQuestion').value,
-        context: document.getElementById('consultContext').value,
-        externalTranscript: document.getElementById('consultExternalTranscript').value,
-        voiceTranscript: extra.voiceTranscript || (consultRecorder.isContextSaved() ? consultRecorder.getTranscript() : '')
-      };
-
-      fetch('/api/generate-consult', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      }).then(data => {
-        mainOutput.textContent = data.output || 'No consult output returned.';
-      }).catch(err => {
-        console.error(err);
-        mainOutput.textContent = 'Error generating consult output.';
-        backendStatusDot.classList.add('offline');
-        backendStatusText.textContent = 'Backend error';
-      }).finally(() => {
-        setWorkingState(false);
-      });
-    }
-
-    if (consultGenerateMainBtn) {
-      consultGenerateMainBtn.addEventListener('click', () => generateConsult());
-    }
-
-    // --------- SOAP Helper Console ----------
-    const helperGenerateBtn = document.getElementById('helperGenerateBtn');
-    const helperClearBtn = document.getElementById('helperClearBtn');
-    const helperPrompt = document.getElementById('helperPrompt');
-    const helperOutput = document.getElementById('helperOutput');
-    const helperCopyBtn = document.getElementById('helperCopyBtn');
-
-    function generateHelper() {
-      const prompt = helperPrompt.value.trim();
-      if (!prompt) {
-        alert('Type what you want the helper to generate (e.g. discharge, email, summary).');
-        return;
-      }
-      setWorkingState(true, 'SOAP helper working…');
-      helperOutput.textContent = 'Working on helper output…';
-
-      const transcriptEdit = document.getElementById('voiceTranscriptEdit');
-      const finalTranscript = transcriptEdit ? (transcriptEdit.value.trim() || soapVoiceTranscript) : soapVoiceTranscript;
-
-      const payload = {
-        mode: 'soap_helper',
-        helperPrompt: prompt,
-        soapText: mainOutput.textContent || '',
-        externalTranscript: document.getElementById('externalTranscript').value,
-        voiceTranscript: finalTranscript
-      };
-
-      fetch('/api/generate-helper', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      }).then(data => {
-        helperOutput.textContent = data.output || 'No helper output returned.';
-      }).catch(err => {
-        console.error(err);
-        helperOutput.textContent = 'Error generating helper output.';
-        backendStatusDot.classList.add('offline');
-        backendStatusText.textContent = 'Backend error';
-      }).finally(() => {
-        setWorkingState(false);
-      });
-    }
-
-    if (helperGenerateBtn) {
-      helperGenerateBtn.addEventListener('click', generateHelper);
-    }
-
-    if (helperClearBtn) {
-      helperClearBtn.addEventListener('click', () => {
-        helperPrompt.value = '';
-        helperOutput.textContent = 'When you generate, helper output (discharge, email, summary, etc.) will appear here.';
-      });
-    }
-
-    if (helperCopyBtn) {
-      helperCopyBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(helperOutput.textContent || '').then(() => {
-          alert('Helper text copied to clipboard.');
-        });
-      });
-    }
-
-    // --------- Copy buttons ----------
-    function copyText(text) {
-      if (!text) {
-        alert('Nothing to copy.');
-        return;
-      }
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Copied to clipboard.');
-      });
-    }
-
-    const copyFullSoapBtn = document.getElementById('copyFullSoapBtn');
-    const copyPlanMedsAfterBtn = document.getElementById('copyPlanMedsAfterBtn');
-    const copyToolboxOutputBtn = document.getElementById('copyToolboxOutputBtn');
-    const copyConsultOutputBtn = document.getElementById('copyConsultOutputBtn');
-
-    if (copyFullSoapBtn) {
-      copyFullSoapBtn.addEventListener('click', () => copyText(mainOutput.textContent));
-    }
-
-    if (copyPlanMedsAfterBtn) {
-      copyPlanMedsAfterBtn.addEventListener('click', () => {
-        // For now copies entire SOAP; backend already structures sections.
-        copyText(mainOutput.textContent);
-      });
-    }
-
-    if (copyToolboxOutputBtn) {
-      copyToolboxOutputBtn.addEventListener('click', () => copyText(mainOutput.textContent));
-    }
-
-    if (copyConsultOutputBtn) {
-      copyConsultOutputBtn.addEventListener('click', () => copyText(mainOutput.textContent));
-    }
-
-    // --------- Send output to desktop (mobile) ----------
-    function wireSendToDesktop(buttonId) {
-      const btn = document.getElementById(buttonId);
-      if (!btn) return;
-      btn.addEventListener('click', () => {
-        const text = mainOutput.textContent || '';
-        if (!text.trim()) {
-          alert('No output to send.');
-          return;
-        }
-        setWorkingState(true, 'Sending to desktop…');
-        fetch('/api/send-to-desktop', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
-        }).then(res => {
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          return res.json();
-        }).then(() => {
-          alert('Sent to desktop relay (check desktop receive panel).');
-        }).catch(err => {
-          console.error(err);
-          alert('Error sending to desktop; check backend.');
-        }).finally(() => {
-          setWorkingState(false);
-        });
-      });
-    }
-
-    wireSendToDesktop('sendOutputToDesktopBtn');
-    wireSendToDesktop('sendToolboxOutputToDesktopBtn');
-    wireSendToDesktop('sendConsultOutputToDesktopBtn');
-
-    // --------- Phone ↔ Desktop relay & uploads ----------
-    const receiveTextFromPhoneBtn = document.getElementById('receiveTextFromPhoneBtn');
-    const receiveFilesFromPhoneBtn = document.getElementById('receiveFilesFromPhoneBtn');
-    const uploadFromDeviceBtn = document.getElementById('uploadFromDeviceBtn');
-    const hiddenFileInput = document.getElementById('hiddenFileInput');
-    const uploadPreview = document.getElementById('uploadPreview');
-
-    const soapMobileUploadBtn = document.getElementById('soapMobileUploadBtn');
-    const toolboxMobileUploadBtn = document.getElementById('toolboxMobileUploadBtn');
-    const consultMobileUploadBtn = document.getElementById('consultMobileUploadBtn');
-
-    function triggerHiddenFileInput() {
-      if (hiddenFileInput) hiddenFileInput.click();
-    }
-
-    if (uploadFromDeviceBtn && hiddenFileInput) {
-      uploadFromDeviceBtn.addEventListener('click', triggerHiddenFileInput);
-
-      hiddenFileInput.addEventListener('change', () => {
-        if (!hiddenFileInput.files || hiddenFileInput.files.length === 0) {
-          uploadPreview.textContent = 'No files uploaded yet.';
-          return;
-        }
-        const names = Array.from(hiddenFileInput.files).map(f => f.name);
-        uploadPreview.textContent = 'Attached: ' + names.join(', ');
-        // Real handling happens in backend when you send them with /api calls.
-      });
-    }
-
-    if (soapMobileUploadBtn) {
-      soapMobileUploadBtn.addEventListener('click', triggerHiddenFileInput);
-    }
-    if (toolboxMobileUploadBtn) {
-      toolboxMobileUploadBtn.addEventListener('click', triggerHiddenFileInput);
-    }
-    if (consultMobileUploadBtn) {
-      consultMobileUploadBtn.addEventListener('click', triggerHiddenFileInput);
-    }
-
-    if (receiveTextFromPhoneBtn) {
-      receiveTextFromPhoneBtn.addEventListener('click', () => {
-        alert('QR-based receive-from-phone UI is ready; this version expects your existing QR/relay backend wiring.');
-      });
-    }
-
-    if (receiveFilesFromPhoneBtn) {
-      receiveFilesFromPhoneBtn.addEventListener('click', () => {
-        alert('QR-based file relay from phone is UI-ready; hook this to your server-side relay like before.');
-      });
-    }
-
-    // Initial tab
-    showTab('soap');
-  </script>
-</body>
-</html>
+    const text = extractResponseText(response);
+    res.json({ output: text });
+  } catch (err) {
+    console.error('Error in /api/generate-helper:', err);
+    res.status(500).json({ error: 'Error generating helper output.' });
+  }
+});
+
+// ----- PHONE → DESKTOP RELAY (TEXT ONLY, IN-MEMORY STUB) -----
+let lastDesktopRelayText = '';
+
+app.post('/api/send-to-desktop', (req, res) => {
+  try {
+    const body = req.body || {};
+    const text = body.text || '';
+
+    lastDesktopRelayText = text;
+    console.log('Received text for desktop relay (length):', text.length);
+
+    // In this version, the desktop button just shows an alert in the UI.
+    // Later, you can add a GET endpoint to fetch lastDesktopRelayText.
+    res.json({ ok: true, message: 'Stored text for desktop relay.' });
+  } catch (err) {
+    console.error('Error in /api/send-to-desktop:', err);
+    res.status(500).json({ error: 'Error storing text for desktop relay.' });
+  }
+});
+
+// Optional: simple endpoint to inspect relay text during development
+app.get('/api/last-desktop-text', (req, res) => {
+  res.json({ text: lastDesktopRelayText || '' });
+});
+
+// ---------- START SERVER ----------
+app.listen(PORT, () => {
+  console.log(`Lohit SOAP App backend running on http://localhost:${PORT}`);
+});
