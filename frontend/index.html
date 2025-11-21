@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lohit SOAP App v1.7.3</title>
+  <title>Lohit SOAP App v1.7.4</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
@@ -354,6 +354,15 @@
       border: 1px solid rgba(55, 65, 81, 0.9);
     }
 
+    .file-chip {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      padding: 4px 8px;
+      font-size: 10px;
+      color: var(--text-main);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
     .footer {
       display: flex;
       justify-content: space-between;
@@ -368,7 +377,7 @@
 <body>
   <div class="app-shell">
     <div class="header-row">
-      <div class="app-title">LOHIT<br />SOAP APP v1.7.3</div>
+      <div class="app-title">LOHIT<br />SOAP APP v1.7.4</div>
       <div class="pill-row">
         <div class="chip chip-strong"><span class="label">Privacy</span>Clinic-safe text only</div>
         <div class="chip"><span class="label">Backend</span><span id="backendLabel">lohit-soap-app.onrender.com</span></div>
@@ -476,13 +485,15 @@
               <span id="backendStatus">Not connected to backend</span>
             </div>
             <div style="font-size:10px;color:var(--text-muted);">
-              QR relay sends text & redacted docs from phone → this desktop.
+              QR relay + local uploads bring text & redacted docs into this console.
             </div>
           </div>
 
-          <div style="margin-top:8px;">
+          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">
             <button id="receiveTextBtn" class="btn-secondary positive">Receive text from phone</button>
             <button id="receiveFileBtn" class="btn-secondary">Receive document from phone</button>
+            <button id="localUploadBtn" class="btn-secondary">Upload from this device</button>
+            <input id="localUploadInput" type="file" accept="image/*,application/pdf" multiple style="display:none;" />
           </div>
 
           <div id="qrTextPanel" class="qr-panel">
@@ -506,22 +517,24 @@
           </div>
 
           <div class="attachments-panel">
-            <div style="margin-bottom:4px;font-weight:500;color:#e5e7eb;">Attachments from phone</div>
+            <div style="margin-bottom:4px;font-weight:500;color:#e5e7eb;">Attachments from phone & this device</div>
             <div id="attachmentsEmpty" class="helper-text">No documents received yet.</div>
             <div id="attachmentsList" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
           </div>
 
-          <!-- Feedback bar & textbox -->
           <div class="field" style="margin-top:8px;">
             <label>Feedback & next inputs (local only)</label>
-            <textarea id="feedbackBox" placeholder="After each run, jot what was missing, what you corrected, or what you want next time. This is just for you – it isn’t sent anywhere yet."></textarea>
+            <textarea id="feedbackBox" placeholder="After each run, jot what was missing, what you corrected, or what you want next time."></textarea>
+            <button id="applyFeedbackBtn" class="btn-secondary positive" style="margin-top:6px;align-self:flex-start;">
+              Use feedback to remake output
+            </button>
           </div>
         </div>
       </div>
     </div>
 
     <div class="footer">
-      <span>v1.7.3 · QR relay + redaction prototype</span>
+      <span>v1.7.4 · QR relay + local uploads + feedback refine</span>
       <span>Keep this tab open on Avimark desktop as your brain console.</span>
     </div>
   </div>
@@ -546,6 +559,9 @@
 
     const receiveTextBtn = document.getElementById('receiveTextBtn');
     const receiveFileBtn = document.getElementById('receiveFileBtn');
+    const localUploadBtn = document.getElementById('localUploadBtn');
+    const localUploadInput = document.getElementById('localUploadInput');
+
     const qrTextPanel = document.getElementById('qrTextPanel');
     const qrFilePanel = document.getElementById('qrFilePanel');
     const qrTextContainer = document.getElementById('qrText');
@@ -563,6 +579,9 @@
     const assessmentHints = document.getElementById('assessmentHints');
     const planHints = document.getElementById('planHints');
     const extraInstructions = document.getElementById('extraInstructions');
+
+    const feedbackBox = document.getElementById('feedbackBox');
+    const applyFeedbackBtn = document.getElementById('applyFeedbackBtn');
 
     let currentTab = 'soap';
     let currentMode = 'help';
@@ -628,12 +647,7 @@
     }
     pingBackend();
 
-    // ----- GENERATE -----
-    generateBtn.addEventListener('click', async () => {
-      generationStatusEl.textContent = 'Working…';
-      generateBtn.disabled = true;
-      mainOutputEl.textContent = '';
-
+    function buildIntakeString() {
       const lines = [];
       lines.push('Tab: ' + currentTab.toUpperCase());
       if (caseLabel.value.trim()) lines.push('Case label: ' + caseLabel.value.trim());
@@ -656,8 +670,14 @@
         lines.push('Plan hints / discharge requests:');
         lines.push(planHints.value.trim());
       }
-      const intake = lines.join('\n');
-      const context = extraInstructions.value.trim();
+      return lines.join('\n');
+    }
+
+    async function callGenerate(intake, context, statusLabel) {
+      generationStatusEl.textContent = statusLabel;
+      generateBtn.disabled = true;
+      applyFeedbackBtn.disabled = true;
+      mainOutputEl.textContent = '';
 
       try {
         const res = await fetch(API_BASE + '/generate', {
@@ -679,7 +699,32 @@
         generationStatusEl.textContent = 'Error';
       } finally {
         generateBtn.disabled = false;
+        applyFeedbackBtn.disabled = false;
       }
+    }
+
+    // ----- GENERATE (PRIMARY BUTTON) -----
+    generateBtn.addEventListener('click', async () => {
+      const intake = buildIntakeString();
+      const context = extraInstructions.value.trim();
+      await callGenerate(intake, context, 'Working…');
+    });
+
+    // ----- APPLY FEEDBACK BUTTON -----
+    applyFeedbackBtn.addEventListener('click', async () => {
+      if (!feedbackBox.value.trim()) {
+        feedbackBox.placeholder = 'Type feedback here first (e.g., "make it past tense", "shorter SOAP").';
+        feedbackBox.focus();
+        return;
+      }
+      const intake = buildIntakeString();
+      const contextParts = [];
+      if (extraInstructions.value.trim()) {
+        contextParts.push('Original extra instructions: ' + extraInstructions.value.trim());
+      }
+      contextParts.push('Doctor feedback for revision: ' + feedbackBox.value.trim());
+      const context = contextParts.join('\n\n');
+      await callGenerate(intake, context, 'Refining with feedback…');
     });
 
     // ----- COPY FULL TEXT -----
@@ -739,7 +784,7 @@
       }, 1500);
     });
 
-    // ----- FILE RELAY -----
+    // ----- FILE RELAY (QR FROM PHONE) -----
     receiveFileBtn.addEventListener('click', async () => {
       try {
         const res = await fetch(API_BASE + '/relay/init-file', {
@@ -783,6 +828,36 @@
           console.error('File relay poll error', err);
         }
       }, 2000);
+    });
+
+    // ----- LOCAL UPLOAD (PHONE OR DESKTOP) -----
+    localUploadBtn.addEventListener('click', () => {
+      localUploadInput.click();
+    });
+
+    localUploadInput.addEventListener('change', () => {
+      if (!localUploadInput.files || !localUploadInput.files.length) return;
+      attachmentsEmpty.style.display = 'none';
+
+      Array.from(localUploadInput.files).forEach(file => {
+        if (file.type && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = e => {
+            const img = document.createElement('img');
+            img.className = 'thumb';
+            img.src = e.target.result;
+            attachmentsList.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          const chip = document.createElement('div');
+          chip.className = 'file-chip';
+          chip.textContent = file.name || 'Attached file';
+          attachmentsList.appendChild(chip);
+        }
+      });
+
+      localUploadInput.value = '';
     });
   </script>
 </body>
