@@ -279,3 +279,42 @@ app.post('/relay/clear', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Lohit SOAP app backend running on port ${PORT}`);
 });
+// Simple in-memory store: { caseId: { text: "", createdAt, updatedAt } }
+const textRelay = new Map();
+const crypto = require('crypto');
+
+// init: desktop calls this to get a caseId for "Receive from phone"
+app.post('/relay/init', (req, res) => {
+  const caseId = crypto.randomBytes(6).toString('hex'); // 12-char id
+  textRelay.set(caseId, { text: '', createdAt: Date.now(), updatedAt: null });
+  res.json({ ok: true, caseId });
+});
+
+// phone (or any client) sends text
+app.post('/relay/text', (req, res) => {
+  const { caseId, text } = req.body || {};
+  if (!caseId || !textRelay.has(caseId)) {
+    return res.status(400).json({ ok: false, error: 'Invalid or missing caseId.' });
+  }
+  const entry = textRelay.get(caseId);
+  entry.text = text;
+  entry.updatedAt = Date.now();
+  textRelay.set(caseId, entry);
+  res.json({ ok: true });
+});
+
+// desktop polls to get text
+app.get('/relay/poll/:caseId', (req, res) => {
+  const { caseId } = req.params;
+  if (!caseId || !textRelay.has(caseId)) {
+    return res.status(404).json({ ok: false, error: 'caseId not found.' });
+  }
+  res.json({ ok: true, data: textRelay.get(caseId) });
+});
+
+// optional: clear when done
+app.post('/relay/clear', (req, res) => {
+  const { caseId } = req.body || {};
+  if (caseId) textRelay.delete(caseId);
+  res.json({ ok: true });
+});
