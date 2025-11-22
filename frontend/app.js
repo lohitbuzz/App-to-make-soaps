@@ -1,491 +1,564 @@
-// ===== CONFIG =====
-const API_BASE_URL = "https://lohit-soap-app.onrender.com"; // Render backend URL
-
-// ===== DOM HELPERS =====
-function $(id) {
-  return document.getElementById(id);
+:root {
+  --bg: #020712;
+  --bg-elevated: #081522;
+  --bg-elevated-soft: #0c1c2c;
+  --accent: #00e0b8;
+  --accent-soft: rgba(0, 224, 184, 0.1);
+  --accent-strong: #0df0c2;
+  --danger: #ff4b6e;
+  --text: #f8fbff;
+  --text-soft: #a6b0c3;
+  --border-soft: #1a2736;
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-pill: 999px;
+  --shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.65);
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
 }
 
-// ===== STATE =====
-let activeTab = "soap";
-let visitType = "appointment"; // 'appointment' | 'surgery'
-let surgeryMode = "simple"; // 'simple' | 'advanced'
-let relayId = "";
-let recognition = null;
-let isRecording = false;
-let activeRecordingTextarea = null;
-
-// ===== INIT =====
-document.addEventListener("DOMContentLoaded", () => {
-  setupTabs();
-  setupVisitAndModeToggles();
-  setupForms();
-  setupRelay();
-  setupBackendHealth();
-  setupRecorder();
-});
-
-// ===== TABS =====
-function setupTabs() {
-  const tabs = [
-    { button: "tab-soap", panel: "panel-soap", key: "soap" },
-    { button: "tab-toolbox", panel: "panel-toolbox", key: "toolbox" },
-    { button: "tab-consult", panel: "panel-consult", key: "consult" },
-  ];
-
-  tabs.forEach(({ button, panel, key }) => {
-    $(button).addEventListener("click", () => {
-      activeTab = key;
-      tabs.forEach(({ button: b, panel: p }) => {
-        $(b).classList.toggle("tab-active", b === button);
-        $(p).classList.toggle("panel-active", p === panel);
-      });
-    });
-  });
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-// ===== VISIT / MODE TOGGLES =====
-function setupVisitAndModeToggles() {
-  const visitAppointmentBtn = $("visit-appointment");
-  const visitSurgeryBtn = $("visit-surgery");
-  const modeSimpleBtn = $("mode-simple");
-  const modeAdvancedBtn = $("mode-advanced");
-
-  visitAppointmentBtn.addEventListener("click", () => {
-    visitType = "appointment";
-    visitAppointmentBtn.classList.add("pill-active");
-    visitSurgeryBtn.classList.remove("pill-active");
-    updateVisitVisibility();
-  });
-
-  visitSurgeryBtn.addEventListener("click", () => {
-    visitType = "surgery";
-    visitSurgeryBtn.classList.add("pill-active");
-    visitAppointmentBtn.classList.remove("pill-active");
-    updateVisitVisibility();
-  });
-
-  modeSimpleBtn.addEventListener("click", () => {
-    surgeryMode = "simple";
-    modeSimpleBtn.classList.add("pill-active");
-    modeAdvancedBtn.classList.remove("pill-active");
-    updateModeVisibility();
-  });
-
-  modeAdvancedBtn.addEventListener("click", () => {
-    surgeryMode = "advanced";
-    modeAdvancedBtn.classList.add("pill-active");
-    modeSimpleBtn.classList.remove("pill-active");
-    updateModeVisibility();
-  });
-
-  updateVisitVisibility();
-  updateModeVisibility();
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: radial-gradient(circle at top left, #022440, #020712 55%);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
-function updateVisitVisibility() {
-  const surgeryOnly = document.querySelectorAll(".visit-surgery-only");
-  const appointmentOnly = document.querySelectorAll(".visit-appointment-only");
-
-  const isSurgery = visitType === "surgery";
-
-  surgeryOnly.forEach((el) => {
-    el.style.display = isSurgery ? "" : "none";
-  });
-  appointmentOnly.forEach((el) => {
-    el.style.display = !isSurgery ? "" : "none";
-  });
-
-  const label = $("soap-mode-label");
-  label.textContent = "Appointment · Surgery · Voice";
-
-  // Also adjust placeholder for SOAP output label
-  const outStatusLabel = $("soap-output-status-label");
-  outStatusLabel.textContent = "Ready";
+body {
+  padding: 12px;
 }
 
-function updateModeVisibility() {
-  const simpleSection = $("surgery-brief-section");
-  const advancedSection = $("surgery-advanced-section");
-  const isAdvanced = surgeryMode === "advanced";
+.page {
+  max-width: 1120px;
+  margin: 0 auto 64px;
+}
 
-  if (simpleSection) {
-    simpleSection.classList.toggle("hidden", isAdvanced);
+/* HEADER */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at top left, #11263a, #050a14);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  margin-bottom: 12px;
+  gap: 16px;
+}
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.app-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  object-fit: contain;
+  background: #020712;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+}
+
+.app-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.app-title {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.app-subtitle {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  border: 1px solid var(--border-soft);
+  background: rgba(3, 15, 30, 0.9);
+}
+
+.status-pill--ready .status-dot {
+  background: #1cf593;
+}
+
+.status-pill--error .status-dot {
+  background: var(--danger);
+}
+
+.status-pill--unknown .status-dot {
+  background: #f2c94c;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.version-pill {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+/* CARDS */
+
+.card {
+  background: linear-gradient(145deg, #050b15, #091625);
+  border-radius: var(--radius-lg);
+  padding: 16px 16px 18px;
+  margin-top: 10px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.card-main {
+  margin-top: 14px;
+}
+
+.card-header-row,
+.tab-header-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.card-tag {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.card-note {
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-top: 4px;
+}
+
+/* ATTACHMENTS */
+
+.card-attachments .attachments-row {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.file-input-label {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  border: 1px solid var(--accent);
+  background: radial-gradient(circle at top left, var(--accent-soft), #050b15);
+  cursor: pointer;
+}
+
+.file-input-label input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-input-label--large {
+  width: 100%;
+  padding: 16px 14px;
+  border-radius: 24px;
+  border-style: dashed;
+  text-align: center;
+}
+
+.attachments-summary {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+/* RECORDER */
+
+.card-recorder .recorder-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.recorder-main {
+  flex: 1 1 180px;
+}
+
+.recorder-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.recorder-status {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+/* TABS */
+
+.tabs {
+  display: inline-flex;
+  background: #050a14;
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-soft);
+}
+
+.tab-button {
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tab-button--active {
+  background: radial-gradient(circle at top left, var(--accent), var(--accent-strong));
+  color: #041018;
+  font-weight: 600;
+}
+
+.tab-content {
+  display: none;
+  margin-top: 8px;
+}
+
+.tab-content--active {
+  display: block;
+}
+
+/* FORM ELEMENTS */
+
+.field {
+  margin-bottom: 10px;
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: var(--text-soft);
+}
+
+.text-input,
+.select-input,
+.text-area {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-soft);
+  background: #040916;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.text-input:focus,
+.select-input:focus,
+.text-area:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(0, 224, 184, 0.35);
+}
+
+.text-area {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.text-area--output {
+  min-height: 140px;
+}
+
+.helper-text {
+  font-size: 11px;
+  color: var(--text-soft);
+  margin-top: 2px;
+}
+
+.checkbox-field {
+  margin-top: 4px;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.checkbox-label input {
+  accent-color: var(--accent);
+}
+
+/* GRID */
+
+.grid {
+  display: grid;
+  gap: 8px;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.field--inline-btn {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* SEGMENTED CONTROL */
+
+.segmented-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.segmented-group {
+  min-width: 0;
+}
+
+.segmented {
+  display: inline-flex;
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  background: #050a14;
+  border: 1px solid var(--border-soft);
+}
+
+.segmented-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.segmented-btn--active {
+  background: radial-gradient(circle at top left, var(--accent), var(--accent-strong));
+  color: #041018;
+  font-weight: 600;
+}
+
+/* FIELDSETS */
+
+.fieldset {
+  margin-top: 10px;
+  padding: 10px 10px 12px;
+  border-radius: 16px;
+  background: #050a14;
+  border: 1px solid var(--border-soft);
+}
+
+.fieldset-title {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fieldset-relay {
+  margin-top: 16px;
+}
+
+.chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-soft);
+}
+
+.chip--muted {
+  opacity: 0.7;
+}
+
+/* BUTTONS */
+
+.btn {
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #031118;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  color: var(--text-soft);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.output-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* RELAY */
+
+.relay-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* MODAL */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: #050b15;
+  border-radius: 20px;
+  padding: 18px 18px 16px;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modal-message {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.modal-close-btn {
+  width: 100%;
+}
+
+/* OUTPUT CARD */
+
+.card-output {
+  margin-top: 14px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 780px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
-  if (advancedSection) {
-    advancedSection.classList.toggle("hidden", !isAdvanced);
-  }
-}
 
-// ===== FORMS & API CALLS =====
-function setupForms() {
-  const soapForm = $("soap-form");
-  soapForm.addEventListener("submit", handleSoapSubmit);
-
-  $("runToolbox").addEventListener("click", handleToolboxRun);
-  $("runConsult").addEventListener("click", handleConsultRun);
-
-  $("copy-soap-full").addEventListener("click", () =>
-    copyToClipboard($("soap-output").value)
-  );
-  $("copy-plan-meds").addEventListener("click", () =>
-    copyPlanMedsAftercare($("soap-output").value)
-  );
-
-  $("copyToolboxOutput").addEventListener("click", () =>
-    copyToClipboard($("toolboxOutput").value)
-  );
-
-  $("copyConsultOutput").addEventListener("click", () =>
-    copyToClipboard($("consultOutput").value)
-  );
-
-  $("apply-soap-feedback").addEventListener("click", handleSoapFeedback);
-  $("applyToolboxFeedback").addEventListener("click", handleToolboxFeedback);
-  $("applyConsultFeedback").addEventListener("click", handleConsultFeedback);
-
-  $("send-to-desktop").addEventListener("click", handleSendToDesktop);
-}
-
-function gatherSoapPayload() {
-  return {
-    visitType,
-    surgeryMode,
-    caseLabel: $("caseLabel").value.trim(),
-    patientName: $("patientName").value.trim(),
-    weightKg: $("weightKg").value.trim(),
-    species: $("species").value,
-    sex: $("sex").value,
-    asa: $("asa").value,
-    tprNotes: $("tprNotes").value.trim(),
-    appointmentPreset: $("appointmentPreset").value,
-    surgeryPreset: $("surgeryPreset").value,
-    vaccinesToday: $("vaccinesToday").checked,
-
-    // Simple fields
-    briefFluids: $("briefFluids").value.trim(),
-    briefPremed: $("briefPremed").value.trim(),
-    briefInduction: $("briefInduction").value.trim(),
-
-    // Advanced fields
-    ettSize: $("ettSize").value.trim(),
-    ivCatheter: $("ivCatheter").value.trim(),
-    advFluids: $("advFluids").value.trim(),
-    premedProtocol: $("premedProtocol").value.trim(),
-    inductionProtocol: $("inductionProtocol").value.trim(),
-    maintenanceProtocol: $("maintenanceProtocol").value.trim(),
-    intraOpMeds: $("intraOpMeds").value.trim(),
-    postOpMeds: $("postOpMeds").value.trim(),
-
-    // Narrative
-    coreHistory: $("coreHistory").value.trim(),
-    peDiagnostics: $("peDiagnostics").value.trim(),
-    assessmentHints: $("assessmentHints").value.trim(),
-    planHints: $("planHints").value.trim(),
-    extraInstructions: $("extraInstructions").value.trim(),
-    voiceNotes: $("voiceNotes").value.trim(),
-  };
-}
-
-async function handleSoapSubmit(event) {
-  event.preventDefault();
-  const payload = gatherSoapPayload();
-  const outArea = $("soap-output");
-  setSoapStatus("Working…", "green");
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/soap`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-    outArea.value = data.text || data.output || "[No text returned]";
-    setSoapStatus("Ready", "green");
-  } catch (err) {
-    console.error("SOAP error", err);
-    outArea.value = `Error calling backend: ${err.message}`;
-    setSoapStatus("Backend unreachable", "red");
-  }
-}
-
-async function handleToolboxRun() {
-  const input = $("toolboxInput").value.trim();
-  const out = $("toolboxOutput");
-  if (!input) {
-    out.value = "[Paste text or notes above first]";
-    return;
-  }
-  out.value = "Working…";
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/toolbox`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: input }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    out.value = data.text || data.output || "[No text returned]";
-  } catch (err) {
-    console.error("Toolbox error", err);
-    out.value = `Error calling backend: ${err.message}`;
-  }
-}
-
-async function handleConsultRun() {
-  const input = $("consultInput").value.trim();
-  const out = $("consultOutput");
-  if (!input) {
-    out.value = "[Type a consult question or context above first]";
-    return;
-  }
-  out.value = "Working…";
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/consult`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: input }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    out.value = data.text || data.output || "[No text returned]";
-  } catch (err) {
-    console.error("Consult error", err);
-    out.value = `Error calling backend: ${err.message}`;
-  }
-}
-
-// ===== FEEDBACK (local only stubs) =====
-function handleSoapFeedback() {
-  const fb = $("soap-feedback").value.trim();
-  if (!fb) return;
-  const out = $("soap-output");
-  out.value += `\n\n[Feedback noted locally: ${fb}]`;
-  $("soap-feedback").value = "";
-}
-
-function handleToolboxFeedback() {
-  const fb = $("toolboxFeedback").value.trim();
-  if (!fb) return;
-  const out = $("toolboxOutput");
-  out.value += `\n\n[Feedback noted locally: ${fb}]`;
-  $("toolboxFeedback").value = "";
-}
-
-function handleConsultFeedback() {
-  const fb = $("consultFeedback").value.trim();
-  if (!fb) return;
-  const out = $("consultOutput");
-  out.value += `\n\n[Feedback noted locally: ${fb}]`;
-  $("consultFeedback").value = "";
-}
-
-// ===== BACKEND HEALTH =====
-function setSoapStatus(text, color) {
-  $("soap-output-status-label").textContent = text;
-  const dot = $("soap-output-status-dot");
-  dot.classList.remove("status-dot-green", "status-dot-red", "status-dot-gray");
-  if (color === "green") dot.classList.add("status-dot-green");
-  else if (color === "red") dot.classList.add("status-dot-red");
-  else dot.classList.add("status-dot-gray");
-}
-
-function setBackendBadge(ok) {
-  const dot = $("backend-status-dot");
-  const label = $("backend-status-label");
-  dot.classList.remove("status-dot-green", "status-dot-red", "status-dot-gray");
-  if (ok) {
-    dot.classList.add("status-dot-green");
-    label.textContent = "Backend reachable";
-  } else {
-    dot.classList.add("status-dot-red");
-    label.textContent = "Backend unreachable";
-  }
-}
-
-function setupBackendHealth() {
-  async function check() {
-    try {
-      const res = await fetch(`${API_BASE_URL}/health`);
-      if (!res.ok) throw new Error();
-      setBackendBadge(true);
-    } catch {
-      setBackendBadge(false);
-    }
-  }
-  check();
-  setInterval(check, 30000);
-}
-
-// ===== CLIPBOARD HELPERS =====
-async function copyToClipboard(text) {
-  if (!text) return;
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch (err) {
-    console.warn("Clipboard error", err);
-  }
-}
-
-function copyPlanMedsAftercare(fullText) {
-  if (!fullText) return;
-  const sections = ["Plan:", "Medications dispensed:", "Aftercare:"];
-  let extracted = "";
-  for (let i = 0; i < sections.length; i++) {
-    const start = fullText.indexOf(sections[i]);
-    if (start === -1) continue;
-    const end =
-      i + 1 < sections.length
-        ? fullText.indexOf(sections[i + 1], start + sections[i].length)
-        : fullText.length;
-    extracted += fullText.slice(start, end).trim() + "\n\n";
-  }
-  copyToClipboard(extracted.trim());
-}
-
-// ===== RELAY (Phone ↔ Desktop) =====
-function setupRelay() {
-  const relayIdInput = $("relayIdInput");
-  $("relayNewIdBtn").addEventListener("click", () => {
-    relayId = generateRelayId();
-    relayIdInput.value = relayId;
-  });
-
-  $("relayReceiveTextBtn").addEventListener("click", async () => {
-    const id = relayIdInput.value.trim();
-    if (!id) {
-      alert("Enter a Relay ID first (or tap New).");
-      return;
-    }
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/relay/receive`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ relayId: id }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data.payload) {
-        $("soap-output").value = data.payload;
-      } else {
-        alert("No text available yet for this Relay ID.");
-      }
-    } catch (err) {
-      console.error("Relay receive error", err);
-      alert("Error receiving text from backend.");
-    }
-  });
-
-  $("uploadInput").addEventListener("change", (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    alert(
-      `${files.length} file(s) selected. File relay is a future version – for now, attach originals to Avimark manually.`
-    );
-  });
-}
-
-function generateRelayId() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let id = "";
-  for (let i = 0; i < 6; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return id;
-}
-
-async function handleSendToDesktop() {
-  const text = $("soap-output").value.trim();
-  if (!text) {
-    alert("No output to send yet – generate a SOAP first.");
-    return;
-  }
-  if (!relayId) {
-    relayId = generateRelayId();
-    $("relayIdInput").value = relayId;
-  }
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/relay/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ relayId, payload: text }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    alert(`Sent to backend. Use Relay ID "${relayId}" on desktop to receive.`);
-  } catch (err) {
-    console.error("Relay send error", err);
-    alert("Error sending text to backend.");
-  }
-}
-
-// ===== RECORDER =====
-function setupRecorder() {
-  const recordBtn = $("record-btn");
-  const textareas = document.querySelectorAll("textarea[data-allow-recording='true']");
-
-  textareas.forEach((ta) => {
-    ta.addEventListener("focus", () => {
-      activeRecordingTextarea = ta;
-    });
-  });
-
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  if (!SpeechRecognition) {
-    recordBtn.textContent = "🎤 Recorder (unsupported)";
-    recordBtn.disabled = true;
-    return;
+  .app-header-right {
+    align-self: stretch;
+    justify-content: space-between;
   }
 
-  recognition = new SpeechRecognition();
-  recognition.continuous = true;
-  recognition.interimResults = false;
-  recognition.lang = "en-US";
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
-  recognition.onresult = (event) => {
-    if (!activeRecordingTextarea) return;
-    let transcript = "";
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      transcript += event.results[i][0].transcript + " ";
-    }
-    transcript = transcript.trim();
-    if (!transcript) return;
+  .segmentized-row,
+  .segmented-row {
+    flex-direction: column;
+  }
 
-    const ta = activeRecordingTextarea;
-    const prefix = ta.value && !ta.value.endsWith(" ") ? " " : "";
-    ta.value += prefix + transcript;
-  };
+  .output-buttons {
+    flex-direction: column;
+  }
 
-  recognition.onend = () => {
-    if (isRecording) {
-      // Safari sometimes stops; restart for continuous mode
-      recognition.start();
-    }
-  };
+  .relay-buttons {
+    flex-direction: column;
+  }
 
-  recordBtn.addEventListener("click", () => {
-    if (!isRecording) {
-      try {
-        recognition.start();
-        isRecording = true;
-        recordBtn.classList.add("recording");
-        recordBtn.textContent = "⏹ Stop recorder";
-      } catch (err) {
-        console.error("Recorder start error", err);
-      }
-    } else {
-      recognition.stop();
-      isRecording = false;
-      recordBtn.classList.remove("recording");
-      recordBtn.textContent = "🎤 Recorder";
-    }
-  });
+  .recorder-row {
+    flex-direction: column;
+  }
 }
