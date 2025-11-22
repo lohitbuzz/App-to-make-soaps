@@ -55,38 +55,39 @@
     </section>
 
     <!-- GLOBAL RECORDER -->
-    <section class="card card-recorder">
-      <div class="card-header-row">
-        <div class="card-title">Voice recorder</div>
-        <div class="card-tag">Dictate notes → textbox or backend</div>
-      </div>
-      <div class="recorder-row">
-        <div class="recorder-main">
-          <label class="field-label" for="recorderTarget">
-            Target
-          </label>
-          <select id="recorderTarget" class="select-input">
-            <option value="soap-voice">SOAP · voice notes</option>
-            <option value="toolbox">Toolbox · input</option>
-            <option value="consult">Consult · question</option>
-          </select>
-        </div>
-        <div class="recorder-buttons">
-          <button id="btnToggleRecord" class="btn btn-outline">
-            Start recording
-          </button>
-          <button id="btnRecorderToField" class="btn btn-secondary">
-            Insert transcript
-          </button>
-          <button id="btnRecorderToBackend" class="btn btn-secondary">
-            Tag for backend
-          </button>
-        </div>
-      </div>
-      <div id="recorderStatus" class="recorder-status">
-        Recorder idle. Uses browser speech dictation if available.
-      </div>
-    </section>
+    <!-- Voice recorder (collapsible) -->
+<details class="card collapsible-card" id="voice-recorder-card">
+  <summary class="collapsible-summary">
+    <div class="collapsible-title">
+      <h2>Voice recorder</h2>
+      <p class="card-subtitle">Dictate notes → textbox or backend</p>
+    </div>
+    <span class="chevron" aria-hidden="true">▾</span>
+  </summary>
+
+  <div class="collapsible-body">
+    <label for="voice-target" class="field-label">Target</label>
+    <div class="select-wrapper">
+      <select id="voice-target">
+        <option value="soap-voice">SOAP · voice notes</option>
+        <option value="toolbox-voice">Toolbox · voice notes</option>
+        <option value="consult-voice">Consult · voice notes</option>
+      </select>
+    </div>
+
+    <div class="button-row">
+      <button id="start-recording" type="button">Start recording</button>
+      <button id="insert-transcript" type="button">Insert transcript</button>
+      <button id="tag-backend" type="button" class="secondary">
+        Tag for backend
+      </button>
+    </div>
+
+    <p id="recorder-status" class="hint">
+      Recorder idle. Uses browser speech dictation if available.
+    </p>
+  </div>
+</details>
 
     <!-- MAIN TABS -->
     <section class="card card-main">
