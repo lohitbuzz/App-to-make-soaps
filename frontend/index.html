@@ -2,476 +2,492 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Moksha SOAP App</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moksha SOAP · Lohit SOAP App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app-root">
-    <!-- Top header card -->
-    <header class="app-header card">
+  <div class="app-shell">
+    <!-- HEADER / STATUS -->
+    <header class="header-card">
       <div class="header-left">
-        <img src="moksha-soap-logo.png" alt="Moksha SOAP logo" class="app-logo" />
-        <div class="header-text">
-          <div class="app-title-main">Moksha SOAP</div>
-          <div class="app-title-sub">
-            Lohit SOAP App · SOAP · Toolbox · Consult · Phone ↔ Desktop
+        <div class="logo-row">
+          <img src="moksha-soap-logo.png" alt="Moksha SOAP logo" class="logo-img" />
+          <div class="logo-text">
+            <div class="app-title">Moksha SOAP</div>
+            <div class="app-subtitle">
+              Lohit SOAP App · SOAP · Toolbox · Consult · Phone ↔ Desktop
+            </div>
           </div>
         </div>
       </div>
+
       <div class="header-right">
         <div class="status-pill">
-          <span class="status-dot" id="backend-status-light"></span>
-          <span>Backend reachable</span>
+          <span id="backend-status-dot" class="status-dot status-dot-gray"></span>
+          <span id="backend-status-label">Backend checking…</span>
         </div>
-        <div class="version-pill">v1.7.6 · Hybrid UI + Recorder</div>
+        <div class="version-pill">
+          v1.7.6 · Hybrid UI + Recorder
+        </div>
+        <button id="record-btn" type="button" class="record-btn">
+          🎤 Recorder
+        </button>
       </div>
     </header>
 
-    <!-- Top tabs -->
-    <nav class="top-tabs">
-      <button id="tab-soap" class="tab-button active">SOAP</button>
+    <!-- MAIN TABS -->
+    <nav class="main-tabs">
+      <button id="tab-soap" class="tab-button tab-active">SOAP</button>
       <button id="tab-toolbox" class="tab-button">Toolbox</button>
       <button id="tab-consult" class="tab-button">Consult</button>
     </nav>
 
-    <!-- Panels wrapper -->
+    <!-- PANELS WRAPPER -->
     <main class="panels-wrapper">
-      <!-- ===================== -->
-      <!-- SOAP PANEL            -->
-      <!-- ===================== -->
-      <section id="panel-soap" class="panel panel-visible">
-        <div class="layout-main">
-          <!-- LEFT: SOAP INPUT -->
-          <section class="column column-left">
-            <div class="card">
-              <div class="card-header-row">
-                <h2 class="card-title">SOAP INPUT</h2>
-                <div class="card-subtitle">Appointment · Surgery · Voice</div>
+      <!-- SOAP PANEL -->
+      <section id="panel-soap" class="panel panel-active">
+        <div class="panel-body">
+          <!-- SOAP INPUT CARD -->
+          <section class="card">
+            <header class="card-header">
+              <div class="card-title">SOAP Input</div>
+              <div class="card-subtitle" id="soap-mode-label">
+                Appointment · Surgery · Voice
               </div>
+            </header>
 
-              <!-- Appointment vs Surgery toggle -->
-              <div class="pill-toggle-group">
-                <button id="visit-appointment" class="pill-button active">
-                  Appointment
-                </button>
-                <button id="visit-surgery" class="pill-button">
-                  Surgery
-                </button>
-              </div>
-
-              <!-- Surgery mode row: Simple vs Advanced (hidden in Appointment mode) -->
-              <div id="surgery-mode-row" class="pill-toggle-group surgery-mode-row">
-                <button id="surgery-simple" class="pill-button active">
-                  Simple
-                </button>
-                <button id="surgery-advanced" class="pill-button">
-                  Advanced
-                </button>
-                <span class="hint-text">
-                  Simple = quick notes · Advanced = full anesthesia details
-                </span>
-              </div>
-
-              <!-- Common fields (for both appointment & surgery) -->
-              <div class="field-grid">
-                <div class="field">
-                  <label for="case-label">Case label</label>
-                  <input id="case-label" type="text" placeholder="e.g. Bella – Spay recheck" />
-                </div>
-                <div class="field">
-                  <label for="patient-name">Patient name</label>
-                  <input id="patient-name" type="text" placeholder="e.g. Bella" />
+            <form id="soap-form" class="card-body-content">
+              <!-- Top toggles -->
+              <div class="toggle-row">
+                <div class="toggle-group">
+                  <span class="toggle-label">Visit type</span>
+                  <div class="pill-toggle">
+                    <button type="button" id="visit-appointment" class="pill pill-active">
+                      Appointment
+                    </button>
+                    <button type="button" id="visit-surgery" class="pill">
+                      Surgery
+                    </button>
+                  </div>
                 </div>
 
+                <div class="toggle-group">
+                  <span class="toggle-label">Surgery mode</span>
+                  <div class="pill-toggle">
+                    <button type="button" id="mode-simple" class="pill pill-active">
+                      Simple
+                    </button>
+                    <button type="button" id="mode-advanced" class="pill">
+                      Advanced
+                    </button>
+                  </div>
+                  <div class="toggle-help">
+                    Simple = quick notes · Advanced = full anesthesia details
+                  </div>
+                </div>
+              </div>
+
+              <!-- Core demographics -->
+              <div class="grid grid-2">
                 <div class="field">
-                  <label for="weight-kg">Weight (kg)</label>
-                  <input id="weight-kg" type="text" placeholder="e.g. 6.4" />
+                  <label for="caseLabel">Case label</label>
+                  <input id="caseLabel" type="text" placeholder="e.g. Bella – Spay recheck" />
+                </div>
+                <div class="field">
+                  <label for="patientName">Patient name</label>
+                  <input id="patientName" type="text" placeholder="e.g. Bella" />
+                </div>
+              </div>
+
+              <div class="grid grid-3">
+                <div class="field">
+                  <label for="weightKg">Weight (kg)</label>
+                  <input id="weightKg" type="number" step="0.1" placeholder="e.g. 6.4" />
                 </div>
                 <div class="field">
                   <label for="species">Species</label>
                   <select id="species">
                     <option value="">Select species</option>
-                    <option>Canine</option>
-                    <option>Feline</option>
-                    <option>Other</option>
+                    <option value="canine">Dog</option>
+                    <option value="feline">Cat</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
-
                 <div class="field">
                   <label for="sex">Sex</label>
                   <select id="sex">
                     <option value="">Sex</option>
-                    <option>Male</option>
-                    <option>Male neutered</option>
-                    <option>Female</option>
-                    <option>Female spayed</option>
+                    <option value="mi">MI</option>
+                    <option value="mc">MC</option>
+                    <option value="fi">FI</option>
+                    <option value="fs">FS</option>
                   </select>
                 </div>
-                <div class="field">
+              </div>
+
+              <div class="grid grid-3">
+                <div class="field visit-surgery-only">
                   <label for="asa">ASA (surgery)</label>
                   <select id="asa">
                     <option value="">Select ASA</option>
-                    <option>I</option>
-                    <option>II</option>
-                    <option>III</option>
-                    <option>IV</option>
+                    <option value="I">ASA I</option>
+                    <option value="II">ASA II</option>
+                    <option value="III">ASA III</option>
+                    <option value="IV">ASA IV</option>
                   </select>
                 </div>
-
-                <div class="field full-width">
-                  <label for="tpr-notes">TPR / notes</label>
-                  <input
-                    id="tpr-notes"
-                    type="text"
-                    placeholder="TPR, BCS, key vitals / comments"
-                  />
+                <div class="field">
+                  <label for="tprNotes">TPR / notes</label>
+                  <input id="tprNotes" type="text" placeholder="TPR, BCS, key vitals / comments" />
+                </div>
+                <div class="field visit-appointment-only">
+                  <label for="appointmentPreset">Appointment preset</label>
+                  <select id="appointmentPreset">
+                    <option value="custom">Custom / blank</option>
+                    <option value="wellness">Wellness / vaccines</option>
+                    <option value="gi">GI upset</option>
+                    <option value="derm">Derm / otitis</option>
+                    <option value="cough">Cough / URI</option>
+                    <option value="lameness">Lameness</option>
+                    <option value="wellness-senior">Senior wellness</option>
+                    <option value="weight">Weight consult / weight loss</option>
+                  </select>
                 </div>
               </div>
 
-              <!-- Appointment-only fields -->
-              <div id="appointment-fields">
-                <div class="field">
-                  <label for="appointment-preset">Appointment preset</label>
-                  <select id="appointment-preset">
-                    <option value="">Custom / blank</option>
-                    <option>Wellness / vaccines</option>
-                    <option>GI upset</option>
-                    <option>Derm / otitis</option>
-                    <option>Cough / URI</option>
-                    <option>Lameness</option>
-                    <option>Wellness senior</option>
+              <div class="grid grid-2">
+                <div class="field visit-surgery-only">
+                  <label for="surgeryPreset">Surgery preset</label>
+                  <select id="surgeryPreset">
+                    <option value="custom">Custom surgery</option>
+                    <option value="canine-spay">Canine spay</option>
+                    <option value="canine-neuter">Canine neuter</option>
+                    <option value="feline-spay">Feline spay</option>
+                    <option value="feline-neuter">Feline neuter</option>
+                    <option value="dental-rads">Dental – COHAT with rads</option>
+                    <option value="dental-no-rads">Dental – COHAT (no rads)</option>
+                    <option value="mass-removal">Mass removal</option>
+                    <option value="cystotomy">Cystotomy</option>
+                    <option value="pyometra-spay">Pyometra spay</option>
+                    <option value="exploratory">Exploratory laparotomy</option>
+                    <option value="enterotomy">Enterotomy</option>
+                    <option value="gastrotomy">Gastrotomy</option>
+                    <option value="gastropexy">Gastropexy</option>
+                    <option value="feline-unblock">Feline urethral unblock</option>
                   </select>
                 </div>
 
-                <div class="checkbox-row">
-                  <label>
-                    <input type="checkbox" id="vaccines-today" />
+                <div class="field">
+                  <label class="checkbox-label">
+                    <input id="vaccinesToday" type="checkbox" />
                     <span>Vaccines done today</span>
                   </label>
-                  <span class="hint-text">
+                  <div class="hint">
                     Used to auto-open vaccine SOAP style for wellness exams.
-                  </span>
-                </div>
-              </div>
-
-              <!-- Surgery-only fields -->
-              <div id="surgery-fields">
-                <div class="field">
-                  <label for="surgery-preset">Surgery preset</label>
-                  <select id="surgery-preset">
-                    <option value="custom">Custom surgery</option>
-                    <option>Canine spay</option>
-                    <option>Canine neuter</option>
-                    <option>Feline spay</option>
-                    <option>Feline neuter</option>
-                    <option>Dental – COHAT with rads</option>
-                    <option>Dental – COHAT (no rads)</option>
-                    <option>Mass removal</option>
-                    <option>Cystotomy</option>
-                    <option>Pyometra spay</option>
-                    <option>Exploratory laparotomy</option>
-                    <option>Enterotomy</option>
-                    <option>Gastrotomy</option>
-                    <option>Gastropexy</option>
-                    <option>Feline urethral unblock</option>
-                  </select>
-                </div>
-
-                <!-- SIMPLE surgery fields -->
-                <div id="surgery-simple-fields">
-                  <div class="field">
-                    <label for="simple-fluids">Fluids (brief)</label>
-                    <input
-                      id="simple-fluids"
-                      type="text"
-                      placeholder="e.g. LRS 5 mL/kg/hr"
-                    />
-                  </div>
-                  <div class="field">
-                    <label for="simple-premed">Premed (brief)</label>
-                    <input
-                      id="simple-premed"
-                      type="text"
-                      placeholder="e.g. Methadone + Dex (standard dose)"
-                    />
-                  </div>
-                  <div class="field">
-                    <label for="simple-induction">Induction / maintenance (brief)</label>
-                    <input
-                      id="simple-induction"
-                      type="text"
-                      placeholder="e.g. Propofol to effect, Iso / O₂"
-                    />
-                  </div>
-                </div>
-
-                <!-- ADVANCED surgery fields -->
-                <div id="surgery-advanced-fields">
-                  <div class="field-grid">
-                    <div class="field">
-                      <label for="ett-size">ET tube size</label>
-                      <input
-                        id="ett-size"
-                        type="text"
-                        placeholder="e.g. 9.0 mm cuffed"
-                      />
-                    </div>
-                    <div class="field">
-                      <label for="iv-cath">IV catheter</label>
-                      <input
-                        id="iv-cath"
-                        type="text"
-                        placeholder="e.g. 22G cephalic, L"
-                      />
-                    </div>
-                  </div>
-
-                  <div class="field">
-                    <label for="adv-fluids">Fluids</label>
-                    <input
-                      id="adv-fluids"
-                      type="text"
-                      placeholder="e.g. LRS 5 mL/kg/hr (dogs), 3 mL/kg/hr (cats)"
-                    />
-                  </div>
-
-                  <div class="field">
-                    <label for="adv-premed">Premed protocol</label>
-                    <input
-                      id="adv-premed"
-                      type="text"
-                      placeholder="e.g. Methadone + Dex (mg/kg auto in SOAP)"
-                    />
-                  </div>
-
-                  <div class="field">
-                    <label for="adv-induction">Induction</label>
-                    <input
-                      id="adv-induction"
-                      type="text"
-                      placeholder="e.g. Propofol to effect"
-                    />
-                  </div>
-
-                  <div class="field">
-                    <label for="adv-maint">Maintenance</label>
-                    <input
-                      id="adv-maint"
-                      type="text"
-                      placeholder="e.g. Isoflurane / O₂, standard monitoring"
-                    />
-                  </div>
-
-                  <div class="field">
-                    <label for="adv-intraop">Intra-op meds</label>
-                    <input
-                      id="adv-intraop"
-                      type="text"
-                      placeholder="e.g. Fentanyl CRI, Lidocaine infusion, NSAID"
-                    />
-                  </div>
-
-                  <div class="field">
-                    <label for="adv-postop">Post-op / take-home meds</label>
-                    <input
-                      id="adv-postop"
-                      type="text"
-                      placeholder="e.g. Bup SR, NSAID, trazodone"
-                    />
                   </div>
                 </div>
               </div>
 
-              <!-- Common text areas -->
-              <div class="field full-width">
-                <label for="core-notes">Core notes / history</label>
-                <textarea
-                  id="core-notes"
-                  rows="3"
-                  placeholder="Why are they here today? Pertinent history, owner concerns, context."
-                ></textarea>
-              </div>
-
-              <div class="field full-width">
-                <label for="pe-data">PE & diagnostics (data only)</label>
-                <textarea
-                  id="pe-data"
-                  rows="3"
-                  placeholder="Include PE systems list, diagnostic results, vitals – values only, no interpretation."
-                ></textarea>
-              </div>
-
-              <div class="field full-width">
-                <label for="assessment-hints">Assessment hints</label>
-                <textarea
-                  id="assessment-hints"
-                  rows="3"
-                  placeholder="What are you worried about? Rule-outs, problem list, ASA grade for anesthesia cases."
-                ></textarea>
-              </div>
-
-              <div class="field full-width">
-                <label for="plan-hints">Plan & discharge hints</label>
-                <textarea
-                  id="plan-hints"
-                  rows="3"
-                  placeholder="Diagnostics, treatments, procedures, recheck timing, what you told the owner, activity restrictions."
-                ></textarea>
-              </div>
-
-              <div class="field full-width">
-                <label for="extra-notes">Extra instructions / anything else</label>
-                <textarea
-                  id="extra-notes"
-                  rows="3"
-                  placeholder="Edge cases, special instructions, inventory notes, anything weird or important."
-                ></textarea>
-              </div>
-
-              <details class="accordion">
-                <summary>External transcript (optional – paste Covet transcript or call log)</summary>
-                <textarea id="external-transcript" rows="3"></textarea>
-              </details>
-
-              <details class="accordion">
-                <summary>Voice notes (optional – paste transcript)</summary>
-                <textarea id="voice-notes" rows="3"></textarea>
-              </details>
-
-              <button id="generate-soap-btn" class="primary-btn">
-                Generate SOAP
-              </button>
-            </div>
-          </section>
-
-          <!-- RIGHT: OUTPUT + RELAY -->
-          <section class="column column-right">
-            <div class="card">
-              <div class="card-header-row">
-                <h2 class="card-title">OUTPUT · AI BRAIN – SOAP</h2>
-                <div class="card-subtitle right">
-                  <span class="status-dot small green"></span>
-                  <span>Ready</span>
+              <!-- Simple surgery brief fields -->
+              <div id="surgery-brief-section" class="visit-surgery-only simple-only">
+                <div class="section-label">Surgery snapshot (simple)</div>
+                <div class="grid grid-3">
+                  <div class="field">
+                    <label for="briefFluids">Fluids (brief)</label>
+                    <input id="briefFluids" type="text" placeholder="e.g. LRS 5 mL/kg/hr" />
+                  </div>
+                  <div class="field">
+                    <label for="briefPremed">Premed (brief)</label>
+                    <input id="briefPremed" type="text" placeholder="e.g. Methadone + Dex" />
+                  </div>
+                  <div class="field">
+                    <label for="briefInduction">Induction / maintenance (brief)</label>
+                    <input id="briefInduction" type="text" placeholder="e.g. Propofol, Iso / O₂" />
+                  </div>
                 </div>
               </div>
 
-              <div id="soap-output-box" class="output-box">
-                SOAP / Toolbox / Consult output will appear here.
+              <!-- Advanced anesthesia block -->
+              <div id="surgery-advanced-section" class="visit-surgery-only advanced-only hidden">
+                <div class="section-label">Anesthesia details (advanced)</div>
+                <div class="grid grid-3">
+                  <div class="field">
+                    <label for="ettSize">ET tube</label>
+                    <input id="ettSize" type="text" placeholder="e.g. 9.0 mm cuffed" />
+                  </div>
+                  <div class="field">
+                    <label for="ivCatheter">IV catheter</label>
+                    <input id="ivCatheter" type="text" placeholder="e.g. 22g cephalic, L" />
+                  </div>
+                  <div class="field">
+                    <label for="advFluids">Fluids</label>
+                    <input id="advFluids" type="text" placeholder="e.g. LRS 5 mL/kg/hr (dogs)" />
+                  </div>
+                </div>
+
+                <div class="grid grid-2">
+                  <div class="field">
+                    <label for="premedProtocol">Premed protocol</label>
+                    <input id="premedProtocol" type="text"
+                      placeholder="e.g. Methadone + Dex (mg/kg auto in SOAP)" />
+                  </div>
+                  <div class="field">
+                    <label for="inductionProtocol">Induction</label>
+                    <input id="inductionProtocol" type="text" placeholder="e.g. Propofol to effect" />
+                  </div>
+                </div>
+
+                <div class="grid grid-3">
+                  <div class="field">
+                    <label for="maintenanceProtocol">Maintenance</label>
+                    <input id="maintenanceProtocol" type="text"
+                      placeholder="e.g. Isoflurane / O₂, standard monitoring" />
+                  </div>
+                  <div class="field">
+                    <label for="intraOpMeds">Intra-op meds</label>
+                    <input id="intraOpMeds" type="text"
+                      placeholder="e.g. Fentanyl CRI, Lidocaine infusion, NSAID" />
+                  </div>
+                  <div class="field">
+                    <label for="postOpMeds">Post-op / take-home meds</label>
+                    <input id="postOpMeds" type="text"
+                      placeholder="e.g. Bup SR, NSAID, trazodone" />
+                  </div>
+                </div>
               </div>
 
-              <div class="button-row">
-                <button class="secondary-btn">Copy full SOAP / output</button>
-                <button class="secondary-btn">Copy Plan + Meds + Aftercare</button>
-              </div>
-              <button class="secondary-btn wide">Send output to desktop</button>
-            </div>
-
-            <!-- Feedback / brain tuning section -->
-            <div class="card">
-              <div class="card-header-row">
-                <h3 class="card-title small">Feedback to Moksha SOAP</h3>
-                <div class="pill-label">Brain tuning (local only)</div>
-              </div>
-              <textarea
-                id="feedback-text"
-                rows="3"
-                placeholder="What would you change in this output? Missing details, tone, formatting, etc."
-              ></textarea>
-              <button class="secondary-btn wide">Apply feedback &amp; refine</button>
-            </div>
-
-            <!-- Phone ↔ Desktop relay / uploads (UI only; your JS can hook in) -->
-            <div class="card">
-              <div class="card-header-row">
-                <h3 class="card-title small">Phone ↔ Desktop relay · Uploads</h3>
-                <div class="pill-label">Clinic-only</div>
+              <!-- Narrative fields -->
+              <div class="field">
+                <label for="coreHistory">Core notes / history</label>
+                <textarea id="coreHistory" rows="3" data-allow-recording="true"
+                  placeholder="Why are they here today? Pertinent history, owner concerns, context."></textarea>
               </div>
 
               <div class="field">
-                <label for="relay-id">Relay ID</label>
+                <label for="peDiagnostics">PE & diagnostics (data only)</label>
+                <textarea id="peDiagnostics" rows="3"
+                  placeholder="Include PE systems list, diagnostic results, vitals – values only, no interpretation."
+                  data-allow-recording="true"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="assessmentHints">Assessment hints</label>
+                <textarea id="assessmentHints" rows="2"
+                  placeholder="What are you worried about? Rule-outs, problem list, ASA grade for anesthesia cases."
+                  data-allow-recording="true"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="planHints">Plan & discharge hints</label>
+                <textarea id="planHints" rows="2"
+                  placeholder="Diagnostics, treatments, procedures, recheck timing, what you told the owner, activity restrictions."
+                  data-allow-recording="true"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="extraInstructions">Extra instructions / anything else</label>
+                <textarea id="extraInstructions" rows="2"
+                  placeholder="Edge cases, special instructions, inventory notes, anything weird or important."
+                  data-allow-recording="true"></textarea>
+              </div>
+
+              <details class="details-field">
+                <summary>Voice notes (optional – paste transcript)</summary>
+                <textarea id="voiceNotes" rows="2" data-allow-recording="true"
+                  placeholder="Recorder will append here when this box is focused."></textarea>
+              </details>
+
+              <button id="soap-generate" type="submit" class="primary-button">
+                Generate SOAP
+              </button>
+            </form>
+          </section>
+
+          <!-- SOAP OUTPUT + RELAY + FEEDBACK -->
+          <section class="card output-card">
+            <header class="card-header">
+              <div class="card-title">Output · AI Brain – SOAP</div>
+              <div class="status-pill small-pill">
+                <span id="soap-output-status-dot" class="status-dot status-dot-green"></span>
+                <span id="soap-output-status-label">Ready</span>
+              </div>
+            </header>
+
+            <div class="card-body-content">
+              <textarea id="soap-output" class="output-area" rows="16"
+                placeholder="SOAP / Toolbox / Consult output will appear here." readonly></textarea>
+
+              <div class="button-row">
+                <button id="copy-soap-full" type="button" class="secondary-button">
+                  Copy full SOAP / output
+                </button>
+                <button id="copy-plan-meds" type="button" class="secondary-button">
+                  Copy Plan + Meds + Aftercare
+                </button>
+                <button id="send-to-desktop" type="button" class="secondary-button">
+                  Send output to desktop
+                </button>
+              </div>
+
+              <!-- Feedback for SOAP -->
+              <section class="feedback-section">
+                <header class="feedback-header">
+                  <span>Feedback to Moksha SOAP</span>
+                  <span class="feedback-pill">Brain tuning (local only)</span>
+                </header>
+                <textarea id="soap-feedback" rows="2"
+                  placeholder="What would you change in this output? Missing details, tone, formatting, etc."
+                  data-allow-recording="true"></textarea>
+                <button id="apply-soap-feedback" type="button" class="tertiary-button">
+                  Apply feedback & refine
+                </button>
+              </section>
+
+              <!-- Phone ↔ Desktop relay -->
+              <section class="relay-section">
+                <header class="relay-header">
+                  <div>Phone ↔ Desktop relay · Uploads</div>
+                  <div class="relay-tag">Clinic-only</div>
+                </header>
+
                 <div class="relay-row">
-                  <input id="relay-id" type="text" value="auto" readonly />
-                  <button class="secondary-btn small">New</button>
+                  <label class="relay-label" for="relayIdInput">Relay ID</label>
+                  <input id="relayIdInput" type="text" placeholder="auto" />
+                  <button id="relayNewIdBtn" type="button" class="small-button">
+                    New
+                  </button>
                 </div>
-              </div>
 
-              <div class="button-column">
-                <button class="secondary-btn wide">Receive text from phone</button>
-                <button class="secondary-btn wide">Receive files from phone</button>
+                <div class="relay-buttons">
+                  <button id="relayReceiveTextBtn" type="button" class="secondary-button small-wide">
+                    Receive text from phone
+                  </button>
+                  <button id="relayReceiveFilesBtn" type="button" class="secondary-button small-wide" disabled>
+                    Receive files from phone (coming soon)
+                  </button>
+                </div>
 
-                <label class="upload-btn wide">
-                  <input type="file" multiple hidden />
-                  <span>Upload from this device</span>
-                </label>
-              </div>
-
-              <p class="hint-text tiny">
-                No files uploaded yet. Use Send output to desktop from your phone, then Receive text here.
-              </p>
+                <div class="upload-row">
+                  <label for="uploadInput" class="upload-label secondary-button small-wide">
+                    Upload from this device
+                  </label>
+                  <input id="uploadInput" type="file" multiple class="hidden" />
+                  <div class="upload-hint">
+                    No files uploaded yet. Use “Send output to desktop” from your phone, then “Receive text” here.
+                  </div>
+                </div>
+              </section>
             </div>
           </section>
         </div>
       </section>
 
-      <!-- ===================== -->
-      <!-- TOOLBOX PANEL         -->
-      <!-- ===================== -->
+      <!-- TOOLBOX PANEL -->
       <section id="panel-toolbox" class="panel">
-        <div class="card">
-          <div class="card-header-row">
-            <h2 class="card-title">Toolbox Lite</h2>
-            <div class="card-subtitle">
-              Quick helpers – bloodwork, client emails, small docs
-            </div>
-          </div>
-          <div class="field full-width">
-            <label for="toolbox-input">Paste text or notes</label>
-            <textarea
-              id="toolbox-input"
-              rows="6"
-              placeholder="e.g. Paste bloodwork, write ‘short summary + client-friendly explanation’"
-            ></textarea>
-          </div>
-          <button class="primary-btn">Run Toolbox</button>
+        <div class="panel-body">
+          <section class="card">
+            <header class="card-header">
+              <div class="card-title">Toolbox Lite</div>
+              <div class="card-subtitle">
+                Quick helpers – bloodwork, client emails, small docs
+              </div>
+            </header>
 
-          <div class="field full-width">
-            <label for="toolbox-output">Toolbox output</label>
-            <textarea id="toolbox-output" rows="8"></textarea>
-          </div>
+            <div class="card-body-content">
+              <div class="field">
+                <label for="toolboxInput">Paste text or notes</label>
+                <textarea id="toolboxInput" rows="6" data-allow-recording="true"
+                  placeholder="e.g. Paste bloodwork, write ‘short summary + client-friendly explanation’"></textarea>
+              </div>
+
+              <button id="runToolbox" type="button" class="primary-button">
+                Run Toolbox
+              </button>
+
+              <div class="field">
+                <label for="toolboxOutput">Toolbox output</label>
+                <textarea id="toolboxOutput" rows="10" class="output-area" readonly></textarea>
+              </div>
+
+              <div class="button-row">
+                <button id="copyToolboxOutput" type="button" class="secondary-button">
+                  Copy Toolbox output
+                </button>
+              </div>
+
+              <!-- Feedback for Toolbox -->
+              <section class="feedback-section">
+                <header class="feedback-header">
+                  <span>Feedback to Moksha SOAP · Toolbox</span>
+                  <span class="feedback-pill">Brain tuning (local only)</span>
+                </header>
+                <textarea id="toolboxFeedback" rows="2"
+                  placeholder="What would you change in this Toolbox result? Level of detail, tone, etc."
+                  data-allow-recording="true"></textarea>
+                <button id="applyToolboxFeedback" type="button" class="tertiary-button">
+                  Refine Toolbox output
+                </button>
+              </section>
+            </div>
+          </section>
         </div>
       </section>
 
-      <!-- ===================== -->
-      <!-- CONSULT PANEL         -->
-      <!-- ===================== -->
+      <!-- CONSULT PANEL -->
       <section id="panel-consult" class="panel">
-        <div class="card">
-          <div class="card-header-row">
-            <h2 class="card-title">Consult</h2>
-            <div class="card-subtitle">
-              Free-form mode – ask Moksha SOAP for anything
-            </div>
-          </div>
-          <div class="field full-width">
-            <label for="consult-notes">Consult question / context</label>
-            <textarea
-              id="consult-notes"
-              rows="6"
-              placeholder="e.g. Draft an email, summarize this case, help with client handout…"
-            ></textarea>
-          </div>
-          <button class="primary-btn">Run Consult</button>
+        <div class="panel-body">
+          <section class="card">
+            <header class="card-header">
+              <div class="card-title">Consult</div>
+              <div class="card-subtitle">
+                Free-form mode – ask Moksha SOAP for anything
+              </div>
+            </header>
 
-          <div class="field full-width">
-            <label for="consult-output">Consult output</label>
-            <textarea id="consult-output" rows="8"></textarea>
-          </div>
+            <div class="card-body-content">
+              <div class="field">
+                <label for="consultInput">Consult question / context</label>
+                <textarea id="consultInput" rows="5"
+                  placeholder="e.g. Draft an email, summarize this case, help with a client handout…"
+                  data-allow-recording="true"></textarea>
+              </div>
+
+              <button id="runConsult" type="button" class="primary-button">
+                Run Consult
+              </button>
+
+              <div class="field">
+                <label for="consultOutput">Consult output</label>
+                <textarea id="consultOutput" rows="10" class="output-area" readonly></textarea>
+              </div>
+
+              <div class="button-row">
+                <button id="copyConsultOutput" type="button" class="secondary-button">
+                  Copy Consult output
+                </button>
+              </div>
+
+              <!-- Feedback for Consult -->
+              <section class="feedback-section">
+                <header class="feedback-header">
+                  <span>Feedback to Moksha SOAP · Consult</span>
+                  <span class="feedback-pill">Brain tuning (local only)</span>
+                </header>
+                <textarea id="consultFeedback" rows="2"
+                  placeholder="How should this consult answer change? Add/remove detail, adjust tone, etc."
+                  data-allow-recording="true"></textarea>
+                <button id="applyConsultFeedback" type="button" class="tertiary-button">
+                  Refine Consult output
+                </button>
+              </section>
+            </div>
+          </section>
         </div>
       </section>
     </main>
   </div>
 
-  <script defer src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
