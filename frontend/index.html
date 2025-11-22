@@ -2,287 +2,223 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Moksha SOAP · Lohit SOAP App</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <title>Moksha SOAP – Lohit SOAP App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      --bg: #020910;
-      --bg-card: rgba(9, 28, 40, 0.96);
-      --bg-card-soft: rgba(6, 22, 32, 0.9);
-      --accent: #00d18a;
-      --accent-soft: rgba(0, 209, 138, 0.35);
-      --accent-strong: #00b67a;
-      --accent-danger: #ff4b6a;
-      --border-soft: rgba(255, 255, 255, 0.05);
-      --border-strong: rgba(255, 255, 255, 0.12);
-      --text-main: #e9f3ff;
-      --text-soft: #c5d7e0;
-      --text-muted: #7f93a4;
-      --pill-bg: rgba(9, 30, 46, 0.9);
-      --input-bg: rgba(6, 20, 30, 0.9);
-      --input-border: rgba(255, 255, 255, 0.08);
-      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.65);
-      --radius-lg: 18px;
-      --radius-md: 12px;
+      --bg: #030912;
+      --card: #081621;
+      --card-soft: #08131d;
+      --accent: #19c2a6;
+      --accent-soft: rgba(25, 194, 166, 0.1);
+      --danger: #ff4f6a;
+      --text: #f5f9ff;
+      --text-soft: #a3b4c8;
+      --border-subtle: rgba(255,255,255,0.04);
+      --pill: #101f2c;
+      --radius-card: 18px;
       --radius-pill: 999px;
-      --transition-fast: 0.16s ease-out;
-      --transition-med: 0.22s ease-out;
-      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "SF Pro Display", "Segoe UI", sans-serif;
+      --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.65);
     }
 
     * {
       box-sizing: border-box;
     }
 
-    html,
-    body {
+    html, body {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
-      font-family: var(--font-main);
-      background: radial-gradient(circle at top left, #112437 0, #020910 55%);
-      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      background: radial-gradient(circle at top left, #102532 0, #030912 55%, #010308 100%);
+      color: var(--text);
       -webkit-font-smoothing: antialiased;
     }
 
     body {
-      display: flex;
-      justify-content: center;
-      align-items: stretch;
-      padding: 12px;
+      padding: 16px;
     }
 
-    #app-shell {
-      width: 100%;
-      max-width: 1320px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    #app {
+      max-width: 1200px;
+      margin: 0 auto 48px;
     }
 
     /* HEADER */
 
     .app-header {
-      padding: 12px 18px 4px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      border-radius: 20px;
-      background: linear-gradient(
-        135deg,
-        rgba(0, 37, 71, 0.9),
-        rgba(0, 12, 24, 0.92)
-      );
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);
-    }
-
-    .header-logo-wrap {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .moksha-logo {
-      max-width: 260px;
-      height: auto;
-      display: block;
-    }
-
-    .header-subtitle-row {
-      width: 100%;
-      max-width: 1200px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      font-size: 0.9rem;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: var(--radius-card);
+      background: radial-gradient(circle at top left, #143541, #07141c 55%, #030910 100%);
+      box-shadow: var(--shadow-card);
+      margin-bottom: 16px;
+    }
+
+    .app-header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .app-logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      object-fit: contain;
+      background: transparent;
+      flex-shrink: 0;
+    }
+
+    .app-title h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .app-title p {
+      margin: 2px 0 0;
+      font-size: 0.8rem;
       color: var(--text-soft);
     }
 
-    .header-subtitle-left {
+    .app-status {
       display: flex;
       align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .header-subtitle-right {
-      display: flex;
-      gap: 8px;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: var(--text-soft);
       flex-wrap: wrap;
       justify-content: flex-end;
     }
 
-    .app-subtitle {
-      opacity: 0.9;
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #666;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
 
-    .pill {
-      border-radius: var(--radius-pill);
-      padding: 4px 10px;
-      font-size: 0.8rem;
-      background: var(--pill-bg);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-
-    .pill-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 10px rgba(0, 209, 138, 0.7);
-    }
-
-    .pill-danger-dot {
-      background: var(--accent-danger);
-      box-shadow: 0 0 10px rgba(255, 75, 106, 0.7);
+    .status-ok {
+      background: #18c47c;
+      box-shadow: 0 0 12px rgba(24,196,124,0.9);
     }
 
     .version-pill {
-      opacity: 0.95;
-    }
-
-    .main-tabs {
-      margin-top: 6px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .tab-button {
+      padding: 4px 10px;
       border-radius: var(--radius-pill);
-      padding: 6px 16px;
+      background: var(--pill);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* TABS */
+
+    .primary-tabs {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.35);
+      margin-bottom: 12px;
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      border-radius: 999px;
       border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      background: rgba(0, 0, 0, 0.35);
+      background: transparent;
       color: var(--text-soft);
+      font-size: 0.85rem;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: background var(--transition-fast), color var(--transition-fast),
-        transform 0.08s ease-out;
     }
 
-    .tab-button span.emoji {
-      font-size: 1rem;
+    .tab-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
     }
 
-    .tab-button:hover {
-      background: rgba(0, 0, 0, 0.6);
-      transform: translateY(-0.5px);
-    }
-
-    .tab-button.active {
-      background: var(--accent);
-      color: #021214;
-      font-weight: 600;
+    .pill-label {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.03);
+      font-size: 0.76rem;
+      color: var(--text-soft);
     }
 
     /* LAYOUT */
 
-    .main-layout {
+    .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.38fr) minmax(0, 1fr);
-      gap: 10px;
-      align-items: start;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
 
     .card {
-      background: var(--bg-card);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border-soft);
-      box-shadow: var(--shadow-soft);
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      background: var(--card);
+      border-radius: var(--radius-card);
+      padding: 16px 18px 18px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-card);
     }
 
-    .card-header-row {
+    .card-header {
       display: flex;
+      align-items: baseline;
       justify-content: space-between;
-      align-items: center;
-      gap: 6px;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .card-header h2 {
       font-size: 0.9rem;
-      color: var(--text-soft);
-    }
-
-    .card-title {
-      font-weight: 600;
-      letter-spacing: 0.02em;
       text-transform: uppercase;
-      font-size: 0.82rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      letter-spacing: 0.14em;
+      margin: 0;
       color: var(--text-soft);
     }
 
-    .card-title span.badge {
+    .sub-label {
       font-size: 0.75rem;
-      text-transform: none;
-      opacity: 0.85;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(6, 20, 30, 0.9);
+      color: var(--text-soft);
     }
 
-    .card-subtitle {
-      font-size: 0.8rem;
-      color: var(--text-muted);
+    /* FORMS */
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
-    /* INPUTS */
-
-    .input-grid-top {
+    .field-row-3 {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .input-grid-row {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
     .field {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      font-size: 0.8rem;
-      color: var(--text-soft);
-    }
-
-    .field-label-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
     }
 
     .field label {
       font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-    }
-
-    .hint {
-      font-size: 0.75rem;
-      color: var(--text-muted);
+      color: var(--text-soft);
     }
 
     input[type="text"],
@@ -290,734 +226,337 @@
     select,
     textarea {
       width: 100%;
-      border-radius: 10px;
-      border: 1px solid var(--input-border);
-      background: var(--input-bg);
-      color: var(--text-main);
-      font-size: 0.85rem;
-      padding: 7px 9px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.04);
+      background: #050d15;
+      color: var(--text);
+      padding: 8px 10px;
+      font-size: 0.84rem;
       outline: none;
-      transition: border-color var(--transition-fast),
-        box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
     }
 
     input::placeholder,
     textarea::placeholder {
-      color: #607386;
+      color: #4b5a6a;
     }
 
-    textarea {
-      min-height: 64px;
-      resize: vertical;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--accent-soft);
-      box-shadow: 0 0 0 1px rgba(0, 209, 138, 0.25);
-      background: #071824;
-    }
-
-    .inline-toggle-group {
-      display: inline-flex;
-      border-radius: var(--radius-pill);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      overflow: hidden;
-      background: rgba(1, 7, 12, 0.7);
-    }
-
-    .inline-toggle {
-      border: none;
-      padding: 4px 10px;
-      cursor: pointer;
-      font-size: 0.78rem;
-      background: transparent;
-      color: var(--text-soft);
-      min-width: 80px;
-      text-align: center;
-      transition: background var(--transition-fast), color var(--transition-fast);
-    }
-
-    .inline-toggle.active {
-      background: var(--accent-soft);
-      color: #021214;
-      font-weight: 600;
-    }
-
-    .upload-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-
-    .upload-btn {
-      border-radius: var(--radius-pill);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(10, 30, 40, 0.95);
-      padding: 6px 12px;
-      font-size: 0.85rem;
-      color: var(--text-soft);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background var(--transition-fast), transform 0.07s ease-out;
-    }
-
-    .upload-btn:hover {
-      background: rgba(12, 40, 58, 0.95);
-      transform: translateY(-0.5px);
-    }
-
-    .upload-btn span.emoji {
-      font-size: 1rem;
-    }
-
-    .checkbox-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      margin-top: 4px;
-    }
-
-    .checkbox-row input[type="checkbox"] {
-      width: 14px;
-      height: 14px;
-      accent-color: var(--accent);
-    }
-
-    /* Vaccines Multi-select */
-
-    .vaccines-row {
-      margin-left: 2px;
-      margin-top: 3px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .pill-button {
-      border-radius: var(--radius-pill);
-      border: 1px solid var(--input-border);
-      background: rgba(6, 20, 30, 0.9);
-      color: var(--text-soft);
-      font-size: 0.83rem;
-      padding: 6px 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-      width: 100%;
-      cursor: pointer;
-      transition: background var(--transition-fast), border-color var(--transition-fast),
-        transform 0.07s ease-out;
-    }
-
-    .pill-button:hover {
-      background: rgba(9, 33, 48, 0.95);
-      border-color: var(--accent-soft);
-      transform: translateY(-0.5px);
-    }
-
-    .pill-button span.label {
-      flex: 1;
-      text-align: left;
-    }
-
-    .pill-button span.count {
-      font-size: 0.78rem;
-      opacity: 0.8;
-    }
-
-    .chips-row {
+    .toggle-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
-      min-height: 20px;
+      gap: 8px;
+      margin-bottom: 10px;
     }
 
-    .chip {
+    .toggle-group {
+      display: inline-flex;
       border-radius: 999px;
-      padding: 3px 8px;
-      font-size: 0.75rem;
-      background: rgba(3, 24, 35, 0.98);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 3px;
+      background: rgba(0,0,0,0.35);
+      gap: 3px;
+    }
+
+    .toggle-btn {
+      border-radius: 999px;
+      padding: 6px 14px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      font-size: 0.8rem;
       color: var(--text-soft);
     }
 
-    /* Anesthesia protocol select */
-
-    .anesthesia-extra-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+    .toggle-btn.active {
+      background: var(--accent);
+      color: #031015;
     }
 
     .small-note {
       font-size: 0.74rem;
-      color: var(--text-muted);
+      color: var(--text-soft);
+      margin-bottom: 10px;
     }
 
-    /* Collapse helpers */
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 9px 18px;
+      font-size: 0.86rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #031015;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(25,194,166,0.4);
+    }
+
+    .btn-secondary {
+      background: #111e28;
+      color: var(--text-soft);
+      box-shadow: none;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-soft);
+      box-shadow: none;
+    }
+
+    .btn-full {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .mt-10 {
+      margin-top: 10px;
+    }
+
+    .mt-12 {
+      margin-top: 12px;
+    }
+
+    .mt-16 {
+      margin-top: 16px;
+    }
+
+    /* OUTPUT */
+
+    .output-box {
+      border-radius: 14px;
+      background: #050d15;
+      border: 1px solid rgba(255,255,255,0.04);
+      padding: 12px 12px 18px;
+      min-height: 160px;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      overflow-y: auto;
+    }
+
+    .output-placeholder {
+      color: #4b5a6a;
+    }
+
+    .output-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: center;
+    }
+
+    .status-pill {
+      font-size: 0.74rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text-soft);
+    }
+
+    .feedback-card {
+      margin-top: 14px;
+      padding: 10px 12px 12px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(25,194,166,0.06), rgba(8,15,25,0.9));
+      border: 1px dashed rgba(25,194,166,0.3);
+    }
+
+    .feedback-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .feedback-header span {
+      font-size: 0.78rem;
+      color: var(--text-soft);
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      background: rgba(25,194,166,0.15);
+      color: var(--accent);
+    }
+
+    /* RELAY */
+
+    .relay-card {
+      margin-top: 14px;
+      padding: 10px 12px 12px;
+      border-radius: 14px;
+      background: #050c14;
+      border: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.8rem;
+    }
+
+    .relay-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .relay-id-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .relay-id-row input {
+      flex: 1;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .relay-btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
 
     .hidden {
       display: none !important;
     }
 
-    /* Textareas stack */
+    /* TOOLBOX / CONSULT SIMPLE STYLES */
 
-    .textarea-stack {
+    .toolbox-body,
+    .consult-body {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-top: 4px;
+      gap: 10px;
     }
 
-    /* ACTION BUTTONS */
-
-    .primary-btn {
-      margin-top: 4px;
-      border-radius: var(--radius-pill);
-      border: none;
-      padding: 9px 18px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-      color: #021214;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      align-self: flex-start;
-      box-shadow: 0 12px 25px rgba(0, 209, 138, 0.32);
-      transition: transform 0.08s ease-out, box-shadow 0.08s ease-out,
-        filter 0.08s ease-out;
-    }
-
-    .primary-btn:hover {
-      filter: brightness(1.04);
-      transform: translateY(-1px);
-      box-shadow: 0 17px 34px rgba(0, 209, 138, 0.4);
-    }
-
-    .primary-btn:active {
-      transform: translateY(0);
-      box-shadow: 0 8px 16px rgba(0, 209, 138, 0.3);
-    }
-
-    .primary-btn span.emoji {
-      font-size: 1rem;
-    }
-
-    /* OUTPUT PANEL */
-
-    .output-area {
-      width: 100%;
-      min-height: 200px;
-      max-height: 480px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--input-border);
-      background: var(--bg-card-soft);
-      padding: 10px 11px;
-      font-size: 0.86rem;
-      color: var(--text-main);
-      white-space: pre-wrap;
-      overflow-y: auto;
-    }
-
-    .output-footer-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .output-buttons-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .secondary-btn {
-      border-radius: var(--radius-pill);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 7px 13px;
-      font-size: 0.84rem;
-      background: rgba(7, 24, 34, 0.98);
-      color: var(--text-soft);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background var(--transition-fast), transform 0.08s ease-out,
-        border-color var(--transition-fast);
-    }
-
-    .secondary-btn:hover {
-      background: rgba(12, 35, 49, 0.98);
-      border-color: rgba(255, 255, 255, 0.18);
-      transform: translateY(-0.5px);
-    }
-
-    .output-status {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .output-status span.dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 8px rgba(0, 209, 138, 0.7);
-    }
-
-    /* FEEDBACK BAR (under output) */
-
-    .feedback-block {
-      margin-top: 6px;
-      border-radius: var(--radius-md);
-      border: 1px dashed rgba(255, 255, 255, 0.12);
-      padding: 8px 10px;
-      background: rgba(4, 18, 26, 0.9);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .feedback-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: var(--text-soft);
-    }
-
-    .feedback-input {
-      border-radius: 8px;
-      border: 1px solid var(--input-border);
-      padding: 6px 8px;
-      min-height: 46px;
-      font-size: 0.82rem;
-      background: rgba(3, 16, 23, 0.96);
-      color: var(--text-main);
-      resize: vertical;
-    }
-
-    .feedback-footer-row {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .tiny-btn {
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 0.78rem;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: rgba(1, 10, 15, 0.95);
-      color: var(--text-soft);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .chips-missing-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      font-size: 0.76rem;
-    }
-
-    .chip-missing {
-      border-radius: 999px;
-      padding: 3px 8px;
-      background: rgba(8, 30, 40, 0.96);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: var(--text-soft);
-    }
-
-    /* DESKTOP RELAY PANEL */
-
-    .relay-panel {
-      margin-top: 8px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-soft);
-      padding: 8px 10px;
-      background: rgba(3, 17, 25, 0.98);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: var(--text-soft);
-    }
-
-    .relay-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .relay-buttons-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 2px;
-    }
-
-    .relay-input-row {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      font-size: 0.78rem;
-    }
-
-    .relay-input-row input {
-      max-width: 140px;
-      padding: 4px 7px;
-      font-size: 0.8rem;
-    }
-
-    .relay-status {
-      font-size: 0.76rem;
-      color: var(--text-muted);
-    }
-
-    /* TOOLBOX & CONSULT INPUTS */
-
-    .stacked-card-inner {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .radio-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      font-size: 0.8rem;
-    }
-
-    .radio-row label {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      cursor: pointer;
-      background: rgba(3, 16, 23, 0.96);
-    }
-
-    .radio-row input[type="radio"] {
-      accent-color: var(--accent);
-    }
-
-    /* OVERLAY for vaccines & anesthesia details (simple modal) */
-
-    .overlay-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.58);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-    }
-
-    .overlay-backdrop.active {
-      display: flex;
-    }
-
-    .overlay-card {
-      width: min(440px, 92%);
-      max-height: 82vh;
-      background: rgba(2, 14, 22, 0.98);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.85);
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .overlay-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.9rem;
-      color: var(--text-soft);
-    }
-
-    .overlay-body {
-      margin-top: 4px;
-      padding-right: 2px;
-      overflow-y: auto;
-      font-size: 0.86rem;
-    }
-
-    .overlay-footer {
-      margin-top: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .overlay-footer .secondary-btn {
-      padding-inline: 12px;
-    }
-
-    .list-column {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .list-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .list-row input[type="checkbox"] {
-      accent-color: var(--accent);
-    }
-
-    .subtitle-pill {
-      border-radius: 999px;
-      padding: 2px 6px;
-      font-size: 0.75rem;
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-soft);
-    }
-
-    /* RESPONSIVE */
-
-    @media (max-width: 980px) {
-      body {
-        padding: 8px;
-      }
-
-      .main-layout {
-        grid-template-columns: minmax(0, 1fr);
-      }
-
-      .card {
-        padding: 12px 12px 11px;
-      }
-
-      .output-area {
-        min-height: 180px;
-        max-height: 320px;
-      }
-
-      .app-header {
-        padding-inline: 12px;
-      }
-
-      .moksha-logo {
-        max-width: 220px;
-      }
-
-      .input-grid-top,
-      .input-grid-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .anesthesia-extra-row {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-
-    @media (max-width: 640px) {
-      .header-subtitle-row {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-
-      .header-subtitle-right {
-        justify-content: center;
-      }
-
-      .input-grid-top,
-      .input-grid-row {
-        grid-template-columns: minmax(0, 1fr);
-      }
-
-      .main-tabs {
-        row-gap: 6px;
-      }
+    .select-inline {
+      max-width: 220px;
     }
   </style>
 </head>
-
 <body>
-  <div id="app-shell">
-    <!-- HEADER -->
-    <header class="app-header">
-      <div class="header-logo-wrap">
-        <!-- Make sure moksha-logo.png exists next to this file -->
-        <img src="moksha-logo.png" alt="Moksha SOAP logo" class="moksha-logo" />
+<div id="app">
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="app-header-left">
+      <!-- Make sure moksha-soap-logo.png is in the same folder as index.html -->
+      <img src="moksha-soap-logo.png" alt="Moksha SOAP logo" class="app-logo" />
+      <div class="app-title">
+        <h1>Moksha SOAP</h1>
+        <p>Lohit SOAP App · SOAP · Toolbox · Consult · Phone ↔ Desktop</p>
       </div>
+    </div>
+    <div class="app-status">
+      <span id="backend-status-dot" class="status-dot status-ok"></span>
+      <span id="backend-status-text">Backend reachable</span>
+      <span class="version-pill">v1.7.6 · Hybrid UI + Recorder</span>
+    </div>
+  </header>
 
-      <div class="header-subtitle-row">
-        <div class="header-subtitle-left">
-          <span class="app-subtitle">
-            Lohit SOAP App · Moksha SOAP · SOAP · Toolbox · Consult · Phone ↔ Desktop
-          </span>
+  <!-- TABS -->
+  <div class="primary-tabs">
+    <button class="tab-btn active" data-tab="soap-tab" id="tab-soap">SOAP</button>
+    <button class="tab-btn" data-tab="toolbox-tab" id="tab-toolbox">Toolbox</button>
+    <button class="tab-btn" data-tab="consult-tab" id="tab-consult">Consult</button>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT: INPUT AREA -->
+    <section>
+      <!-- SOAP TAB -->
+      <div id="soap-tab" class="card">
+        <div class="card-header">
+          <h2>SOAP Input</h2>
+          <span class="sub-label">Appointment · Surgery · Voice</span>
         </div>
-        <div class="header-subtitle-right">
-          <span class="pill" id="backend-pill">
-            <span class="pill-dot"></span>
-            Backend reachable
-          </span>
-          <span class="pill version-pill">v1.7.6 · Hybrid UI + Recorder</span>
-        </div>
-      </div>
 
-      <nav class="main-tabs">
-        <button class="tab-button active" data-tab="soap">
-          <span class="emoji">📄</span><span>SOAP</span>
-        </button>
-        <button class="tab-button" data-tab="toolbox">
-          <span class="emoji">🧰</span><span>Toolbox</span>
-        </button>
-        <button class="tab-button" data-tab="consult">
-          <span class="emoji">💭</span><span>Consult</span>
-        </button>
-      </nav>
-    </header>
-
-    <!-- MAIN LAYOUT -->
-    <div class="main-layout">
-      <!-- LEFT: INPUT PANEL (SOAP / TOOLBOX / CONSULT) -->
-      <section class="card" id="soap-input-card">
-        <div class="card-header-row">
-          <div class="card-title">
-            SOAP INPUT
-            <span class="badge">Appointment · Surgery · Voice</span>
+        <div class="toggle-row">
+          <div class="toggle-group" id="visit-type-toggle">
+            <button class="toggle-btn active" data-visit="appointment">Appointment</button>
+            <button class="toggle-btn" data-visit="surgery">Surgery</button>
           </div>
-          <div class="card-subtitle">Moksha SOAP · v1.7.6 Hybrid</div>
-        </div>
-
-        <!-- Upload row (phone camera / screenshot) -->
-        <div class="upload-row">
-          <button class="upload-btn" id="upload-from-phone-btn">
-            <span class="emoji">📷</span><span>Upload from this phone</span>
-          </button>
-          <input type="file" id="phone-file-input" accept="image/*,application/pdf"
-            multiple style="display: none" />
-          <span class="small-note">
-            Attach screenshots / docs to guide SOAP or Toolbox.
-          </span>
-        </div>
-
-        <!-- Basic signalment + visit flags -->
-        <div class="input-grid-top">
-          <div class="field">
-            <label for="case-label">Case label</label>
-            <input id="case-label" type="text" placeholder="e.g. Bella – Spay recheck" />
-          </div>
-          <div class="field">
-            <label for="patient-name">Patient name</label>
-            <input id="patient-name" type="text" placeholder="e.g. Bella" />
-          </div>
-          <div class="field">
-            <label for="weight-kg">Weight (kg)</label>
-            <input id="weight-kg" type="number" step="0.1" min="0" placeholder="e.g. 6.4" />
+          <div class="toggle-group" id="surgery-mode-toggle">
+            <button class="toggle-btn active" data-mode="simple">Simple</button>
+            <button class="toggle-btn" data-mode="advanced">Advanced</button>
           </div>
         </div>
 
-        <div class="input-grid-row">
+        <div class="field-row">
           <div class="field">
-            <label for="species-select">Species</label>
-            <select id="species-select">
+            <label>Case label</label>
+            <input type="text" id="case-label" placeholder="e.g. Bella – Spay recheck" />
+          </div>
+          <div class="field">
+            <label>Patient name</label>
+            <input type="text" id="patient-name" placeholder="e.g. Bella" />
+          </div>
+        </div>
+
+        <div class="field-row-3">
+          <div class="field">
+            <label>Species</label>
+            <select id="species">
               <option value="">Select species</option>
-              <option value="canine">Canine</option>
-              <option value="feline">Feline</option>
-              <option value="other">Other</option>
+              <option>Canine</option>
+              <option>Feline</option>
+              <option>Other</option>
             </select>
           </div>
           <div class="field">
-            <label for="sex-select">Sex</label>
-            <select id="sex-select">
+            <label>Sex</label>
+            <select id="sex">
               <option value="">Sex</option>
-              <option value="female-spayed">FS</option>
-              <option value="female-intact">FI</option>
-              <option value="male-neutered">MN</option>
-              <option value="male-intact">MI</option>
-              <option value="unknown">Unknown</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Male neutered</option>
+              <option>Female spayed</option>
             </select>
           </div>
           <div class="field">
-            <div class="field-label-row">
-              <label>Visit type</label>
-            </div>
-            <div class="inline-toggle-group" id="visit-type-toggle">
-              <button class="inline-toggle active" data-visit="appointment">Appointment</button>
-              <button class="inline-toggle" data-visit="surgery">Surgery</button>
-            </div>
+            <label>Weight (kg)</label>
+            <input type="number" id="weight" placeholder="e.g. 6.4" step="0.01" />
           </div>
         </div>
 
-        <div class="input-grid-row">
+        <div class="field-row-3">
           <div class="field">
-            <label>Appointment vs Surgery</label>
-            <div class="inline-toggle-group" id="avs-toggle">
-              <button class="inline-toggle active" data-avs="appointment">Appointment</button>
-              <button class="inline-toggle" data-avs="surgery">Surgery</button>
-            </div>
-          </div>
-          <div class="field">
-            <label for="asa-select">ASA (surgery)</label>
-            <select id="asa-select">
+            <label>ASA (surgery)</label>
+            <select id="asa">
               <option value="">Select ASA</option>
-              <option value="1">ASA I</option>
-              <option value="2">ASA II</option>
-              <option value="3">ASA III</option>
-              <option value="4">ASA IV</option>
-              <option value="5">ASA V</option>
+              <option>I</option>
+              <option>II</option>
+              <option>III</option>
+              <option>IV</option>
+              <option>V</option>
             </select>
           </div>
           <div class="field">
-            <label for="tpr-notes">TPR / notes</label>
-            <input id="tpr-notes" type="text" placeholder="TPR, BCS, key vitals / comments" />
-          </div>
-        </div>
-
-        <div class="input-grid-row" id="appointment-vs-surgery-row">
-          <div class="field" id="appointment-preset-field">
-            <label for="appointment-preset">Appointment preset</label>
+            <label>Appointment preset</label>
             <select id="appointment-preset">
               <option value="custom">Custom / blank</option>
               <option value="wellness">Wellness / vaccines</option>
-              <option value="gi-upset">GI upset</option>
-              <option value="derm-otitis">Derm / otitis</option>
-              <option value="cough-uri">Cough / URI</option>
+              <option value="gi">GI upset</option>
+              <option value="derm">Derm / otitis</option>
+              <option value="cough">Cough / URI</option>
               <option value="lameness">Lameness</option>
-              <option value="senior-multi">Senior / multi-issue</option>
+              <option value="senior">Senior / multi-issue</option>
               <option value="recheck">Recheck</option>
             </select>
           </div>
-
-          <div class="field" id="surgery-preset-field">
-            <label for="surgery-preset">Surgery preset</label>
+          <div class="field">
+            <label>Surgery preset</label>
             <select id="surgery-preset">
               <option value="custom">Custom surgery</option>
               <option value="canine-spay">Canine spay</option>
@@ -1028,495 +567,374 @@
               <option value="dental-no-rads">Dental – COHAT (no rads)</option>
               <option value="mass-removal">Mass removal</option>
               <option value="cystotomy">Cystotomy</option>
-              <option value="pyometra-spay">Pyometra spay</option>
-              <option value="exploratory-lap">Exploratory laparotomy</option>
+              <option value="pyometra">Pyometra spay</option>
+              <option value="exploratory">Exploratory laparotomy</option>
               <option value="enterotomy">Enterotomy</option>
               <option value="gastrotomy">Gastrotomy</option>
               <option value="gastropexy">Gastropexy</option>
-              <option value="feline-u-block">Feline urethral unblock</option>
+              <option value="feline-block">Feline urethral unblock</option>
             </select>
           </div>
-
-          <div class="field" id="surgery-mode-field">
-            <label>Surgery mode</label>
-            <div class="inline-toggle-group" id="surgery-mode-toggle">
-              <button class="inline-toggle active" data-surgery-mode="simple">Simple</button>
-              <button class="inline-toggle" data-surgery-mode="advanced">Advanced</button>
-            </div>
-          </div>
         </div>
 
-        <!-- Vaccines checkbox + multi-select (mostly for wellness) -->
-        <div class="checkbox-row">
-          <input type="checkbox" id="vaccines-today" />
-          <label for="vaccines-today">Vaccines done today</label>
-          <span class="small-note">Auto-open for Wellness; optional otherwise</span>
+        <div class="field mt-10">
+          <label><input type="checkbox" id="vaccines-today" /> Vaccines done today</label>
+          <div class="small-note">Used to auto-open vaccine SOAP style for wellness exams.</div>
         </div>
 
-        <div class="vaccines-row" id="vaccines-picker-row" class="hidden">
-          <button type="button" class="pill-button" id="vaccines-pill-btn">
-            <span class="label">Vaccines</span>
-            <span class="count" id="vaccines-count-label">0 selected</span>
-          </button>
-          <div class="chips-row" id="vaccines-chips"></div>
+        <div class="field">
+          <label>Core notes / history</label>
+          <textarea id="core-notes" placeholder="Why are they here today? Pertinent history, owner concerns, context."></textarea>
         </div>
 
-        <!-- Anesthesia protocol (advanced surgery mode) -->
-        <div id="anesthesia-advanced-block" class="hidden">
-          <div class="field" style="margin-top: 8px;">
-            <div class="field-label-row">
-              <label for="anesthesia-protocol-select">Anesthesia protocol</label>
-              <span class="hint">Simple mode = optional; Advanced = fill this</span>
-            </div>
-            <select id="anesthesia-protocol-select">
-              <option value="">Select protocol</option>
-              <!-- TDK -->
-              <option value="tdk-im">TDK 1:1:1:1 (IM)</option>
-              <option value="tdk-iv">TDK 1:1:1:1 (IV)</option>
-              <!-- Methadone-based -->
-              <option value="meth-midaz-im">Methadone + Midazolam (IM)</option>
-              <option value="meth-midaz-iv">Methadone + Midazolam (IV)</option>
-              <option value="meth-dex-im">Methadone + Dexmed (IM)</option>
-              <option value="meth-dex-iv">Methadone + Dexmed (IV)</option>
-              <option value="meth-alone-im">Methadone alone (IM)</option>
-              <option value="meth-alone-iv">Methadone alone (IV)</option>
-              <!-- Hydromorphone-based -->
-              <option value="hydro-midaz-im">Hydromorphone + Midazolam (IM)</option>
-              <option value="hydro-midaz-iv">Hydromorphone + Midazolam (IV)</option>
-              <option value="hydro-dex-im">Hydromorphone + Dexmed (IM)</option>
-              <option value="hydro-dex-iv">Hydromorphone + Dexmed (IV)</option>
-              <option value="hydro-alone-im">Hydromorphone alone (IM)</option>
-              <option value="hydro-alone-iv">Hydromorphone alone (IV)</option>
-              <!-- Butorphanol-based -->
-              <option value="torb-midaz-im">Torb + Midazolam (IM)</option>
-              <option value="torb-midaz-iv">Torb + Midazolam (IV)</option>
-              <option value="torb-ket-midaz-im">
-                Torb + Ketamine + Midaz (IM)
-              </option>
-              <option value="torb-ket-midaz-iv">
-                Torb + Ketamine + Midaz (IV)
-              </option>
-              <!-- Buprenorphine-based -->
-              <option value="bup-midaz-im">Buprenorphine + Midaz (IM)</option>
-              <option value="bup-midaz-iv">Buprenorphine + Midaz (IV)</option>
-              <option value="bup-dex-im">Buprenorphine + Dexmed (IM)</option>
-              <option value="bup-dex-iv">Buprenorphine + Dexmed (IV)</option>
-              <option value="bup-alone-im">Buprenorphine alone (IM)</option>
-              <option value="bup-alone-iv">Buprenorphine alone (IV)</option>
-              <option value="bup-sr">
-                Buprenorphine SR (IM only – post-op analgesia)
-              </option>
-            </select>
-            <div class="small-note">
-              Simple mode: you can skip this and just use free-text notes below. Advanced:
-              picking a cocktail helps the brain auto-fill mg/kg + mL using your standard
-              doses and concentrations.
-            </div>
-          </div>
-
-          <div class="anesthesia-extra-row" style="margin-top: 6px;">
-            <div class="field">
-              <label for="induction-notes">Induction</label>
-              <input id="induction-notes" type="text"
-                placeholder="e.g. Ketamine + diazepam, propofol, alfaxan, mask, etc." />
-            </div>
-            <div class="field">
-              <label for="maintenance-notes">Maintenance</label>
-              <input id="maintenance-notes" type="text"
-                placeholder="e.g. Isoflurane / sevoflurane / CRI notes." />
-            </div>
-          </div>
+        <div class="field">
+          <label>PE & diagnostics (data only)</label>
+          <textarea id="pe-notes" placeholder="Include PE systems list, diagnostic results, vitals – values only, no interpretation."></textarea>
         </div>
 
-        <!-- CORE TEXTAREAS -->
-
-        <div class="textarea-stack">
-          <div class="field">
-            <label for="core-notes">Core notes / history</label>
-            <textarea id="core-notes"
-              placeholder="Why are they here today? Pertinent history, owner concerns, context."></textarea>
-          </div>
-          <div class="field">
-            <label for="pe-objective">PE & diagnostics (data only)</label>
-            <textarea id="pe-objective"
-              placeholder="Include PE systems list, diagnostic results, vitals – values only, no interpretation."></textarea>
-          </div>
-          <div class="field">
-            <label for="assessment-hints">Assessment hints</label>
-            <textarea id="assessment-hints"
-              placeholder="What are you worried about? Rule-outs, problem list, ASA grade for anesthesia cases."></textarea>
-          </div>
-          <div class="field">
-            <label for="plan-hints">Plan & discharge hints</label>
-            <textarea id="plan-hints"
-              placeholder="Diagnostics, treatments, procedures, recheck timing, what you told the owner, activity restrictions."></textarea>
-          </div>
-          <div class="field">
-            <label for="extra-notes">Extra instructions / anything else</label>
-            <textarea id="extra-notes"
-              placeholder="Edge cases, special instructions, inventory notes, anything weird or important."></textarea>
-          </div>
+        <div class="field">
+          <label>Assessment hints</label>
+          <textarea id="assessment-hints" placeholder="What are you worried about? Rule-outs, problem list, ASA grade for anesthesia cases."></textarea>
         </div>
 
-        <!-- Optional external transcript & voice notes -->
-        <details style="margin-top: 6px;">
-          <summary style="cursor: pointer; font-size: 0.82rem; color: var(--text-soft);">
-            External transcript (optional – paste Covet transcript or call log)
-          </summary>
-          <div class="field" style="margin-top: 4px;">
-            <textarea id="external-transcript" placeholder="Paste external transcript here."></textarea>
-          </div>
+        <div class="field">
+          <label>Plan & discharge hints</label>
+          <textarea id="plan-hints" placeholder="Diagnostics, treatments, procedures, recheck timing, what you told the owner, activity restrictions."></textarea>
+        </div>
+
+        <div class="field">
+          <label>Extra instructions / anything else</label>
+          <textarea id="extra-notes" placeholder="Edge cases, special instructions, inventory notes, anything weird or important."></textarea>
+        </div>
+
+        <details class="mt-10">
+          <summary class="small-note">External transcript (optional – paste Covet transcript or call log)</summary>
+          <textarea id="external-transcript" class="mt-10"></textarea>
         </details>
 
-        <details style="margin-top: 4px;">
-          <summary style="cursor: pointer; font-size: 0.82rem; color: var(--text-soft);">
-            Voice notes (optional – paste transcription or typed notes)
-          </summary>
-          <div class="field" style="margin-top: 4px;">
-            <textarea id="voice-notes" placeholder="Dictation from room / hallway, etc."></textarea>
-          </div>
+        <details class="mt-10">
+          <summary class="small-note">Voice notes (optional – paste transcript)</summary>
+          <textarea id="voice-notes" class="mt-10"></textarea>
         </details>
 
-        <button class="primary-btn" id="generate-soap-btn">
-          <span class="emoji">✨</span>
-          <span>Generate SOAP</span>
-        </button>
-      </section>
+        <button id="generate-soap-btn" class="btn btn-full mt-16">Generate SOAP</button>
+      </div>
 
-      <!-- TOOLBOX INPUT CARD (hidden until toolbox tab) -->
-      <section class="card hidden" id="toolbox-input-card">
-        <div class="card-header-row">
-          <div class="card-title">
-            TOOLBOX INPUT
-            <span class="badge">Bloodwork · Emails · Quick text</span>
-          </div>
-          <div class="card-subtitle">Text-only beta · v1.7.6 Lite</div>
+      <!-- TOOLBOX TAB -->
+      <div id="toolbox-tab" class="card hidden">
+        <div class="card-header">
+          <h2>Toolbox</h2>
+          <span class="sub-label">Bloodwork · Emails · Discharges</span>
         </div>
-
-        <div class="stacked-card-inner">
+        <div class="toolbox-body">
+          <div class="field-row">
+            <div class="field select-inline">
+              <label>Tool</label>
+              <select id="toolbox-tool">
+                <option value="bw-summary">Bloodwork helper – summary</option>
+                <option value="bw-expanded">Bloodwork helper – expanded + DDx</option>
+                <option value="email-client">Client email / call note</option>
+                <option value="handout">Client handout / instructions</option>
+              </select>
+            </div>
+          </div>
           <div class="field">
-            <label>Tool</label>
-            <div class="radio-row">
-              <label>
-                <input type="radio" name="toolbox-tool" value="bw-lite" checked />
-                <span>Bloodwork Helper (Lite)</span>
-              </label>
-              <label>
-                <input type="radio" name="toolbox-tool" value="email-helper" />
-                <span>Email / Client communication</span>
-              </label>
-            </div>
+            <label>Paste data or notes</label>
+            <textarea id="toolbox-input" placeholder="Paste bloodwork, notes, or prompt for what you want."></textarea>
           </div>
-
-          <div class="field">
-            <label for="toolbox-input-text">Paste data / request</label>
-            <textarea id="toolbox-input-text"
-              placeholder="Paste bloodwork, cytology, or write what you want (e.g. 'draft a brief email explaining these liver enzymes')."></textarea>
-          </div>
-
-          <div class="field">
-            <label>Detail level</label>
-            <div class="radio-row">
-              <label>
-                <input type="radio" name="toolbox-detail" value="short" checked />
-                <span>Short</span>
-              </label>
-              <label>
-                <input type="radio" name="toolbox-detail" value="standard" />
-                <span>Standard</span>
-              </label>
-              <label>
-                <input type="radio" name="toolbox-detail" value="expanded" />
-                <span>Expanded</span>
-              </label>
-            </div>
-          </div>
-
-          <button class="primary-btn" id="generate-toolbox-btn">
-            <span class="emoji">🧰</span>
-            <span>Run Toolbox</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- CONSULT INPUT CARD (hidden until consult tab) -->
-      <section class="card hidden" id="consult-input-card">
-        <div class="card-header-row">
-          <div class="card-title">
-            CONSULT INPUT
-            <span class="badge">Free-form · Small animal focus</span>
-          </div>
-          <div class="card-subtitle">Ask Moksha SOAP anything case-related</div>
-        </div>
-
-        <div class="stacked-card-inner">
-          <div class="field">
-            <label for="consult-text">Consult prompt</label>
-            <textarea id="consult-text"
-              placeholder="Describe the case, upload screenshots via the header button, and ask for what you need (e.g. 'help structure a weight consult discharge', 'outline a derm workup', etc.)."></textarea>
-          </div>
-
-          <button class="primary-btn" id="generate-consult-btn">
-            <span class="emoji">💭</span>
-            <span>Generate consult output</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- RIGHT: OUTPUT + RELAY PANEL -->
-      <section class="card">
-        <div class="card-header-row">
-          <div class="card-title">
-            OUTPUT · AI BRAIN – <span id="output-mode-label">SOAP</span>
-          </div>
-          <div class="card-subtitle">
-            <span id="output-chip">Ready</span>
-          </div>
-        </div>
-
-        <div class="output-area" id="output-area">
-          SOAP / Toolbox / Consult output will appear here.
-        </div>
-
-        <div class="output-footer-row">
-          <div class="output-buttons-row">
-            <button class="secondary-btn" id="copy-full-soap-btn">
-              <span class="emoji">📋</span>
-              <span>Copy full SOAP / output</span>
-            </button>
-            <button class="secondary-btn" id="copy-plan-meds-btn">
-              <span class="emoji">💊</span>
-              <span>Copy Plan + Meds + Aftercare</span>
-            </button>
-            <button class="secondary-btn" id="send-to-desktop-btn">
-              <span class="emoji">🖥️</span>
-              <span>Send output to desktop</span>
-            </button>
-          </div>
-          <div class="output-status">
-            <span class="dot"></span>
-            <span id="output-status-text">Ready</span>
-          </div>
-        </div>
-
-        <!-- Feedback bar -->
-        <div class="feedback-block">
-          <div class="feedback-header-row">
-            <span>Feedback to Moksha SOAP</span>
-            <span class="subtitle-pill">Brain tuning (local only)</span>
-          </div>
-          <textarea id="feedback-input" class="feedback-input"
-            placeholder="What would you change in this output? Missing details, tone, formatting, etc."></textarea>
-          <div class="feedback-footer-row">
-            <button class="tiny-btn" id="apply-feedback-btn">
-              <span class="emoji">🔁</span><span>Apply feedback & refine</span>
-            </button>
-            <div class="chips-missing-row" id="missing-chips-row">
-              <!-- Filled dynamically after a run -->
-            </div>
-          </div>
-        </div>
-
-        <!-- Desktop relay panel -->
-        <div class="relay-panel">
-          <div class="relay-header-row">
-            <span>Phone ↔ Desktop relay · Uploads</span>
-            <span class="subtitle-pill">Clinic-only</span>
-          </div>
-          <div class="relay-input-row">
-            <span>Relay ID</span>
-            <input type="text" id="relay-id-input" placeholder="auto" />
-            <button class="tiny-btn" id="new-relay-id-btn">New</button>
-          </div>
-
-          <div class="relay-buttons-row">
-            <button class="tiny-btn" id="receive-text-btn">
-              <span class="emoji">📩</span><span>Receive text from phone</span>
-            </button>
-            <button class="tiny-btn" id="receive-files-btn" disabled>
-              <span class="emoji">📁</span><span>Receive files from phone</span>
-            </button>
-            <button class="tiny-btn" id="upload-from-desktop-btn">
-              <span class="emoji">🖼️</span><span>Upload from this device</span>
-            </button>
-            <input type="file" id="desktop-file-input" accept="image/*,application/pdf"
-              multiple style="display: none" />
-          </div>
-          <div class="relay-status" id="relay-status-text">
-            No files uploaded yet. Use Send output to desktop from your phone, then Receive text here.
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- Vaccines overlay -->
-    <div class="overlay-backdrop" id="vaccines-overlay">
-      <div class="overlay-card">
-        <div class="overlay-header-row">
-          <span>Vaccines today</span>
-          <button class="tiny-btn" type="button" id="close-vaccines-overlay-btn">
-            ✕ Close
-          </button>
-        </div>
-        <div class="overlay-body">
-          <div class="list-column">
-            <div class="list-row">
-              <input type="checkbox" data-vaccine="da2pp-1" id="v-da2pp-1" />
-              <label for="v-da2pp-1">DA2PP – 1-year (SQ LH)</label>
-            </div>
-            <div class="list-row">
-              <input type="checkbox" data-vaccine="da2pp-3" id="v-da2pp-3" />
-              <label for="v-da2pp-3">DA2PP – 3-year (SQ LH)</label>
-            </div>
-            <div class="list-row">
-              <input type="checkbox" data-vaccine="rabies-1" id="v-rabies-1" />
-              <label for="v-rabies-1">Rabies – 1-year (SQ RH)</label>
-            </div>
-            <div class="list-row">
-              <input type="checkbox" data-vaccine="rabies-3" id="v-rabies-3" />
-              <label for="v-rabies-3">Rabies – 3-year (SQ RH)</label>
-            </div>
-            <div class="list-row">
-              <input type="checkbox" data-vaccine="lyme" id="v-lyme" />
-              <label for="v-lyme">Lyme (SQ LF)</label>
-            </div>
-            <div class="list-row">
-              <input type="checkbox" data-vaccine="lepto" id="v-lepto" />
-              <label for="v-lepto">Leptospirosis (SQ RF)</label>
-            </div>
-            <div class="list-row">
-              <input type="checkbox" data-vaccine="bord-inj" id="v-bord-inj" />
-              <label for="v-bord-inj">
-                Bordetella – injectable (SQ dorsum)
-              </label>
-            </div>
-            <div class="list-row">
-              <input type="checkbox" data-vaccine="bord-oral" id="v-bord-oral" />
-              <label for="v-bord-oral">Bordetella – oral</label>
-            </div>
-            <div class="list-row">
-              <input type="checkbox" data-vaccine="feline-rccp" id="v-rccp" />
-              <label for="v-rccp">FVRCP (cats)</label>
-            </div>
-            <div class="list-row">
-              <input type="checkbox" data-vaccine="felv" id="v-felv" />
-              <label for="v-felv">FeLV</label>
-            </div>
-          </div>
-        </div>
-        <div class="overlay-footer">
-          <span class="small-note">
-            Selections are used to help Plan & inventory wording, nothing is billed here.
-          </span>
-          <button class="secondary-btn" type="button" id="vaccines-apply-btn">
-            ✓ Done
-          </button>
+          <button id="toolbox-generate-btn" class="btn btn-full mt-12">Generate via Toolbox</button>
         </div>
       </div>
-    </div>
+
+      <!-- CONSULT TAB -->
+      <div id="consult-tab" class="card hidden">
+        <div class="card-header">
+          <h2>Consult</h2>
+          <span class="sub-label">Ask Moksha SOAP anything</span>
+        </div>
+        <div class="consult-body">
+          <div class="field">
+            <label>Consult question / scenario</label>
+            <textarea id="consult-input" placeholder="Describe the case or question."></textarea>
+          </div>
+          <button id="consult-generate-btn" class="btn btn-full mt-12">Generate consult answer</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: OUTPUT, FEEDBACK, RELAY -->
+    <section>
+      <div class="card">
+        <div class="card-header">
+          <h2>Output · AI Brain – SOAP</h2>
+          <span class="sub-label" id="output-status-pill">Ready</span>
+        </div>
+        <div id="output-box" class="output-box">
+          <div class="output-placeholder">SOAP / Toolbox / Consult output will appear here.</div>
+        </div>
+
+        <div class="output-actions">
+          <button id="copy-full-btn" class="btn-secondary btn">
+            Copy full SOAP / output
+          </button>
+          <button id="copy-plan-btn" class="btn-secondary btn">
+            Copy Plan + Meds + Aftercare
+          </button>
+          <button id="send-to-desktop-btn" class="btn-ghost btn">
+            Send output to desktop
+          </button>
+          <span class="status-pill" id="output-mini-status">Ready</span>
+        </div>
+
+        <!-- FEEDBACK -->
+        <div class="feedback-card">
+          <div class="feedback-header">
+            <span>Feedback to Moksha SOAP</span>
+            <span class="badge">Brain tuning (local only)</span>
+          </div>
+          <textarea id="feedback-text" placeholder="What would you change in this output? Missing details, tone, formatting, etc." rows="3"></textarea>
+          <button id="apply-feedback-btn" class="btn btn-full mt-10">Apply feedback &amp; refine</button>
+        </div>
+
+        <!-- RELAY -->
+        <div class="relay-card">
+          <div class="relay-header">
+            <span>Phone ↔ Desktop relay · Uploads</span>
+            <span class="pill-label">Clinic-only</span>
+          </div>
+          <div class="relay-id-row">
+            <input type="text" id="relay-id" placeholder="Relay ID (auto or custom)" />
+            <button id="new-relay-id-btn" class="btn-secondary">New</button>
+          </div>
+          <div class="relay-btn-row">
+            <button id="receive-text-btn" class="btn-secondary">Receive text from phone</button>
+            <button id="receive-files-btn" class="btn-secondary">Receive files from phone</button>
+            <button id="upload-from-device-btn" class="btn-secondary">Upload from this device</button>
+          </div>
+          <div class="small-note mt-10" id="relay-status-text">
+            No files uploaded yet. Use “Send output to desktop” on your phone, then “Receive text from phone” here.
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
+</div>
 
-  <script>
-    // ---------- UTILS ----------
+<script>
+  // --- tiny helpers ---
+  function $(id) { return document.getElementById(id); }
 
-    function $(id) {
-      return document.getElementById(id);
+  function setOutput(text) {
+    const box = $('output-box');
+    box.innerHTML = '';
+    const pre = document.createElement('pre');
+    pre.textContent = text;
+    box.appendChild(pre);
+  }
+
+  function setStatus(text) {
+    $('output-status-pill').textContent = text;
+    $('output-mini-status').textContent = text;
+  }
+
+  async function callBackend(path, payload) {
+    try {
+      setStatus('Thinking…');
+      const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload || {})
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      setOutput(data.text || data.output || '[No text returned]');
+      setStatus('Ready');
+    } catch (err) {
+      console.error(err);
+      setOutput('Error calling backend: ' + err.message);
+      setStatus('Error');
     }
+  }
 
-    function copyToClipboard(text) {
-      if (!navigator.clipboard) {
-        const temp = document.createElement("textarea");
-        temp.value = text;
-        document.body.appendChild(temp);
-        temp.select();
-        document.execCommand("copy");
-        document.body.removeChild(temp);
+  // --- tabs ---
+  function setupTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabs.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tabId = btn.dataset.tab;
+        document.querySelectorAll('#soap-tab, #toolbox-tab, #consult-tab').forEach(sec => {
+          sec.classList.add('hidden');
+        });
+        document.getElementById(tabId).classList.remove('hidden');
+      });
+    });
+  }
+
+  // --- visit / surgery mode toggles ---
+  function setupToggles() {
+    const visitButtons = document.querySelectorAll('#visit-type-toggle .toggle-btn');
+    visitButtons.forEach(b => {
+      b.addEventListener('click', () => {
+        visitButtons.forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+      });
+    });
+
+    const modeButtons = document.querySelectorAll('#surgery-mode-toggle .toggle-btn');
+    modeButtons.forEach(b => {
+      b.addEventListener('click', () => {
+        modeButtons.forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        const isAdvanced = b.dataset.mode === 'advanced';
+        // In a later version you can show/hide detailed anesthesia fields here.
+        console.log('Surgery mode =', isAdvanced ? 'Advanced' : 'Simple');
+      });
+    });
+  }
+
+  // --- SOAP generate ---
+  function setupSoapGenerate() {
+    $('generate-soap-btn').addEventListener('click', () => {
+      const visitType = document.querySelector('#visit-type-toggle .toggle-btn.active').dataset.visit;
+      const mode = document.querySelector('#surgery-mode-toggle .toggle-btn.active').dataset.mode;
+      const payload = {
+        visitType,
+        mode,
+        caseLabel: $('case-label').value,
+        patientName: $('patient-name').value,
+        species: $('species').value,
+        sex: $('sex').value,
+        weightKg: $('weight').value,
+        asa: $('asa').value,
+        appointmentPreset: $('appointment-preset').value,
+        surgeryPreset: $('surgery-preset').value,
+        vaccinesToday: $('vaccines-today').checked,
+        coreNotes: $('core-notes').value,
+        peNotes: $('pe-notes').value,
+        assessmentHints: $('assessment-hints').value,
+        planHints: $('plan-hints').value,
+        extraNotes: $('extra-notes').value,
+        externalTranscript: $('external-transcript').value,
+        voiceNotes: $('voice-notes').value
+      };
+      callBackend('/api/soap', payload);
+    });
+  }
+
+  // --- Toolbox ---
+  function setupToolbox() {
+    $('toolbox-generate-btn').addEventListener('click', () => {
+      const payload = {
+        tool: $('toolbox-tool').value,
+        text: $('toolbox-input').value
+      };
+      callBackend('/api/toolbox', payload);
+    });
+  }
+
+  // --- Consult ---
+  function setupConsult() {
+    $('consult-generate-btn').addEventListener('click', () => {
+      const payload = { question: $('consult-input').value };
+      callBackend('/api/consult', payload);
+    });
+  }
+
+  // --- Copy buttons ---
+  function setupCopyButtons() {
+    $('copy-full-btn').addEventListener('click', async () => {
+      const text = $('output-box').innerText || '';
+      try {
+        await navigator.clipboard.writeText(text);
+        $('output-mini-status').textContent = 'Copied full output';
+      } catch {
+        $('output-mini-status').textContent = 'Copy failed';
+      }
+    });
+
+    $('copy-plan-btn').addEventListener('click', async () => {
+      const text = $('output-box').innerText || '';
+      // Dumb split: in your real server output you’ll keep Plan / Meds / Aftercare group.
+      const idx = text.indexOf('Plan:');
+      const slice = idx >= 0 ? text.slice(idx) : text;
+      try {
+        await navigator.clipboard.writeText(slice);
+        $('output-mini-status').textContent = 'Copied Plan + Meds + Aftercare';
+      } catch {
+        $('output-mini-status').textContent = 'Copy failed';
+      }
+    });
+  }
+
+  // --- Feedback ---
+  function setupFeedback() {
+    $('apply-feedback-btn').addEventListener('click', () => {
+      const fb = $('feedback-text').value.trim();
+      if (!fb) return;
+      const current = $('output-box').innerText || '';
+      const combined = current + '\n\n---\nFeedback notes:\n' + fb;
+      setOutput(combined);
+      $('feedback-text').value = '';
+      $('output-mini-status').textContent = 'Feedback attached (local only)';
+    });
+  }
+
+  // --- Relay (local-only demo; your server can replace this with real endpoints) ---
+  function setupRelay() {
+    const relayInput = $('relay-id');
+
+    $('new-relay-id-btn').addEventListener('click', () => {
+      const id = 'R' + Math.random().toString(36).slice(2, 8).toUpperCase();
+      relayInput.value = id;
+      $('relay-status-text').textContent = 'New relay ID created. Use this on your phone and desktop.';
+    });
+
+    // “Send output to desktop” simply stores in localStorage under relay ID
+    $('send-to-desktop-btn').addEventListener('click', () => {
+      const id = relayInput.value.trim() || 'LOCAL';
+      const text = $('output-box').innerText || '';
+      if (!text) {
+        $('output-mini-status').textContent = 'No output to send';
         return;
       }
-      navigator.clipboard.writeText(text).catch(console.error);
-    }
-
-    function setOutputStatus(text, busy) {
-      const status = $("output-status-text");
-      const chip = $("output-chip");
-      status.textContent = text;
-      chip.textContent = busy ? "Working…" : "Ready";
-    }
-
-    function getActiveTab() {
-      const btn = document.querySelector(".tab-button.active");
-      return btn ? btn.dataset.tab : "soap";
-    }
-
-    // ---------- TAB SWITCHING ----------
-
-    const tabButtons = document.querySelectorAll(".tab-button");
-    tabButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        tabButtons.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-
-        const tab = btn.dataset.tab;
-        $("output-mode-label").textContent = tab.toUpperCase();
-
-        // toggle cards
-        $("soap-input-card").classList.toggle("hidden", tab !== "soap");
-        $("toolbox-input-card").classList.toggle("hidden", tab !== "toolbox");
-        $("consult-input-card").classList.toggle("hidden", tab !== "consult");
-      });
+      localStorage.setItem('mokshaRelay:' + id, text);
+      $('relay-status-text').textContent = 'Output stored under relay ID ' + id + ' (local demo).';
+      $('output-mini-status').textContent = 'Sent to relay (local demo)';
     });
 
-    // ---------- VISIT TYPE / AVS / SURGERY MODE ----------
-
-    function initToggleGroup(groupId, onChange) {
-      const group = $(groupId);
-      if (!group) return;
-      group.querySelectorAll(".inline-toggle").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          group.querySelectorAll(".inline-toggle").forEach((b) =>
-            b.classList.remove("active")
-          );
-          btn.classList.add("active");
-          if (onChange) onChange(btn.dataset);
-        });
-      });
-    }
-
-    // Appointment vs surgery
-    initToggleGroup("avs-toggle", (data) => {
-      const isAppointment = data.avs === "appointment";
-      $("appointment-preset-field").style.display = isAppointment ? "block" : "none";
-      $("surgery-preset-field").style.display = isAppointment ? "none" : "block";
-      $("surgery-mode-field").style.display = isAppointment ? "none" : "block";
-      if (isAppointment) {
-        $("anesthesia-advanced-block").classList.add("hidden");
+    $('receive-text-btn').addEventListener('click', () => {
+      const id = relayInput.value.trim() || 'LOCAL';
+      const text = localStorage.getItem('mokshaRelay:' + id);
+      if (!text) {
+        $('relay-status-text').textContent = 'No text stored for relay ID ' + id + '.';
+        return;
       }
+      setOutput(text);
+      $('relay-status-text').textContent = 'Received text from relay ID ' + id + '.';
     });
 
-    // Seed initial AVS state
-    (function () {
-      const active = document.querySelector(
-        "#avs-toggle .inline-toggle.active"
-      );
-      if (active) {
-        const ev = new Event("click");
-        active.dispatchEvent(ev);
-      }
-    })();
-
-    // Surgery mode: simple vs advanced => show/hide anesthesia block
-    initToggleGroup("surgery-mode-toggle", (data) => {
-      const isAdvanced = data["surgery-mode"] === "advanced";
-      $("anesthesia-advanced-block").classList.toggle("hidden", !isAdvanced);
+    $('receive-files-btn').addEventListener('click', () => {
+      $('relay-status-text').textContent = 'File relay not wired in this demo. Use local uploads.';
     });
 
-    // ---------- VACCINES MULTI-SELECT ----------
+    $('upload-from-device-btn').addEventListener('click', () => {
+      $('relay-status-text').textContent = 'For now, attach files directly in the SOAP app or use local tools.';
+    });
+  }
 
-    const vaccinesOverlay = $("vaccines-overlay");
-    const vaccinesBtn = $("vaccines-pill-btn");
-    const vaccinesApplyBtn = $("vaccines-apply-btn");
-    const vaccinesCloseBtn = $("close-vaccines-overlay-btn");
-    const vaccinesTodayCheckbox = $("vaccines-today");
-
-    function updateVaccinesSummary() {
-      const checks = vaccines
+  // INIT
+  document.addEventListener('DOMContentLoaded', () => {
+    setupTabs();
+    setupToggles();
+    setupSoapGenerate();
+    setupToolbox();
+    setupConsult();
+    setupCopyButtons();
+    setupFeedback();
+    setupRelay();
+  });
+</script>
+</body>
+</html>
