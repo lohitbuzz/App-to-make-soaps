@@ -1,16 +1,14 @@
 {
-  "name": "moksha-soap-backend",
-  "version": "1.0.0",
-  "description": "Backend API for Moksha SOAP (Render server)",
-  "type": "module",
+  "name": "moksha-soap-server",
+  "version": "1.7.6",
+  "description": "Backend for Moksha SOAP / Lohit SOAP App",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "express-fileupload": "^1.4.3",
-    "node-fetch": "^3.3.2"
+    "express": "^4.18.2"
   }
 }
