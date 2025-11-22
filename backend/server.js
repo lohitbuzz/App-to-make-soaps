@@ -1,270 +1,220 @@
+// -----------------------------
+// Moksha SOAP – Backend v1.0
+// Render-compatible (Option A)
+// -----------------------------
+
 import express from "express";
+import fetch from "node-fetch";
 import cors from "cors";
-import OpenAI from "openai";
 
+// -----------------------------
+// CONFIG
+// -----------------------------
 const app = express();
-const port = process.env.PORT || 10000;
-
 app.use(cors());
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 
-// In-memory relay store { relayId: payload }
-const relayStore = new Map();
+// -----------------------------
+// OPENAI CONFIG
+// -----------------------------
 
-// Optional OpenAI client
-let openai = null;
-if (process.env.OPENAI_API_KEY) {
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  console.log("OpenAI client initialised.");
-} else {
-  console.log("OPENAI_API_KEY not set – backend will return stub text only.");
-}
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_BASE = "https://api.openai.com/v1/chat/completions";
 
-// Simple health check
-app.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "Moksha SOAP backend", time: new Date().toISOString() });
-});
-
-// ---- SOAP ENDPOINT ----
-app.post("/api/soap", async (req, res) => {
-  const body = req.body || {};
-  const visitType = body.visitType || "appointment";
-  const surgeryMode = body.surgeryMode || "simple";
-
-  try {
-    let text;
-
-    if (!openai) {
-      // Stub: structured but simple text so the app is usable without a key
-      text = buildStubSoap(body, visitType, surgeryMode);
-    } else {
-      const systemPrompt = buildSoapSystemPrompt();
-      const userPrompt = JSON.stringify(
-        {
-          visitType,
-          surgeryMode,
-          fields: body,
-        },
-        null,
-        2
-      );
-
-      const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: userPrompt,
-          },
-        ],
-      });
-
-      text = completion.choices?.[0]?.message?.content?.trim();
-      if (!text) {
-        text = buildStubSoap(body, visitType, surgeryMode);
-      }
-    }
-
-    res.json({ text });
-  } catch (err) {
-    console.error("SOAP /api/soap error:", err);
-    res.status(500).json({ error: "Failed to generate SOAP" });
-  }
-});
-
-// ---- TOOLBOX ENDPOINT ----
-app.post("/api/toolbox", async (req, res) => {
-  const text = (req.body && req.body.text) || "";
-
-  try {
-    let output;
-
-    if (!openai) {
-      output = `Toolbox (stub mode)\n\nOriginal:\n${text}`;
-    } else {
-      const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are Toolbox Lite inside a veterinary SOAP helper. Summarize bloodwork, draft short client emails, or tidy short documents. Be concise and clinic-friendly.",
-          },
-          { role: "user", content: text },
-        ],
-      });
-
-      output = completion.choices?.[0]?.message?.content?.trim();
-      if (!output) output = `Toolbox result:\n${text}`;
-    }
-
-    res.json({ text: output });
-  } catch (err) {
-    console.error("/api/toolbox error:", err);
-    res.status(500).json({ error: "Failed to run Toolbox" });
-  }
-});
-
-// ---- CONSULT ENDPOINT ----
-app.post("/api/consult", async (req, res) => {
-  const text = (req.body && req.body.text) || "";
-
-  try {
-    let output;
-
-    if (!openai) {
-      output = `Consult (stub mode)\n\nQuestion:\n${text}`;
-    } else {
-      const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are Moksha SOAP – a small animal veterinary assistant helping with emails, handouts, and general consult questions. Keep outputs clear and Avimark-friendly.",
-          },
-          { role: "user", content: text },
-        ],
-      });
-
-      output = completion.choices?.[0]?.message?.content?.trim();
-      if (!output) output = `Consult result:\n${text}`;
-    }
-
-    res.json({ text: output });
-  } catch (err) {
-    console.error("/api/consult error:", err);
-    res.status(500).json({ error: "Failed to run Consult" });
-  }
-});
-
-// ---- RELAY ENDPOINTS ----
-// Send text from phone
-app.post("/api/relay/send", (req, res) => {
-  const { relayId, payload } = req.body || {};
-  if (!relayId || !payload) {
-    return res.status(400).json({ error: "relayId and payload are required" });
-  }
-
-  relayStore.set(relayId, {
-    payload,
-    time: Date.now(),
+// Universal request helper
+async function callOpenAI(messages, model = "gpt-4.1") {
+  const res = await fetch(OPENAI_BASE, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.3,
+      max_tokens: 6000,
+    }),
   });
 
-  // Simple auto-expiry in memory
-  pruneRelayStore();
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error("OpenAI error: " + error);
+  }
 
-  res.json({ ok: true, relayId });
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+// -----------------------------
+//  ROUTES
+// -----------------------------
+
+// ===== HEALTH CHECK =====
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
-// Receive text on desktop
-app.post("/api/relay/receive", (req, res) => {
-  const { relayId } = req.body || {};
-  if (!relayId) {
-    return res.status(400).json({ error: "relayId is required" });
-  }
+// ===== SOAP GENERATION =====
+app.post("/api/generate", async (req, res) => {
+  try {
+    const payload = req.body;
 
-  const entry = relayStore.get(relayId);
-  if (!entry) {
-    return res.json({ ok: true, payload: null });
-  }
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are the Moksha SOAP engine. Generate full SOAPs using Lohit's global rules, spacing, formatting, and medications. NEVER invent species, weight, drugs, vaccines, or findings not provided. Use clinic rules for templates, ASA, surgical modes, and anesthesia combinations. Follow Avimark spacing.",
+      },
+      {
+        role: "user",
+        content: JSON.stringify(payload),
+      },
+    ];
 
-  // Optionally delete on read
-  relayStore.delete(relayId);
-  res.json({ ok: true, payload: entry.payload });
+    const output = await callOpenAI(messages);
+
+    res.json({ output });
+  } catch (err) {
+    console.error("SOAP ERROR:", err);
+    res.status(500).json({ error: err.toString() });
+  }
 });
 
-// ---- UTILITIES ----
-function pruneRelayStore() {
-  const now = Date.now();
-  const ttlMs = 15 * 60 * 1000; // 15 minutes
-  for (const [key, value] of relayStore.entries()) {
-    if (now - value.time > ttlMs) {
-      relayStore.delete(key);
-    }
+// ===== TOOLBOX =====
+app.post("/api/generate-toolbox", async (req, res) => {
+  try {
+    const payload = req.body;
+
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are the Moksha SOAP Toolbox engine. Produce structured outputs for bloodwork interpretation, email templates, client handouts, SOAP snippets, Covet fixer, freeform generation, and future tools. Follow clinic formatting.",
+      },
+      { role: "user", content: JSON.stringify(payload) },
+    ];
+
+    const output = await callOpenAI(messages);
+
+    res.json({ output });
+  } catch (err) {
+    console.error("TOOLBOX ERROR:", err);
+    res.status(500).json({ error: err.toString() });
   }
-}
+});
 
-function buildStubSoap(body, visitType, surgeryMode) {
-  const lines = [];
+// ===== CONSULT =====
+app.post("/api/generate-consult", async (req, res) => {
+  try {
+    const payload = req.body;
 
-  const visitLabel =
-    visitType === "surgery" ? "SURGERY" : "APPOINTMENT";
-  const modeLabel =
-    visitType === "surgery" ? `(${surgeryMode} mode)` : "(simple)";
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are the Moksha Consult engine. Provide differentials, next-step testing, ranking, and reasoning. Output clear, concise summaries with tiered recommendations.",
+      },
+      { role: "user", content: JSON.stringify(payload) },
+    ];
 
-  lines.push(`Moksha SOAP – ${visitLabel} ${modeLabel}`);
-  lines.push("");
+    const output = await callOpenAI(messages);
 
-  lines.push("Subjective:");
-  lines.push(body.coreHistory || "[History not provided]");
-  lines.push("");
+    res.json({ output });
+  } catch (err) {
+    console.error("CONSULT ERROR:", err);
+    res.status(500).json({ error: err.toString() });
+  }
+});
 
-  lines.push("Objective:");
-  lines.push(body.peDiagnostics || "[PE/diagnostics data not provided]");
-  lines.push("");
+// ===== HELPER OUTPUT =====
+app.post("/api/generate-helper", async (req, res) => {
+  try {
+    const payload = req.body;
 
-  lines.push("Assessment:");
-  lines.push(body.assessmentHints || "[Assessment hints not provided]");
-  lines.push("");
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are the helper console for Moksha SOAP. Take a full SOAP output and produce: discharges, emails, summaries, recheck notes, or doctor instructions.",
+      },
+      { role: "user", content: JSON.stringify(payload) },
+    ];
 
-  lines.push("Plan:");
-  lines.push(body.planHints || "[Plan not provided]");
-  lines.push("");
+    const output = await callOpenAI(messages);
 
-  lines.push("Medications dispensed:");
-  lines.push("[Populate from plan / meds defaults in a future version]");
-  lines.push("");
+    res.json({ output });
+  } catch (err) {
+    console.error("HELPER ERROR:", err);
+    res.status(500).json({ error: err.toString() });
+  }
+});
 
-  lines.push("Aftercare:");
-  lines.push(
-    "- Discussed diagnosis and plan with owner.\n" +
-      "- Provided written discharge instructions and clinic contact info.\n" +
-      "- Advised recheck or sooner if concerns arise."
-  );
+// ====== QR RELAY ENDPOINT ======
+let qrRelayText = "";
+let qrRelayFiles = [];
 
-  return lines.join("\n");
-}
+app.post("/api/send-to-desktop", (req, res) => {
+  qrRelayText = req.body.text || "";
+  res.json({ ok: true });
+});
 
-function buildSoapSystemPrompt() {
-  return `
-You are Moksha SOAP, a veterinary SOAP generator for a small animal practice.
-You receive a JSON object with visitType, surgeryMode, and many fields typed
-by the doctor. You must:
+app.get("/api/receive-text", (req, res) => {
+  const text = qrRelayText;
+  qrRelayText = ""; // reset after retrieval
+  res.json({ text });
+});
 
-- Produce an Avimark-compatible SOAP note.
-- Sections: Subjective, Objective, Assessment, Plan, Medications dispensed, Aftercare.
-- Subjective: owner concerns and brief history.
-- Objective: PE systems list + diagnostics with values ONLY (no interpretation).
-- Assessment: problem list, differentials, and interpretation of data. Include ASA for anesthesia cases.
-- Plan: diagnostics, procedures, treatments, peri-op plan, and clear structure.
-- Medications dispensed: list drug name, dose, route, frequency, duration.
-- Aftercare: concise client instructions, recheck timing, red flags.
+// Files relay
+app.post("/api/send-files", (req, res) => {
+  qrRelayFiles = req.body.files || [];
+  res.json({ ok: true });
+});
 
-Rules:
-- Respect the user's text exactly where provided; don't overwrite their wording.
-- If a field is missing, use safe, generic wording and clearly mark assumptions.
-- Never fabricate patient identifiers or microchip numbers.
-- Keep spacing Avimark-friendly: no blank lines inside sections, only one blank line between sections.
-- For surgery cases, organise Plan as:
-  1. IV Catheter / Fluids
-  2. Pre-medications
-  3. Induction / Maintenance
-  4. Surgical Prep
-  5. Surgical Procedure
-  6. Intra-op Medications
-  7. Recovery
-  8. Medications Dispensed
-  9. Aftercare
+app.get("/api/receive-files", (req, res) => {
+  const files = qrRelayFiles;
+  qrRelayFiles = [];
+  res.json({ files });
+});
 
-Output ONLY the SOAP text, no JSON and no commentary.`;
-}
+// ====== VISION (base64) ======
+app.post("/api/vision", async (req, res) => {
+  try {
+    const { images, prompt } = req.body;
 
-// ---- START ----
-app.listen(port, () => {
-  console.log(`Moksha SOAP backend listening on port ${port}`);
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are the Vision engine for Moksha SOAP. Read screenshots of Avimark, bloodwork, documents, and extract structured data only.",
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: prompt },
+          ...images.map((img) => ({
+            type: "image_url",
+            image_url: { url: img },
+          })),
+        ],
+      },
+    ];
+
+    const output = await callOpenAI(messages, "gpt-4o-mini");
+
+    res.json({ output });
+  } catch (e) {
+    console.error("VISION ERROR:", e);
+    res.status(500).json({ error: e.toString() });
+  }
+});
+
+// -----------------------------
+// START SERVER
+// -----------------------------
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Moksha SOAP server running on port " + PORT);
 });
