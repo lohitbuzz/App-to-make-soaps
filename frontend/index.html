@@ -2,616 +2,685 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Moksha SOAP – v1.8 (Stable)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Stylesheet -->
+  <title>Moksha SOAP App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-<div class="app-shell">
-
-  <!-- ===========================
-       HEADER WITH LOGO
-  ============================ -->
-  <header class="app-header">
-    <div class="app-header-left">
-      <div class="app-title">
-        <img src="moksha_logo.png" class="logo-img" />
-        Moksha SOAP
-      </div>
-      <div class="app-subtitle">SOAP • Toolbox • Consult • Vision • Phone ↔ Desktop</div>
-    </div>
-
-    <div class="app-header-right">
-      <div class="pill">
-        <span class="pill-dot" id="backendDot"></span>
-        <span id="backendStatus">Backend reachable</span>
-      </div>
-
-      <div class="pill pill-version">v1.8 Stable</div>
-    </div>
-  </header>
-
-  <!-- ===========================
-       TOP TABS
-  ============================ -->
-  <div class="top-tabs">
-    <button class="top-tab-btn active" data-tab="soap">
-      🧾 SOAP
-    </button>
-    <button class="top-tab-btn" data-tab="toolbox">
-      🧰 Toolbox
-    </button>
-    <button class="top-tab-btn" data-tab="consult">
-      💭 Consult
-    </button>
-  </div>
-
-  <!-- ===========================
-       GLOBAL UPLOAD BAR (Option A)
-       Works for SOAP, Toolbox, Consult
-  ============================ -->
-  <div class="upload-bar">
-    <label class="upload-btn">
-      📎 Attach files (Vision enabled)
-      <input type="file" id="fileUploadInput" multiple />
-    </label>
-
-    <div id="fileUploadList" class="file-list">
-      No files uploaded yet.
-    </div>
-  </div>
-
-
-  <!-- ===========================
-       MAIN 2-COLUMN LAYOUT
-  ============================ -->
-  <div class="content-grid">
-
-
-<!-- =====================================================================
-     LEFT COLUMN — SOAP SECTION (Part 1 covers up to anesthesia header)
-===================================================================== -->
-<div id="soap-section" class="panel">
-
-  <div class="panel-header">
-    <div class="panel-title">SOAP – Appointment / Surgery</div>
-    <div class="panel-chip">Voice • Vision • Presets</div>
-  </div>
-
-  <div class="panel-body">
-
-    <!-- Basic patient info -->
-    <div class="field-row">
-      <div class="field">
-        <label class="field-label">Case label</label>
-        <input type="text" id="caseLabel" placeholder="Bella – Spay recheck" />
-      </div>
-
-      <div class="field">
-        <label class="field-label">Patient name</label>
-        <input type="text" id="patientName" placeholder="Bella" />
-      </div>
-    </div>
-
-    <div class="field-row">
-      <div class="field">
-        <label class="field-label">Species</label>
-        <select id="species">
-          <option value="">Select species</option>
-          <option value="canine">Canine</option>
-          <option value="feline">Feline</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label class="field-label">Sex</label>
-        <select id="sex">
-          <option value="">Sex</option>
-          <option value="M">Male</option>
-          <option value="MN">Male Neutered</option>
-          <option value="F">Female</option>
-          <option value="FS">Female Spayed</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label class="field-label">Weight (kg)</label>
-        <input type="number" step="0.1" id="weightKg" placeholder="6.4" />
-      </div>
-    </div>
-
-    <!-- Visit type toggle -->
-    <div class="field-row">
-      <div class="field">
-        <label class="field-label">Visit type</label>
-        <div class="chip-toggle-group">
-          <button class="chip-toggle active" id="visitTypeAppointment">Appointment</button>
-          <button class="chip-toggle" id="visitTypeSurgery">Surgery</button>
+  <div class="page">
+    <!-- HEADER / STATUS -->
+    <header class="app-header">
+      <div class="app-header-left">
+        <img src="logo.png" alt="Moksha SOAP logo" class="app-logo" />
+        <div class="app-title-block">
+          <div class="app-title">Moksha SOAP</div>
+          <div class="app-subtitle">
+            Lohit SOAP App · SOAP · Toolbox · Consult · Phone ↔ Desktop
+          </div>
         </div>
       </div>
-
-      <div class="field" id="asaField" style="display:none;">
-        <label class="field-label">ASA</label>
-        <select id="asaStatus">
-          <option value="">Select ASA</option>
-          <option value="I">I</option>
-          <option value="II">II</option>
-          <option value="III">III</option>
-          <option value="IV">IV</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Appointment preset row -->
-    <div class="field-row" id="appointmentPresetRow">
-      <div class="field">
-        <label class="field-label">Appointment preset</label>
-        <select id="appointmentPreset">
-          <option value="">Custom</option>
-          <option value="wellness">Wellness</option>
-          <option value="gi">GI upset</option>
-          <option value="derm">Dermatitis / Otitis</option>
-          <option value="cough">Cough / URI</option>
-          <option value="lameness">Lameness</option>
-          <option value="senior">Senior multi-issue</option>
-          <option value="recheck">Recheck</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Surgery preset row -->
-    <div class="field-row" id="surgeryPresetRow" style="display:none;">
-      <div class="field">
-        <label class="field-label">Surgery preset</label>
-        <select id="surgeryPreset">
-          <option value="">Custom</option>
-          <option value="dog_spay">Canine Spay</option>
-          <option value="dog_neuter">Canine Neuter</option>
-          <option value="cat_spay">Feline Spay</option>
-          <option value="cat_neuter">Feline Neuter</option>
-          <option value="pyometra">Pyometra</option>
-          <option value="cystotomy">Cystotomy</option>
-          <option value="exploratory">Exploratory</option>
-          <option value="enterotomy">Enterotomy</option>
-          <option value="mass_removal">Mass Removal</option>
-          <option value="laceration">Laceration Repair</option>
-          <option value="amputation">Amputation</option>
-          <option value="dental_no_rads">Dental COHAT – No Rads</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label class="field-label">Surgery mode</label>
-        <div class="chip-toggle-group">
-          <button class="chip-toggle active" id="surgeryModeSimple">Simple</button>
-          <button class="chip-toggle" id="surgeryModeAdvanced">Advanced</button>
+      <div class="app-header-right">
+        <div id="backendStatusPill" class="status-pill status-pill--unknown">
+          <span class="status-dot"></span>
+          <span id="backendStatusText">Checking backend…</span>
         </div>
+        <div class="version-pill">v1.7.6 · Hybrid UI + Recorder</div>
       </div>
-    </div>
+    </header>
 
-    <!-- ==== START: Anesthesia (Hybrid UI placeholder, real controls appear in Part 2) ==== -->
-    <div id="anesthesiaBlock">
-      <!-- More will load in Part 2 -->      <!-- ==== ANESTHESIA BLOCK (Hybrid UI) ==== -->
-      <div class="panel-subtitle">Anesthesia</div>
-
-      <!-- SIMPLE MODE: One dropdown -->
-      <div id="anesthesiaSimpleRow" class="field-row">
-        <div class="field">
-          <label class="field-label">Premed cocktail</label>
-          <select id="premedSimple">
-            <option value="">Select...</option>
-            <optgroup label="TDK (Cats)">
-              <option value="tdk_im">TDK IM (1:1:1:1)</option>
-              <option value="tdk_iv">TDK IV (1:1:1:1)</option>
-            </optgroup>
-
-            <optgroup label="Methadone-based">
-              <option value="methadone_midaz_im">Methadone + Midazolam IM</option>
-              <option value="methadone_midaz_iv">Methadone + Midazolam IV</option>
-              <option value="methadone_dex_im">Methadone + Dexmedetomidine IM</option>
-              <option value="methadone_dex_iv">Methadone + Dexmedetomidine IV</option>
-              <option value="methadone_im">Methadone IM</option>
-              <option value="methadone_iv">Methadone IV</option>
-            </optgroup>
-
-            <optgroup label="Hydromorphone-based">
-              <option value="hydro_midaz_im">Hydromorphone + Midazolam IM</option>
-              <option value="hydro_midaz_iv">Hydromorphone + Midazolam IV</option>
-              <option value="hydro_dex_im">Hydromorphone + Dexmedetomidine IM</option>
-              <option value="hydro_dex_iv">Hydromorphone + Dexmedetomidine IV</option>
-              <option value="hydromorphone_im">Hydromorphone IM</option>
-              <option value="hydromorphone_iv">Hydromorphone IV</option>
-            </optgroup>
-
-            <optgroup label="Butorphanol-based">
-              <option value="torb_midaz_im">Torb + Midazolam IM</option>
-              <option value="torb_midaz_iv">Torb + Midazolam IV</option>
-              <option value="torb_ket_midaz_im">Torb + Ketamine + Midaz IM</option>
-              <option value="torb_ket_midaz_iv">Torb + Ketamine + Midaz IV</option>
-            </optgroup>
-
-            <optgroup label="Buprenorphine-based">
-              <option value="bup_midaz_im">Buprenorphine + Midazolam IM</option>
-              <option value="bup_midaz_iv">Buprenorphine + Midazolam IV</option>
-              <option value="bup_dex_im">Buprenorphine + Dexmedetomidine IM</option>
-              <option value="bup_dex_iv">Buprenorphine + Dexmedetomidine IV</option>
-              <option value="bup_im">Buprenorphine IM</option>
-              <option value="bup_iv">Buprenorphine IV</option>
-              <option value="bup_sr">Buprenorphine SR (IM only)</option>
-            </optgroup>
-
-          </select>
-        </div>
+    <!-- GLOBAL ATTACHMENTS (VISION) -->
+    <section class="card card-attachments">
+      <div class="card-header-row">
+        <div class="card-title">Attachments · Vision helper</div>
+        <div class="card-tag">Photos · PDFs · Screenshots</div>
       </div>
-
-      <!-- ADVANCED MODE: Multi-select for full control -->
-      <div id="anesthesiaAdvancedRow" class="field-row" style="display:none;">
-        <div class="field">
-          <label class="field-label">
-            Detailed anesthesia components
-            <span class="hint">(Ctrl/Cmd-click to select multiple)</span>
-          </label>
-          <select id="premedAdvanced" multiple size="12">
-
-            <optgroup label="TDK (Cats)">
-              <option value="tdk_im">TDK IM 1:1:1:1</option>
-              <option value="tdk_iv">TDK IV 1:1:1:1</option>
-            </optgroup>
-
-            <optgroup label="Methadone-based">
-              <option value="methadone_midaz_im">Methadone + Midazolam IM</option>
-              <option value="methadone_midaz_iv">Methadone + Midazolam IV</option>
-              <option value="methadone_dex_im">Methadone + Dex IM</option>
-              <option value="methadone_dex_iv">Methadone + Dex IV</option>
-              <option value="methadone_im">Methadone IM</option>
-              <option value="methadone_iv">Methadone IV</option>
-            </optgroup>
-
-            <optgroup label="Hydromorphone-based">
-              <option value="hydro_midaz_im">Hydromorphone + Midazolam IM</option>
-              <option value="hydro_midaz_iv">Hydromorphone + Midazolam IV</option>
-              <option value="hydro_dex_im">Hydromorphone + Dex IM</option>
-              <option value="hydro_dex_iv">Hydromorphone + Dex IV</option>
-              <option value="hydromorphone_im">Hydromorphone IM</option>
-              <option value="hydromorphone_iv">Hydromorphone IV</option>
-            </optgroup>
-
-            <optgroup label="Butorphanol-based">
-              <option value="torb_midaz_im">Torb + Midazolam IM</option>
-              <option value="torb_midaz_iv">Torb + Midazolam IV</option>
-              <option value="torb_ket_midaz_im">Torb + Ketamine + Midaz IM</option>
-              <option value="torb_ket_midaz_iv">Torb + Ketamine + Midaz IV</option>
-            </optgroup>
-
-            <optgroup label="Buprenorphine-based">
-              <option value="bup_midaz_im">Buprenorphine + Midazolam IM</option>
-              <option value="bup_midaz_iv">Buprenorphine + Midazolam IV</option>
-              <option value="bup_dex_im">Buprenorphine + Dex IM</option>
-              <option value="bup_dex_iv">Buprenorphine + Dex IV</option>
-              <option value="bup_im">Buprenorphine IM</option>
-              <option value="bup_iv">Buprenorphine IV</option>
-              <option value="bup_sr">Buprenorphine SR (IM)</option>
-            </optgroup>
-
-          </select>
-        </div>
-      </div>
-
-      <!-- Induction -->
-      <div class="field-row">
-        <div class="field">
-          <label class="field-label">Induction</label>
-          <select id="inductionSelect">
-            <option value="">Select...</option>
-            <option value="propofol">Propofol</option>
-            <option value="alfaxalone">Alfaxalone</option>
-            <option value="ket_diaz">Ketamine + Diazepam</option>
-            <option value="mask">Mask induction</option>
-            <option value="rsi">Rapid sequence induction</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Intra-op meds -->
-      <div class="field-row">
-        <div class="field">
-          <label class="field-label">Intra-op medications</label>
-          <select id="intraOp" multiple size="6">
-            <option value="meloxicam_inj">Meloxicam inj</option>
-            <option value="onsior_inj">Onsior inj</option>
-            <option value="cefazolin">Cefazolin</option>
-            <option value="duplicillin">Duplicillin IM</option>
-            <option value="local_blocks">Local blocks</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Post-op -->
-      <div class="field-row">
-        <div class="field">
-          <label class="field-label">Post-op analgesia</label>
-          <select id="postOpAnalgesia" multiple size="6">
-            <option value="meloxicam_oral">Meloxicam oral</option>
-            <option value="onsior_oral">Onsior oral</option>
-            <option value="gabapentin">Gabapentin</option>
-            <option value="bup_sr">Buprenorphine SR</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label class="field-label">Post-op antibiotics</label>
-          <select id="postOpAntibiotics" multiple size="6">
-            <option value="convenia">Convenia</option>
-            <option value="amoxi_clav">Amoxi-Clav</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- === SOAP MAIN TEXT AREAS === -->
-      <div class="field">
-        <label class="field-label">Core notes / history</label>
-        <textarea id="soapCoreNotes"></textarea>
-      </div>
-
-      <div class="field">
-        <label class="field-label">PE & diagnostics (data only)</label>
-        <textarea id="soapPE"></textarea>
-      </div>
-
-      <div class="field">
-        <label class="field-label">Assessment hints</label>
-        <textarea id="soapAssessmentHints"></textarea>
-      </div>
-
-      <div class="field">
-        <label class="field-label">Plan & discharge hints</label>
-        <textarea id="soapPlanHints"></textarea>
-      </div>
-
-      <div class="field">
-        <label class="field-label">Extra instructions</label>
-        <textarea id="soapExtra"></textarea>
-      </div>
-
-      <!-- External transcript -->
-      <div class="collapse-toggle" id="extTranscriptToggle">
-        ▶ External transcript (Covet or call log)
-      </div>
-      <div class="collapse-body" id="extTranscriptBody" style="display:none;">
-        <textarea id="externalTranscript"></textarea>
-        <label class="checkbox-inline">
-          <input type="checkbox" id="externalTranscriptInclude" />
-          <span>Include structured communication summary</span>
+      <p class="card-note">
+        Attach images / PDFs you want Moksha SOAP to look at for this run
+        (SOAP · Toolbox · Consult). On phone you can use the camera here.
+      </p>
+      <div class="attachments-row">
+        <label class="file-input-label">
+          <input
+            type="file"
+            id="visionFiles"
+            multiple
+            accept="image/*,application/pdf"
+          />
+          <span>Select or capture files</span>
         </label>
+        <div id="visionFilesSummary" class="attachments-summary">
+          No files selected.
+        </div>
       </div>
+    </section>
 
-      <!-- Voice recorder: 3-button system -->
-      <div class="collapse-toggle" id="voiceToggle">
-        ▶ Voice notes
+    <!-- GLOBAL RECORDER -->
+    <section class="card card-recorder">
+      <div class="card-header-row">
+        <div class="card-title">Voice recorder</div>
+        <div class="card-tag">Dictate notes → textbox or backend</div>
       </div>
+      <div class="recorder-row">
+        <div class="recorder-main">
+          <label class="field-label" for="recorderTarget">
+            Target
+          </label>
+          <select id="recorderTarget" class="select-input">
+            <option value="soap-voice">SOAP · voice notes</option>
+            <option value="toolbox">Toolbox · input</option>
+            <option value="consult">Consult · question</option>
+          </select>
+        </div>
+        <div class="recorder-buttons">
+          <button id="btnToggleRecord" class="btn btn-outline">
+            Start recording
+          </button>
+          <button id="btnRecorderToField" class="btn btn-secondary">
+            Insert transcript
+          </button>
+          <button id="btnRecorderToBackend" class="btn btn-secondary">
+            Tag for backend
+          </button>
+        </div>
+      </div>
+      <div id="recorderStatus" class="recorder-status">
+        Recorder idle. Uses browser speech dictation if available.
+      </div>
+    </section>
 
-      <div class="collapse-body" id="voiceBody" style="display:none;">
-        <div class="recorder-strip">
+    <!-- MAIN TABS -->
+    <section class="card card-main">
+      <nav class="tabs">
+        <button class="tab-button tab-button--active" data-tab="soap">
+          SOAP
+        </button>
+        <button class="tab-button" data-tab="toolbox">Toolbox</button>
+        <button class="tab-button" data-tab="consult">Consult</button>
+      </nav>
 
-          <div class="rec-top-row">
-            <button class="btn btn-soft" id="voiceRecordBtn">🎙 Record</button>
-            <div class="rec-status">
-              <span id="voiceRecDot" class="rec-dot"></span>
-              <span id="voiceRecStatus">Not recording</span>
+      <!-- SOAP TAB -->
+      <div id="tab-soap" class="tab-content tab-content--active">
+        <div class="tab-header-row">
+          <div class="card-title">SOAP Input</div>
+          <div class="card-tag">Appointment · Surgery · Voice</div>
+        </div>
+
+        <!-- Visit type + surgery mode -->
+        <div class="segmented-row">
+          <div class="segmented-group">
+            <div class="field-label">Visit type</div>
+            <div class="segmented">
+              <button
+                id="visitAppointment"
+                class="segmented-btn segmented-btn--active"
+                data-visit="appointment"
+              >
+                Appointment
+              </button>
+              <button
+                id="visitSurgery"
+                class="segmented-btn"
+                data-visit="surgery"
+              >
+                Surgery
+              </button>
             </div>
           </div>
-
-          <div class="rec-actions">
-            <button class="btn btn-soft" id="voiceSendToBackendBtn">Send to backend</button>
-            <button class="btn btn-primary" id="voiceSendToTextboxBtn">Insert into transcript box</button>
-            <button class="btn btn-danger" id="voiceClearBtn">Clear</button>
-          </div>
-
-          <div class="collapse-toggle" id="voiceTranscriptToggle">
-            ▶ Transcript (editable)
-          </div>
-          <div class="collapse-body" id="voiceTranscriptBody" style="display:none;">
-            <textarea id="voiceTranscriptEdit" class="scroll-area"></textarea>
+          <div class="segmented-group">
+            <div class="field-label">Surgery mode</div>
+            <div class="segmented">
+              <button
+                id="modeSimple"
+                class="segmented-btn segmented-btn--active"
+                data-mode="simple"
+              >
+                Simple
+              </button>
+              <button
+                id="modeAdvanced"
+                class="segmented-btn"
+                data-mode="advanced"
+              >
+                Advanced
+              </button>
+            </div>
+            <div class="helper-text">
+              Simple = quick notes · Advanced = full anesthesia details
+            </div>
           </div>
         </div>
-      </div>      <!-- ====== TOOLBOX SECTION ====== -->
-      <div id="toolboxSection" class="panel" style="display:none;">
-        <div class="panel-header">
-          <div class="panel-title">Toolbox</div>
-          <div class="panel-chip">Bloodwork · Client Update · Handout · Weight Consult · Freeform</div>
-        </div>
 
-        <div class="panel-body">
-
-          <!-- Vision-enabled file upload -->
-          <div class="field-row">
-            <button class="btn btn-soft" id="toolboxUploadBtn">📷 Upload photos / PDFs</button>
-            <input type="file" id="toolboxFiles" multiple style="display:none;">
-          </div>
-
-          <div id="toolboxFilesPreview" class="tiny">No files uploaded.</div>
-
-          <!-- Toolbox dropdown -->
+        <!-- Core patient info -->
+        <div class="grid grid-2">
           <div class="field">
-            <label class="field-label">Select tool</label>
-            <select id="toolboxMode">
-              <option value="bloodwork">Bloodwork Analysis</option>
-              <option value="email">Client Update Helper</option>
-              <option value="handout">Client Handout Builder</option>
-              <option value="snippet">SOAP Snippet Helper</option>
-              <option value="weight">Weight Consult / Weight Loss Plan</option>
-              <option value="freeform">Freeform (Use all context)</option>
+            <label for="caseLabel" class="field-label">Case label</label>
+            <input
+              id="caseLabel"
+              type="text"
+              class="text-input"
+              placeholder="e.g. Bella – Spay recheck"
+            />
+          </div>
+          <div class="field">
+            <label for="patientName" class="field-label">Patient name</label>
+            <input
+              id="patientName"
+              type="text"
+              class="text-input"
+              placeholder="e.g. Bella"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-3">
+          <div class="field">
+            <label for="weightKg" class="field-label">Weight (kg)</label>
+            <input
+              id="weightKg"
+              type="number"
+              step="0.01"
+              class="text-input"
+              placeholder="e.g. 6.4"
+            />
+          </div>
+          <div class="field">
+            <label for="species" class="field-label">Species</label>
+            <select id="species" class="select-input">
+              <option value="">Select species</option>
+              <option value="canine">Dog</option>
+              <option value="feline">Cat</option>
+              <option value="other">Other</option>
             </select>
           </div>
-
-          <!-- Toolbox input -->
           <div class="field">
-            <label class="field-label">Core text for the tool</label>
-            <textarea id="toolboxInput" placeholder="Paste values, client concerns, or instructions."></textarea>
+            <label for="sex" class="field-label">Sex</label>
+            <select id="sex" class="select-input">
+              <option value="">Sex</option>
+              <option value="M">Male</option>
+              <option value="MN">Male neutered</option>
+              <option value="F">Female</option>
+              <option value="FS">Female spayed</option>
+            </select>
           </div>
+        </div>
 
-          <!-- External transcript -->
-          <div class="collapse-toggle" id="toolboxExtToggle">▶ External transcript</div>
-          <div class="collapse-body" id="toolboxExtBody" style="display:none;">
-            <textarea id="toolboxExtTranscript" class="scroll-area"
-              placeholder="Paste long client call, Covet transcript, or external note."></textarea>
+        <div class="grid grid-3">
+          <div class="field">
+            <label for="asa" class="field-label">ASA (surgery)</label>
+            <select id="asa" class="select-input">
+              <option value="">Select ASA</option>
+              <option value="I">I – Healthy</option>
+              <option value="II">II – Mild disease</option>
+              <option value="III">III – Moderate disease</option>
+              <option value="IV">IV – Severe disease</option>
+              <option value="V">V – Moribund</option>
+            </select>
           </div>
+          <div class="field">
+            <label for="tprNotes" class="field-label">TPR / notes</label>
+            <input
+              id="tprNotes"
+              type="text"
+              class="text-input"
+              placeholder="TPR, BCS, key vitals / comments"
+            />
+          </div>
+          <div class="field">
+            <label for="surgeryPreset" class="field-label">Surgery preset</label>
+            <select id="surgeryPreset" class="select-input">
+              <option value="custom">Custom surgery</option>
+              <option value="canine-spay">Canine spay</option>
+              <option value="canine-neuter">Canine neuter</option>
+              <option value="feline-spay">Feline spay</option>
+              <option value="feline-neuter">Feline neuter</option>
+              <option value="dental-cohat-rads">
+                Dental – COHAT (with rads)
+              </option>
+              <option value="dental-cohat-norads">
+                Dental – COHAT (no rads)
+              </option>
+              <option value="mass-removal">Mass removal</option>
+              <option value="cystotomy">Cystotomy</option>
+              <option value="pyometra">Pyometra spay</option>
+              <option value="exploratory">Exploratory laparotomy</option>
+            </select>
+          </div>
+        </div>
 
-          <!-- Recorder -->
-          <div class="collapse-toggle" id="toolboxVoiceToggle">▶ Voice notes</div>
-          <div class="collapse-body" id="toolboxVoiceBody" style="display:none;">
-            <div class="recorder-strip">
+        <div class="field checkbox-field">
+          <label class="checkbox-label">
+            <input type="checkbox" id="vaccinesDone" />
+            <span>Vaccines done today</span>
+          </label>
+          <div class="helper-text">
+            Used to auto-open vaccine SOAP style for wellness exams.
+          </div>
+        </div>
 
-              <div class="rec-top-row">
-                <button class="btn btn-soft" id="toolboxRecordBtn">🎙 Record</button>
-                <div class="rec-status">
-                  <span id="toolboxRecDot" class="rec-dot"></span>
-                  <span id="toolboxRecStatus">Not recording</span>
-                </div>
-              </div>
+        <!-- Simple surgery snapshot (only visible when surgery + simple) -->
+        <div id="simpleSurgeryBlock" class="fieldset">
+          <div class="fieldset-title">Surgery snapshot (simple)</div>
+          <div class="grid grid-3">
+            <div class="field">
+              <label for="simpleFluids" class="field-label">Fluids (brief)</label>
+              <input
+                id="simpleFluids"
+                type="text"
+                class="text-input"
+                placeholder="e.g. LRS 5 mL/kg/hr"
+              />
+            </div>
+            <div class="field">
+              <label for="simplePremed" class="field-label">Premed (brief)</label>
+              <input
+                id="simplePremed"
+                type="text"
+                class="text-input"
+                placeholder="e.g. Methadone + Dex"
+              />
+            </div>
+            <div class="field">
+              <label for="simpleInduction" class="field-label">
+                Induction / maintenance (brief)
+              </label>
+              <input
+                id="simpleInduction"
+                type="text"
+                class="text-input"
+                placeholder="e.g. Propofol to effect, Iso / O₂"
+              />
+            </div>
+          </div>
+        </div>
 
-              <div class="rec-actions">
-                <button class="btn btn-soft" id="toolboxSendBackendBtn">Send to backend</button>
-                <button class="btn btn-primary" id="toolboxSendTextboxBtn">Insert into transcript box</button>
-                <button class="btn btn-danger" id="toolboxRecClearBtn">Clear</button>
-              </div>
-
-              <div class="collapse-toggle" id="toolboxTranscriptToggle">▶ Transcript</div>
-              <div class="collapse-body" id="toolboxTranscriptBody" style="display:none;">
-                <textarea id="toolboxTranscriptEdit" class="scroll-area"></textarea>
-              </div>
+        <!-- Advanced anesthesia details (surgery + advanced) -->
+        <div id="advancedAnesthesiaBlock" class="fieldset">
+          <div class="fieldset-title">Anesthesia details (advanced)</div>
+          <div class="grid grid-3">
+            <div class="field">
+              <label for="etTube" class="field-label">ET tube</label>
+              <input
+                id="etTube"
+                type="text"
+                class="text-input"
+                placeholder="e.g. 9.0 mm cuffed"
+              />
+            </div>
+            <div class="field">
+              <label for="ivCatheter" class="field-label">IV catheter</label>
+              <input
+                id="ivCatheter"
+                type="text"
+                class="text-input"
+                placeholder="e.g. 22g cephalic, L"
+              />
+            </div>
+            <div class="field">
+              <label for="advFluids" class="field-label">Fluids</label>
+              <input
+                id="advFluids"
+                type="text"
+                class="text-input"
+                placeholder="e.g. LRS 5 mL/kg/hr (dogs), 3 mL/kg/hr (cats)"
+              />
             </div>
           </div>
 
-          <div class="button-row">
-            <button class="btn btn-primary" id="toolboxGenerateBtn">Generate</button>
+          <div class="grid grid-3">
+            <div class="field">
+              <label for="premedProtocol" class="field-label">
+                Premed protocol
+              </label>
+              <input
+                id="premedProtocol"
+                type="text"
+                class="text-input"
+                placeholder="e.g. Methadone + Dex (mg/kg auto in SOAP)"
+              />
+            </div>
+            <div class="field">
+              <label for="induction" class="field-label">Induction</label>
+              <input
+                id="induction"
+                type="text"
+                class="text-input"
+                placeholder="e.g. Propofol to effect"
+              />
+            </div>
+            <div class="field">
+              <label for="maintenance" class="field-label">Maintenance</label>
+              <input
+                id="maintenance"
+                type="text"
+                class="text-input"
+                placeholder="e.g. Isoflurane / O₂, standard monitoring"
+              />
+            </div>
           </div>
 
+          <div class="grid grid-2">
+            <div class="field">
+              <label for="intraOpMeds" class="field-label">Intra-op meds</label>
+              <input
+                id="intraOpMeds"
+                type="text"
+                class="text-input"
+                placeholder="e.g. Fentanyl CRI, Lidocaine infusion, NSAID"
+              />
+            </div>
+            <div class="field">
+              <label for="postOpMeds" class="field-label">
+                Post-op / take-home meds
+              </label>
+              <input
+                id="postOpMeds"
+                type="text"
+                class="text-input"
+                placeholder="e.g. Bup SR, NSAID, trazodone"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- SOAP hint fields -->
+        <div class="fieldset">
+          <div class="fieldset-title">Core SOAP hints</div>
+          <div class="field">
+            <label for="coreNotes" class="field-label">
+              Core notes / history
+            </label>
+            <textarea
+              id="coreNotes"
+              class="text-area"
+              placeholder="Why are they here today? Pertinent history, owner concerns, context."
+            ></textarea>
+          </div>
+          <div class="field">
+            <label for="peDiagnostics" class="field-label">
+              PE & diagnostics (data only)
+            </label>
+            <textarea
+              id="peDiagnostics"
+              class="text-area"
+              placeholder="Include PE systems list, diagnostic results, vitals – values only, no interpretation."
+            ></textarea>
+          </div>
+          <div class="field">
+            <label for="assessmentHints" class="field-label">
+              Assessment hints
+            </label>
+            <textarea
+              id="assessmentHints"
+              class="text-area"
+              placeholder="What are you worried about? Rule-outs, problem list, ASA grade for anesthesia cases."
+            ></textarea>
+          </div>
+          <div class="field">
+            <label for="planHints" class="field-label">
+              Plan & discharge hints
+            </label>
+            <textarea
+              id="planHints"
+              class="text-area"
+              placeholder="Diagnostics, treatments, procedures, recheck timing, what you told the owner, activity restrictions."
+            ></textarea>
+          </div>
+          <div class="field">
+            <label for="extraInstructions" class="field-label">
+              Extra instructions / anything else
+            </label>
+            <textarea
+              id="extraInstructions"
+              class="text-area"
+              placeholder="Edge cases, special instructions, inventory notes, anything weird or important."
+            ></textarea>
+          </div>
+          <div class="field">
+            <label for="voiceNotes" class="field-label">
+              Voice notes (optional – paste transcript)
+            </label>
+            <textarea
+              id="voiceNotes"
+              class="text-area"
+              placeholder="Paste transcript from recorder if not sending directly to backend."
+            ></textarea>
+          </div>
+        </div>
+
+        <button id="btnGenerateSoap" class="btn btn-primary">
+          Generate SOAP
+        </button>
+      </div>
+
+      <!-- TOOLBOX TAB -->
+      <div id="tab-toolbox" class="tab-content">
+        <div class="tab-header-row">
+          <div class="card-title">Toolbox Lite</div>
+          <div class="card-tag">Bloodwork · client emails · small docs</div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label for="toolboxMode" class="field-label">Tool</label>
+            <select id="toolboxMode" class="select-input">
+              <option value="auto">Auto-detect</option>
+              <option value="bloodwork">Bloodwork summary</option>
+              <option value="email">Client email / message</option>
+              <option value="weight">Weight consult / BCS plan</option>
+              <option value="handout">Client handout</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="toolboxInput" class="field-label">
+            Paste text or notes
+          </label>
+          <textarea
+            id="toolboxInput"
+            class="text-area"
+            placeholder="e.g. Paste bloodwork, write ‘short summary + client-friendly explanation’"
+          ></textarea>
+        </div>
+
+        <button id="btnRunToolbox" class="btn btn-primary">
+          Run Toolbox
+        </button>
+
+        <div class="field">
+          <label for="toolboxOutput" class="field-label">Toolbox output</label>
+          <textarea
+            id="toolboxOutput"
+            class="text-area text-area--output"
+            readonly
+          ></textarea>
+        </div>
+        <button id="btnCopyToolboxOutput" class="btn btn-secondary">
+          Copy Toolbox output
+        </button>
+
+        <div class="fieldset">
+          <div class="fieldset-title">
+            Feedback to Moksha SOAP · Toolbox
+            <span class="chip">Brain tuning (local only)</span>
+          </div>
+          <div class="field">
+            <textarea
+              id="toolboxFeedback"
+              class="text-area"
+              placeholder="What would you change in this Toolbox result? Level of detail, tone, etc."
+            ></textarea>
+          </div>
+          <button id="btnRefineToolbox" class="btn btn-outline">
+            Refine Toolbox output
+          </button>
         </div>
       </div>
 
-      <!-- ====== CONSULT SECTION ====== -->
-      <div id="consultSection" class="panel" style="display:none;">
-        <div class="panel-header">
-          <div class="panel-title">Consult</div>
-          <div class="panel-chip">Differentials · Plans · Reasoning</div>
+      <!-- CONSULT TAB -->
+      <div id="tab-consult" class="tab-content">
+        <div class="tab-header-row">
+          <div class="card-title">Consult</div>
+          <div class="card-tag">
+            Free-form mode – ask Moksha SOAP for anything
+          </div>
         </div>
 
-        <div class="panel-body">
+        <div class="field">
+          <label for="consultInput" class="field-label">
+            Consult question / context
+          </label>
+          <textarea
+            id="consultInput"
+            class="text-area"
+            placeholder="e.g. Draft an email, summarize this case, help with a client handout…"
+          ></textarea>
+        </div>
 
-          <!-- Vision-enabled file upload -->
-          <div class="field-row">
-            <button class="btn btn-soft" id="consultUploadBtn">📷 Upload photos / PDFs</button>
-            <input type="file" id="consultFiles" multiple style="display:none;">
+        <button id="btnRunConsult" class="btn btn-primary">
+          Run Consult
+        </button>
+
+        <div class="field">
+          <label for="consultOutput" class="field-label">Consult output</label>
+          <textarea
+            id="consultOutput"
+            class="text-area text-area--output"
+            readonly
+          ></textarea>
+        </div>
+        <button id="btnCopyConsultOutput" class="btn btn-secondary">
+          Copy Consult output
+        </button>
+
+        <div class="fieldset">
+          <div class="fieldset-title">
+            Feedback to Moksha SOAP · Consult
+            <span class="chip">Brain tuning (local only)</span>
           </div>
-
-          <div id="consultFilesPreview" class="tiny">No files uploaded.</div>
-
           <div class="field">
-            <label class="field-label">Consult question</label>
-            <textarea id="consultQuestion" placeholder="What do you want help with?"></textarea>
+            <textarea
+              id="consultFeedback"
+              class="text-area"
+              placeholder="How should this consult answer change? Add/remove detail, adjust tone, etc."
+            ></textarea>
           </div>
+          <button id="btnRefineConsult" class="btn btn-outline">
+            Refine Consult output
+          </button>
+        </div>
+      </div>
+    </section>
 
-          <div class="field">
-            <label class="field-label">Case context</label>
-            <textarea id="consultContext" placeholder="Signalment, history, findings, labs, imaging..."></textarea>
-          </div>
-
-          <!-- External transcript -->
-          <div class="collapse-toggle" id="consultExtToggle">▶ External transcript</div>
-          <div class="collapse-body" id="consultExtBody" style="display:none;">
-            <textarea id="consultExtTranscript" class="scroll-area"
-              placeholder="Call logs, long dictations, or Covet transcription."></textarea>
-          </div>
-
-          <!-- Recorder -->
-          <div class="collapse-toggle" id="consultVoiceToggle">▶ Voice notes</div>
-          <div class="collapse-body" id="consultVoiceBody" style="display:none;">
-            <div class="recorder-strip">
-
-              <div class="rec-top-row">
-                <button class="btn btn-soft" id="consultRecordBtn">🎙 Record</button>
-                <div class="rec-status">
-                  <span id="consultRecDot" class="rec-dot"></span>
-                  <span id="consultRecStatus">Not recording</span>
-                </div>
-              </div>
-
-              <div class="rec-actions">
-                <button class="btn btn-soft" id="consultSendBackendBtn">Send to backend</button>
-                <button class="btn btn-primary" id="consultSendTextboxBtn">Insert into transcript box</button>
-                <button class="btn btn-danger" id="consultRecClearBtn">Clear</button>
-              </div>
-
-              <div class="collapse-toggle" id="consultTranscriptToggle">▶ Transcript</div>
-              <div class="collapse-body" id="consultTranscriptBody" style="display:none;">
-                <textarea id="consultTranscriptEdit" class="scroll-area"></textarea>
-              </div>
-            </div>
-          </div>
-
-          <div class="button-row">
-            <button class="btn btn-primary" id="consultGenerateBtn">Generate</button>
-          </div>
+    <!-- SHARED OUTPUT + RELAY -->
+    <section class="card card-output">
+      <div class="card-header-row">
+        <div class="card-title">Output · AI Brain – SOAP</div>
+        <div id="mainOutputStatusPill" class="status-pill status-pill--ready">
+          <span class="status-dot"></span>
+          <span id="mainOutputStatusText">Ready</span>
         </div>
       </div>
 
-      <!-- ===== OUTPUT PANEL (RIGHT SIDE) ===== -->
-      <div id="outputPanel" class="panel">
-        <div class="panel-header">
-          <div class="panel-title">AI Output</div>
-          <div class="panel-chip">SOAP · Toolbox · Consult</div>
-        </div>
+      <textarea
+        id="mainOutput"
+        class="text-area text-area--output"
+        readonly
+        placeholder="SOAP / Toolbox / Consult output will appear here."
+      ></textarea>
 
-        <div class="panel-body">
-
-          <div class="output-main" id="mainOutput">
-            Output will appear here.
-          </div>
-
-          <div class="button-row">
-            <button class="btn btn-primary" id="copyOutputBtn">Copy</button>
-
-            <!-- MOBILE: send to desktop -->
-            <button class="btn btn-soft mobile-only" id="sendToDesktopBtn">📤 Send to desktop</button>
-          </div>
-
-          <!-- FEEDBACK BAR -->
-          <div class="field">
-            <label class="field-label">Feedback</label>
-            <textarea id="outputFeedback" placeholder="Refine, reword, expand, fix something..."></textarea>
-          </div>
-
-          <div class="button-row">
-            <button class="btn btn-soft" id="applyFeedbackBtn">Apply feedback</button>
-          </div>
-
-          <!-- Desktop relay -->
-          <div class="right-bottom-card desktop-only">
-            <div class="right-bottom-row">
-              <div class="status-left">
-                <div class="status-dot" id="backendStatusDot"></div>
-                <span id="backendStatusText">Backend unreachable</span>
-              </div>
-              <span class="tiny">Phone ↔ Desktop relay</span>
-            </div>
-
-            <div class="right-bottom-buttons">
-              <button class="btn btn-soft" id="receiveFromPhoneBtn">📲 Receive text/files</button>
-            </div>
-          </div>
-
-        </div>
+      <div class="output-buttons">
+        <button id="btnCopyFull" class="btn btn-secondary">
+          Copy full SOAP / output
+        </button>
+        <button id="btnCopyPlanMedsAftercare" class="btn btn-secondary">
+          Copy Plan + Meds + Aftercare
+        </button>
+        <button id="btnSendOutputToDesktop" class="btn btn-outline">
+          Send output to desktop
+        </button>
       </div>
 
-    </div> <!-- end content-grid -->
-  </div> <!-- end app-main -->
-</div> <!-- end app-shell -->
+      <div class="fieldset">
+        <div class="fieldset-title">
+          Feedback to Moksha SOAP
+          <span class="chip">Brain tuning (local only)</span>
+        </div>
+        <div class="field">
+          <textarea
+            id="mainFeedback"
+            class="text-area"
+            placeholder="What would you change in this output? Missing details, tone, formatting, etc."
+          ></textarea>
+        </div>
+        <button id="btnApplyFeedback" class="btn btn-outline">
+          Apply feedback &amp; refine
+        </button>
+      </div>
 
-<script src="/app.js"></script>
+      <div class="fieldset fieldset-relay">
+        <div class="fieldset-title">
+          Phone ↔ Desktop relay · Uploads
+          <span class="chip chip--muted">Clinic-only</span>
+        </div>
+        <div class="grid grid-3">
+          <div class="field">
+            <label for="relayId" class="field-label">Relay ID</label>
+            <input
+              id="relayId"
+              class="text-input"
+              type="text"
+              placeholder="auto"
+            />
+          </div>
+          <div class="field field--inline-btn">
+            <button id="btnNewRelayId" class="btn btn-secondary">
+              New
+            </button>
+          </div>
+        </div>
+        <div class="relay-buttons">
+          <button id="btnReceiveTextFromPhone" class="btn btn-outline">
+            Receive text from phone
+          </button>
+          <button
+            id="btnReceiveFilesFromPhone"
+            class="btn btn-outline"
+            disabled
+          >
+            Receive files from phone (coming soon)
+          </button>
+        </div>
+
+        <div class="upload-block">
+          <label class="file-input-label file-input-label--large">
+            <input
+              type="file"
+              id="relayFileInput"
+              multiple
+              accept="image/*,application/pdf"
+            />
+            <span>Upload from this device</span>
+          </label>
+        </div>
+        <p id="relayFilesNote" class="card-note">
+          No files uploaded yet. Use “Send output to desktop” from your phone,
+          then “Receive text” here. File relay is a future version – for now,
+          attach originals to Avimark manually.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <div id="modalMessage" class="modal-message"></div>
+      <button id="modalClose" class="btn btn-primary modal-close-btn">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
