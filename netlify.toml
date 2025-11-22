@@ -1,6 +1,7 @@
 [build]
   publish = "frontend"
-  functions = "netlify/functions"
+  command = ""
 
 [functions]
+  directory = "netlify/functions"
   node_bundler = "esbuild"
