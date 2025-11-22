@@ -1,7 +1,7 @@
 [build]
   publish = "frontend"
-  command = ""
+  functions = "netlify/functions"
 
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
+[dev]
+  publish = "frontend"
+  functions = "netlify/functions"
