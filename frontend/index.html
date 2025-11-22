@@ -2,23 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Moksha SOAP – Lohit SOAP App</title>
+  <title>Moksha SOAP · Lohit SOAP App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      --bg: #030912;
-      --card: #081621;
-      --card-soft: #08131d;
-      --accent: #19c2a6;
-      --accent-soft: rgba(25, 194, 166, 0.1);
-      --danger: #ff4f6a;
-      --text: #f5f9ff;
-      --text-soft: #a3b4c8;
-      --border-subtle: rgba(255,255,255,0.04);
-      --pill: #101f2c;
-      --radius-card: 18px;
-      --radius-pill: 999px;
-      --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.65);
+      --bg: #020816;
+      --card: #051626;
+      --card-soft: #071a2d;
+      --accent: #11c5a1;
+      --accent-soft: rgba(17, 197, 161, 0.1);
+      --accent-strong: #0fb18f;
+      --text-main: #f7fbff;
+      --text-soft: #c7d4e5;
+      --text-muted: #7c8ba1;
+      --border: #103047;
+      --error: #ff5a6b;
     }
 
     * {
@@ -28,135 +26,147 @@
     html, body {
       margin: 0;
       padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-      background: radial-gradient(circle at top left, #102532 0, #030912 55%, #010308 100%);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
+      height: 100%;
+      background: radial-gradient(circle at top left, #05263d, #020816 55%, #05091a);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      color: var(--text-main);
     }
 
     body {
-      padding: 16px;
+      display: flex;
+      justify-content: center;
+      padding: 10px;
     }
 
-    #app {
-      max-width: 1200px;
-      margin: 0 auto 48px;
+    .app-shell {
+      width: 100%;
+      max-width: 1400px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    /* HEADER */
-
-    .app-header {
+    .header-card {
+      background: radial-gradient(circle at top left, #0b2b43, #051322);
+      border-radius: 20px;
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 16px 20px;
-      border-radius: var(--radius-card);
-      background: radial-gradient(circle at top left, #143541, #07141c 55%, #030910 100%);
-      box-shadow: var(--shadow-card);
-      margin-bottom: 16px;
+      gap: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
     }
 
-    .app-header-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .app-logo {
+    .logo-wrap {
       width: 60px;
       height: 60px;
       border-radius: 16px;
-      object-fit: contain;
-      background: transparent;
-      flex-shrink: 0;
-    }
-
-    .app-title h1 {
-      font-size: 1.2rem;
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .app-title p {
-      margin: 2px 0 0;
-      font-size: 0.8rem;
-      color: var(--text-soft);
-    }
-
-    .app-status {
+      overflow: hidden;
+      background: #021116;
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 0.78rem;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .logo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .header-text-main {
+      flex: 1;
+    }
+
+    .header-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
       color: var(--text-soft);
-      flex-wrap: wrap;
-      justify-content: flex-end;
+      margin-top: 2px;
     }
 
-    .status-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #666;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    .header-subtitle span {
+      color: var(--accent-strong);
     }
 
-    .status-ok {
-      background: #18c47c;
-      box-shadow: 0 0 12px rgba(24,196,124,0.9);
+    .header-status {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
     }
 
-    .version-pill {
-      padding: 4px 10px;
-      border-radius: var(--radius-pill);
-      background: var(--pill);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-
-    /* TABS */
-
-    .primary-tabs {
+    .pill {
       display: inline-flex;
+      align-items: center;
       gap: 6px;
-      padding: 4px;
+      padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(0,0,0,0.35);
-      margin-bottom: 12px;
+      font-size: 11px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(5, 11, 25, 0.9);
+      color: var(--text-soft);
     }
 
-    .tab-btn {
-      padding: 8px 16px;
+    .pill-dot {
+      width: 8px;
+      height: 8px;
       border-radius: 999px;
+      background: #31d158;
+      box-shadow: 0 0 12px rgba(49, 209, 88, 0.6);
+    }
+
+    .pill-version {
+      background: linear-gradient(135deg, rgba(13, 177, 143, 0.16), rgba(13, 111, 177, 0.16));
+      border-color: rgba(17, 197, 161, 0.4);
+      color: var(--accent-strong);
+    }
+
+    .header-line2 {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .tabs-row {
+      margin-top: 10px;
+      display: inline-flex;
+      padding: 2px;
+      border-radius: 999px;
+      background: rgba(1, 9, 18, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .top-tab {
       border: none;
       background: transparent;
       color: var(--text-soft);
-      font-size: 0.85rem;
-      cursor: pointer;
-      display: inline-flex;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      display: flex;
       align-items: center;
       gap: 6px;
+      cursor: pointer;
     }
 
-    .tab-btn.active {
-      background: var(--accent-soft);
-      color: var(--accent);
+    .top-tab.active {
+      background: var(--accent);
+      color: #021015;
+      font-weight: 600;
+      box-shadow: 0 0 0 1px rgba(6, 57, 46, 0.5);
     }
-
-    .pill-label {
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.03);
-      font-size: 0.76rem;
-      color: var(--text-soft);
-    }
-
-    /* LAYOUT */
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
-      gap: 16px;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.6fr);
+      gap: 12px;
     }
 
     @media (max-width: 960px) {
@@ -166,59 +176,85 @@
     }
 
     .card {
-      background: var(--card);
-      border-radius: var(--radius-card);
-      padding: 16px 18px 18px;
-      border: 1px solid var(--border-subtle);
-      box-shadow: var(--shadow-card);
+      background: radial-gradient(circle at top left, #071c30, #050f1f 55%);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
     }
 
-    .card-header {
+    .card-header-line {
       display: flex;
-      align-items: baseline;
       justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .segmented-group {
+      display: inline-flex;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(2, 9, 19, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      gap: 3px;
+    }
+
+    .segmented {
+      border: none;
+      background: transparent;
+      color: var(--text-soft);
+      padding: 6px 16px;
+      font-size: 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .segmented.active {
+      background: var(--accent);
+      color: #021015;
+      font-weight: 600;
+      box-shadow: 0 0 0 1px rgba(8, 64, 52, 0.7);
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
       margin-bottom: 10px;
     }
 
-    .card-header h2 {
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      margin: 0;
-      color: var(--text-soft);
-    }
-
-    .sub-label {
-      font-size: 0.75rem;
-      color: var(--text-soft);
-    }
-
-    /* FORMS */
-
-    .field-row {
+    .input-row {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 10px;
     }
 
-    .field-row-3 {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 10px;
+    @media (max-width: 720px) {
+      .input-grid,
+      .input-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
 
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .field label {
-      font-size: 0.78rem;
-      color: var(--text-soft);
+    .field-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
     }
 
     input[type="text"],
@@ -226,715 +262,882 @@
     select,
     textarea {
       width: 100%;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.04);
-      background: #050d15;
-      color: var(--text);
-      padding: 8px 10px;
-      font-size: 0.84rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(1, 7, 15, 0.82);
+      color: var(--text-main);
+      padding: 8px 12px;
+      font-size: 13px;
       outline: none;
     }
 
     textarea {
+      border-radius: 12px;
       min-height: 70px;
       resize: vertical;
+      font-family: inherit;
+      line-height: 1.35;
     }
 
     input::placeholder,
     textarea::placeholder {
-      color: #4b5a6a;
+      color: var(--text-muted);
     }
 
-    .toggle-row {
+    select {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, var(--text-soft) 50%),
+        linear-gradient(135deg, var(--text-soft) 50%, transparent 50%);
+      background-position: calc(100% - 15px) calc(50% - 3px),
+        calc(100% - 10px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+    }
+
+    .checkbox-row {
       display: flex;
-      flex-wrap: wrap;
+      align-items: center;
       gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .toggle-group {
-      display: inline-flex;
-      border-radius: 999px;
-      padding: 3px;
-      background: rgba(0,0,0,0.35);
-      gap: 3px;
-    }
-
-    .toggle-btn {
-      border-radius: 999px;
-      padding: 6px 14px;
-      border: none;
-      cursor: pointer;
-      background: transparent;
-      font-size: 0.8rem;
+      font-size: 12px;
       color: var(--text-soft);
+      margin: 6px 0 10px;
     }
 
-    .toggle-btn.active {
-      background: var(--accent);
-      color: #031015;
+    .checkbox-row input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
     }
 
-    .small-note {
-      font-size: 0.74rem;
-      color: var(--text-soft);
-      margin-bottom: 10px;
+    .hint-text {
+      font-size: 11px;
+      color: var(--text-muted);
     }
 
-    .btn {
+    .section-caption {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin: 12px 0 4px;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-ghost {
       border-radius: 999px;
-      border: none;
       padding: 9px 18px;
-      font-size: 0.86rem;
+      border: 1px solid transparent;
+      font-size: 13px;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      cursor: pointer;
-      background: var(--accent);
-      color: #031015;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #1be0b7);
+      color: #021013;
       font-weight: 600;
-      box-shadow: 0 8px 20px rgba(25,194,166,0.4);
+      box-shadow: 0 8px 22px rgba(5, 148, 118, 0.65);
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-primary[disabled] {
+      opacity: 0.45;
+      cursor: default;
+      box-shadow: none;
     }
 
     .btn-secondary {
-      background: #111e28;
+      background: rgba(3, 17, 29, 0.9);
       color: var(--text-soft);
-      box-shadow: none;
-      border: 1px solid rgba(255,255,255,0.04);
+      border-color: rgba(255, 255, 255, 0.08);
     }
 
     .btn-ghost {
       background: transparent;
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text-soft);
-      box-shadow: none;
+      color: var(--text-muted);
+      border-color: rgba(255, 255, 255, 0.08);
     }
-
-    .btn-full {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .mt-10 {
-      margin-top: 10px;
-    }
-
-    .mt-12 {
-      margin-top: 12px;
-    }
-
-    .mt-16 {
-      margin-top: 16px;
-    }
-
-    /* OUTPUT */
 
     .output-box {
-      border-radius: 14px;
-      background: #050d15;
-      border: 1px solid rgba(255,255,255,0.04);
-      padding: 12px 12px 18px;
       min-height: 160px;
-      font-size: 0.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: radial-gradient(circle at top left, #07192a, #030815);
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--text-soft);
       white-space: pre-wrap;
-      overflow-y: auto;
+      overflow: auto;
     }
 
-    .output-placeholder {
-      color: #4b5a6a;
-    }
-
-    .output-actions {
+    .output-status-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
+      justify-content: space-between;
       align-items: center;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
     }
 
     .status-pill {
-      font-size: 0.74rem;
-      padding: 4px 9px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.04);
-      color: var(--text-soft);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(3, 13, 24, 0.9);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #31d158;
+    }
+
+    .status-dot.busy {
+      background: #f6b500;
+    }
+
+    .status-dot.error {
+      background: var(--error);
+    }
+
+    .output-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0 4px;
     }
 
     .feedback-card {
-      margin-top: 14px;
-      padding: 10px 12px 12px;
+      margin-top: 10px;
+      padding: 10px 10px 12px;
       border-radius: 14px;
-      background: linear-gradient(135deg, rgba(25,194,166,0.06), rgba(8,15,25,0.9));
-      border: 1px dashed rgba(25,194,166,0.3);
+      background: radial-gradient(circle at top left, #051829, #020813);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
     }
 
     .feedback-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
+      font-size: 12px;
+      margin-bottom: 4px;
     }
 
-    .feedback-header span {
-      font-size: 0.78rem;
-      color: var(--text-soft);
-    }
-
-    .badge {
-      padding: 3px 8px;
+    .feedback-badge {
+      font-size: 10px;
+      padding: 2px 8px;
       border-radius: 999px;
-      font-size: 0.72rem;
-      background: rgba(25,194,166,0.15);
-      color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      border: 1px solid rgba(17, 197, 161, 0.5);
     }
 
-    /* RELAY */
+    .feedback-textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(3, 14, 26, 0.9);
+      color: var(--text-main);
+      padding: 8px 10px;
+      font-size: 12px;
+      resize: vertical;
+      min-height: 60px;
+      outline: none;
+      font-family: inherit;
+    }
 
     .relay-card {
-      margin-top: 14px;
-      padding: 10px 12px 12px;
+      margin-top: 10px;
+      padding: 8px 10px 10px;
       border-radius: 14px;
-      background: #050c14;
-      border: 1px solid rgba(255,255,255,0.04);
-      font-size: 0.8rem;
+      background: radial-gradient(circle at top left, #041522, #020812);
+      border: 1px solid rgba(18, 143, 120, 0.4);
     }
 
-    .relay-header {
+    .relay-top-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
-      gap: 8px;
+      font-size: 11px;
+      margin-bottom: 6px;
+      color: var(--text-soft);
+    }
+
+    .relay-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(1, 27, 33, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+
+    .relay-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 720px) {
+      .relay-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
 
     .relay-id-row {
       display: flex;
+      align-items: center;
       gap: 6px;
-      margin-bottom: 8px;
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
     }
 
     .relay-id-row input {
-      flex: 1;
-      font-size: 0.8rem;
-      padding: 6px 10px;
+      width: 80px;
       border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(1, 7, 15, 0.82);
+      color: var(--text-main);
+      padding: 4px 8px;
+      font-size: 11px;
     }
 
-    .relay-btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+    .small {
+      font-size: 11px;
     }
 
-    .hidden {
+    .hidden-by-mode {
       display: none !important;
     }
 
-    /* TOOLBOX / CONSULT SIMPLE STYLES */
-
-    .toolbox-body,
-    .consult-body {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .select-inline {
-      max-width: 220px;
+    .error-text {
+      color: var(--error);
+      font-size: 11px;
+      margin-top: 4px;
     }
   </style>
 </head>
 <body>
-<div id="app">
+<div class="app-shell">
+
   <!-- HEADER -->
-  <header class="app-header">
-    <div class="app-header-left">
-      <!-- Make sure moksha-soap-logo.png is in the same folder as index.html -->
-      <img src="moksha-soap-logo.png" alt="Moksha SOAP logo" class="app-logo" />
-      <div class="app-title">
-        <h1>Moksha SOAP</h1>
-        <p>Lohit SOAP App · SOAP · Toolbox · Consult · Phone ↔ Desktop</p>
+  <div class="header-card">
+    <div class="logo-wrap">
+      <!-- Put moksha-logo.png in same folder as index.html -->
+      <img src="./moksha-logo.png" alt="Moksha SOAP logo" />
+    </div>
+    <div class="header-text-main">
+      <div class="header-title">Moksha SOAP</div>
+      <div class="header-subtitle">
+        Lohit SOAP App · <span>SOAP · Toolbox · Consult · Phone ↔ Desktop</span>
+      </div>
+      <div class="header-line2 small">
+        Appointment vs Surgery toggle · Help-me SOAP mode · Clinic-only relay
+      </div>
+      <div class="tabs-row" id="topTabs">
+        <button class="top-tab active" data-tab="soap">SOAP</button>
+        <button class="top-tab" data-tab="toolbox">Toolbox</button>
+        <button class="top-tab" data-tab="consult">Consult</button>
       </div>
     </div>
-    <div class="app-status">
-      <span id="backend-status-dot" class="status-dot status-ok"></span>
-      <span id="backend-status-text">Backend reachable</span>
-      <span class="version-pill">v1.7.6 · Hybrid UI + Recorder</span>
+    <div class="header-status">
+      <div class="pill">
+        <span class="pill-dot"></span>
+        <span id="backendStatusText">Backend reachable</span>
+      </div>
+      <div class="pill pill-version">
+        v1.7.6 · Hybrid UI + Recorder
+      </div>
     </div>
-  </header>
-
-  <!-- TABS -->
-  <div class="primary-tabs">
-    <button class="tab-btn active" data-tab="soap-tab" id="tab-soap">SOAP</button>
-    <button class="tab-btn" data-tab="toolbox-tab" id="tab-toolbox">Toolbox</button>
-    <button class="tab-btn" data-tab="consult-tab" id="tab-consult">Consult</button>
   </div>
 
+  <!-- MAIN LAYOUT -->
   <div class="layout">
-    <!-- LEFT: INPUT AREA -->
-    <section>
-      <!-- SOAP TAB -->
-      <div id="soap-tab" class="card">
-        <div class="card-header">
-          <h2>SOAP Input</h2>
-          <span class="sub-label">Appointment · Surgery · Voice</span>
+
+    <!-- LEFT: INPUT -->
+    <div class="card" id="soapInputCard">
+      <div class="card-header-line">
+        <div>
+          <div class="card-title">SOAP INPUT</div>
+          <div class="card-sub">Appointment · Surgery · Voice</div>
         </div>
-
-        <div class="toggle-row">
-          <div class="toggle-group" id="visit-type-toggle">
-            <button class="toggle-btn active" data-visit="appointment">Appointment</button>
-            <button class="toggle-btn" data-visit="surgery">Surgery</button>
-          </div>
-          <div class="toggle-group" id="surgery-mode-toggle">
-            <button class="toggle-btn active" data-mode="simple">Simple</button>
-            <button class="toggle-btn" data-mode="advanced">Advanced</button>
-          </div>
+        <div class="segmented-group">
+          <button id="visitAppointmentBtn" class="segmented active">Appointment</button>
+          <button id="visitSurgeryBtn" class="segmented">Surgery</button>
         </div>
-
-        <div class="field-row">
-          <div class="field">
-            <label>Case label</label>
-            <input type="text" id="case-label" placeholder="e.g. Bella – Spay recheck" />
-          </div>
-          <div class="field">
-            <label>Patient name</label>
-            <input type="text" id="patient-name" placeholder="e.g. Bella" />
-          </div>
-        </div>
-
-        <div class="field-row-3">
-          <div class="field">
-            <label>Species</label>
-            <select id="species">
-              <option value="">Select species</option>
-              <option>Canine</option>
-              <option>Feline</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Sex</label>
-            <select id="sex">
-              <option value="">Sex</option>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Male neutered</option>
-              <option>Female spayed</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Weight (kg)</label>
-            <input type="number" id="weight" placeholder="e.g. 6.4" step="0.01" />
-          </div>
-        </div>
-
-        <div class="field-row-3">
-          <div class="field">
-            <label>ASA (surgery)</label>
-            <select id="asa">
-              <option value="">Select ASA</option>
-              <option>I</option>
-              <option>II</option>
-              <option>III</option>
-              <option>IV</option>
-              <option>V</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Appointment preset</label>
-            <select id="appointment-preset">
-              <option value="custom">Custom / blank</option>
-              <option value="wellness">Wellness / vaccines</option>
-              <option value="gi">GI upset</option>
-              <option value="derm">Derm / otitis</option>
-              <option value="cough">Cough / URI</option>
-              <option value="lameness">Lameness</option>
-              <option value="senior">Senior / multi-issue</option>
-              <option value="recheck">Recheck</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Surgery preset</label>
-            <select id="surgery-preset">
-              <option value="custom">Custom surgery</option>
-              <option value="canine-spay">Canine spay</option>
-              <option value="canine-neuter">Canine neuter</option>
-              <option value="feline-spay">Feline spay</option>
-              <option value="feline-neuter">Feline neuter</option>
-              <option value="dental-rads">Dental – COHAT with rads</option>
-              <option value="dental-no-rads">Dental – COHAT (no rads)</option>
-              <option value="mass-removal">Mass removal</option>
-              <option value="cystotomy">Cystotomy</option>
-              <option value="pyometra">Pyometra spay</option>
-              <option value="exploratory">Exploratory laparotomy</option>
-              <option value="enterotomy">Enterotomy</option>
-              <option value="gastrotomy">Gastrotomy</option>
-              <option value="gastropexy">Gastropexy</option>
-              <option value="feline-block">Feline urethral unblock</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field mt-10">
-          <label><input type="checkbox" id="vaccines-today" /> Vaccines done today</label>
-          <div class="small-note">Used to auto-open vaccine SOAP style for wellness exams.</div>
-        </div>
-
-        <div class="field">
-          <label>Core notes / history</label>
-          <textarea id="core-notes" placeholder="Why are they here today? Pertinent history, owner concerns, context."></textarea>
-        </div>
-
-        <div class="field">
-          <label>PE & diagnostics (data only)</label>
-          <textarea id="pe-notes" placeholder="Include PE systems list, diagnostic results, vitals – values only, no interpretation."></textarea>
-        </div>
-
-        <div class="field">
-          <label>Assessment hints</label>
-          <textarea id="assessment-hints" placeholder="What are you worried about? Rule-outs, problem list, ASA grade for anesthesia cases."></textarea>
-        </div>
-
-        <div class="field">
-          <label>Plan & discharge hints</label>
-          <textarea id="plan-hints" placeholder="Diagnostics, treatments, procedures, recheck timing, what you told the owner, activity restrictions."></textarea>
-        </div>
-
-        <div class="field">
-          <label>Extra instructions / anything else</label>
-          <textarea id="extra-notes" placeholder="Edge cases, special instructions, inventory notes, anything weird or important."></textarea>
-        </div>
-
-        <details class="mt-10">
-          <summary class="small-note">External transcript (optional – paste Covet transcript or call log)</summary>
-          <textarea id="external-transcript" class="mt-10"></textarea>
-        </details>
-
-        <details class="mt-10">
-          <summary class="small-note">Voice notes (optional – paste transcript)</summary>
-          <textarea id="voice-notes" class="mt-10"></textarea>
-        </details>
-
-        <button id="generate-soap-btn" class="btn btn-full mt-16">Generate SOAP</button>
       </div>
 
-      <!-- TOOLBOX TAB -->
-      <div id="toolbox-tab" class="card hidden">
-        <div class="card-header">
-          <h2>Toolbox</h2>
-          <span class="sub-label">Bloodwork · Emails · Discharges</span>
+      <!-- Simple vs Advanced -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="segmented-group">
+          <button id="modeSimpleBtn" class="segmented active">Simple</button>
+          <button id="modeAdvancedBtn" class="segmented">Advanced</button>
         </div>
-        <div class="toolbox-body">
-          <div class="field-row">
-            <div class="field select-inline">
-              <label>Tool</label>
-              <select id="toolbox-tool">
-                <option value="bw-summary">Bloodwork helper – summary</option>
-                <option value="bw-expanded">Bloodwork helper – expanded + DDx</option>
-                <option value="email-client">Client email / call note</option>
-                <option value="handout">Client handout / instructions</option>
-              </select>
+        <div class="card-sub small">
+          Simple = quick notes · Advanced = full anesthesia details
+        </div>
+      </div>
+
+      <!-- TOP FIELDS -->
+      <div class="input-grid">
+        <div>
+          <div class="field-label">Case label</div>
+          <input id="caseLabel" type="text" placeholder="e.g. Bella – Spay recheck" />
+        </div>
+        <div>
+          <div class="field-label">Patient name</div>
+          <input id="patientName" type="text" placeholder="e.g. Bella" />
+        </div>
+        <div>
+          <div class="field-label">Weight (kg)</div>
+          <input id="weightKg" type="number" step="0.1" min="0" placeholder="e.g. 6.4" />
+        </div>
+      </div>
+
+      <div class="input-grid">
+        <div>
+          <div class="field-label">Species</div>
+          <select id="species">
+            <option value="">Select species</option>
+            <option value="canine">Canine</option>
+            <option value="feline">Feline</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">Sex</div>
+          <select id="sex">
+            <option value="">Sex</option>
+            <option value="female-intact">FS / intact female</option>
+            <option value="female-spayed">Spayed female</option>
+            <option value="male-intact">MI / intact male</option>
+            <option value="male-neutered">Neutered male</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">ASA (surgery)</div>
+          <select id="asa">
+            <option value="">Select ASA</option>
+            <option value="I">ASA I</option>
+            <option value="II">ASA II</option>
+            <option value="III">ASA III</option>
+            <option value="IV">ASA IV</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-grid">
+        <div>
+          <div class="field-label">Appointment preset</div>
+          <select id="appointmentPreset">
+            <option value="custom">Custom / blank</option>
+            <option value="wellness">Wellness / vaccines</option>
+            <option value="gi-upset">GI upset</option>
+            <option value="derm">Derm / otitis</option>
+            <option value="cough-uri">Cough / URI</option>
+            <option value="lameness">Lameness</option>
+            <option value="senior">Senior / multi-issue</option>
+            <option value="recheck">Recheck</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">Surgery preset</div>
+          <select id="surgeryPreset">
+            <option value="custom">Custom surgery</option>
+            <option value="canine-spay">Canine spay</option>
+            <option value="canine-neuter">Canine neuter</option>
+            <option value="feline-spay">Feline spay</option>
+            <option value="feline-neuter">Feline neuter</option>
+            <option value="dental-rads">Dental – COHAT with rads</option>
+            <option value="dental-norads">Dental – COHAT (no rads)</option>
+            <option value="mass-removal">Mass removal</option>
+            <option value="cystotomy">Cystotomy</option>
+            <option value="pyometra-spay">Pyometra spay</option>
+            <option value="exploratory">Exploratory laparotomy</option>
+            <option value="enterotomy">Enterotomy</option>
+            <option value="gastrotomy">Gastrotomy</option>
+            <option value="gastropexy">Gastropexy</option>
+            <option value="feline-ublock">Feline urethral unblock</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">TPR / notes</div>
+          <input id="tprNotes" type="text" placeholder="TPR, BCS, key vitals / comments" />
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        <input id="vaccinesDone" type="checkbox" />
+        <label for="vaccinesDone">Vaccines done today</label>
+      </div>
+
+      <!-- Core SOAP text areas -->
+      <div class="section-caption">Core notes / history</div>
+      <textarea id="coreNotes" placeholder="Why are they here today? Pertinent history, owner concerns, context."></textarea>
+
+      <div class="section-caption">PE & diagnostics (data only)</div>
+      <textarea id="peDiagnostics" placeholder="Include PE systems list, diagnostic results, vitals – values only, no interpretation."></textarea>
+
+      <div class="section-caption">Assessment hints</div>
+      <textarea id="assessmentHints" placeholder="What are you worried about? Rule-outs, problem list, ASA grade for anesthesia cases."></textarea>
+
+      <div class="section-caption">Plan & discharge hints</div>
+      <textarea id="planHints" placeholder="Diagnostics, treatments, procedures, recheck timing, what you told the owner, activity restrictions."></textarea>
+
+      <div class="section-caption">Extra instructions / anything else</div>
+      <textarea id="extraNotes" placeholder="Edge cases, special instructions, inventory notes, anything weird or important."></textarea>
+
+      <!-- ANESTHESIA BLOCK (Simple vs Advanced) -->
+      <div class="section-caption">Anesthesia / surgery details</div>
+      <div id="anesthesia-block">
+
+        <!-- Always visible -->
+        <div data-show-when="both">
+          <div class="input-row">
+            <div>
+              <div class="field-label">IV catheter (gauge / site)</div>
+              <input id="ivCatheter" type="text" placeholder="e.g. 22g cephalic, L" />
+            </div>
+            <div>
+              <div class="field-label">Fluids</div>
+              <input id="fluids" type="text" placeholder="e.g. LRS 5 mL/kg/hr" />
             </div>
           </div>
-          <div class="field">
-            <label>Paste data or notes</label>
-            <textarea id="toolbox-input" placeholder="Paste bloodwork, notes, or prompt for what you want."></textarea>
+        </div>
+
+        <!-- SIMPLE MODE: quick premed description only -->
+        <div data-show-when="simple">
+          <div class="input-row">
+            <div>
+              <div class="field-label">Premed (brief)</div>
+              <input id="premedSimple" type="text" placeholder="e.g. Methadone + Dex (standard dose)" />
+            </div>
+            <div>
+              <div class="field-label">Induction / maintenance (brief)</div>
+              <input id="inductionSimple" type="text" placeholder="e.g. Propofol to effect, Iso / O2" />
+            </div>
           </div>
-          <button id="toolbox-generate-btn" class="btn btn-full mt-12">Generate via Toolbox</button>
+        </div>
+
+        <!-- ADVANCED MODE: full dropdown + details -->
+        <div data-show-when="advanced">
+          <div class="input-row">
+            <div>
+              <div class="field-label">Premed cocktail</div>
+              <select id="premedProtocol">
+                <option value="">Select protocol</option>
+                <option value="meth-midz-im">Methadone + Midazolam (IM)</option>
+                <option value="meth-midz-iv">Methadone + Midazolam (IV)</option>
+                <option value="meth-dex-im">Methadone + Dexmed (IM)</option>
+                <option value="meth-dex-iv">Methadone + Dexmed (IV)</option>
+                <option value="tdk-im">TDK 1:1:1:1 (IM – cats)</option>
+                <option value="tdk-iv">TDK 1:1:1:1 (IV – cats)</option>
+                <option value="hydro-dex-im">Hydromorphone + Dexmed (IM)</option>
+                <option value="hydro-dex-iv">Hydromorphone + Dexmed (IV)</option>
+                <option value="custom">Custom premed</option>
+              </select>
+            </div>
+            <div>
+              <div class="field-label">Premed notes (optional)</div>
+              <input id="premedNotes" type="text" placeholder="Adjustments, bup SR, etc." />
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div>
+              <div class="field-label">Induction</div>
+              <select id="inductionProtocol">
+                <option value="">Select induction</option>
+                <option value="propofol">Propofol (mg/kg to effect)</option>
+                <option value="alfaxan">Alfaxan (mg/kg to effect)</option>
+                <option value="ket-midaz">Ketamine + Midazolam</option>
+                <option value="mask">Mask / chamber (cats)</option>
+                <option value="rapid-sequence">Rapid sequence (critical)</option>
+                <option value="custom">Custom induction</option>
+              </select>
+            </div>
+            <div>
+              <div class="field-label">Maintenance</div>
+              <input id="maintenanceNotes" type="text" placeholder="e.g. Isoflurane / O2, standard monitoring" />
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div>
+              <div class="field-label">Intra-op meds</div>
+              <input id="intraOpMeds" type="text" placeholder="e.g. Fentanyl CRI, Lidocaine infusion, NSAID" />
+            </div>
+            <div>
+              <div class="field-label">Post-op / take-home meds</div>
+              <input id="postOpMeds" type="text" placeholder="e.g. Bup SR, NSAID, trazodone" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- GENERATE BUTTON -->
+      <button id="generateSoapBtn" class="btn-primary">Generate SOAP</button>
+      <div id="generateError" class="error-text" style="display:none;"></div>
+    </div>
+
+    <!-- RIGHT: OUTPUT -->
+    <div class="card">
+      <div class="card-header-line">
+        <div>
+          <div class="card-title">OUTPUT · AI BRAIN – SOAP</div>
+          <div class="card-sub">SOAP / Toolbox / Consult output will appear here.</div>
+        </div>
+        <div class="status-pill" id="outputStatusPill">
+          <span class="status-dot" id="outputStatusDot"></span>
+          <span id="outputStatusText">Ready</span>
         </div>
       </div>
 
-      <!-- CONSULT TAB -->
-      <div id="consult-tab" class="card hidden">
-        <div class="card-header">
-          <h2>Consult</h2>
-          <span class="sub-label">Ask Moksha SOAP anything</span>
+      <div class="output-box" id="soapOutput">
+        SOAP / Toolbox / Consult output will appear here.
+      </div>
+
+      <div class="output-buttons">
+        <button id="copyFullBtn" class="btn-secondary">Copy full SOAP / output</button>
+        <button id="copyPlanBtn" class="btn-secondary">Copy Plan + Meds + Aftercare</button>
+        <button id="sendToDesktopBtn" class="btn-ghost">Send output to desktop</button>
+      </div>
+
+      <!-- Feedback -->
+      <div class="feedback-card">
+        <div class="feedback-header">
+          <div>Feedback to Moksha SOAP</div>
+          <div class="feedback-badge">Brain tuning (local only)</div>
         </div>
-        <div class="consult-body">
-          <div class="field">
-            <label>Consult question / scenario</label>
-            <textarea id="consult-input" placeholder="Describe the case or question."></textarea>
-          </div>
-          <button id="consult-generate-btn" class="btn btn-full mt-12">Generate consult answer</button>
+        <textarea id="feedbackText" class="feedback-textarea"
+                  placeholder="What would you change in this output? Missing details, tone, formatting, etc."></textarea>
+        <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
+          <button id="applyFeedbackBtn" class="btn-secondary">Apply feedback &amp; refine</button>
+          <span class="hint-text">For your eyes only – use this to nudge future runs today.</span>
         </div>
       </div>
-    </section>
 
-    <!-- RIGHT: OUTPUT, FEEDBACK, RELAY -->
-    <section>
-      <div class="card">
-        <div class="card-header">
-          <h2>Output · AI Brain – SOAP</h2>
-          <span class="sub-label" id="output-status-pill">Ready</span>
+      <!-- Relay -->
+      <div class="relay-card">
+        <div class="relay-top-row">
+          <div>Phone ↔ Desktop relay · Uploads</div>
+          <div class="relay-badge">Clinic-only</div>
         </div>
-        <div id="output-box" class="output-box">
-          <div class="output-placeholder">SOAP / Toolbox / Consult output will appear here.</div>
+        <div class="relay-id-row">
+          <span>Relay ID</span>
+          <input id="relayIdInput" type="text" placeholder="auto" />
+          <button id="newRelayBtn" class="btn-ghost" style="padding:4px 10px;font-size:11px;">New</button>
+          <span class="hint-text">Open lohitsoap.netlify.app on phone &amp; desktop with same ID.</span>
         </div>
-
-        <div class="output-actions">
-          <button id="copy-full-btn" class="btn-secondary btn">
-            Copy full SOAP / output
-          </button>
-          <button id="copy-plan-btn" class="btn-secondary btn">
-            Copy Plan + Meds + Aftercare
-          </button>
-          <button id="send-to-desktop-btn" class="btn-ghost btn">
-            Send output to desktop
-          </button>
-          <span class="status-pill" id="output-mini-status">Ready</span>
+        <div class="relay-grid">
+          <button id="receiveTextBtn" class="btn-secondary">Receive text from phone</button>
+          <button id="receiveFilesBtn" class="btn-secondary">Receive files from phone</button>
+          <button id="uploadFromDeviceBtn" class="btn-secondary">Upload from this device</button>
         </div>
-
-        <!-- FEEDBACK -->
-        <div class="feedback-card">
-          <div class="feedback-header">
-            <span>Feedback to Moksha SOAP</span>
-            <span class="badge">Brain tuning (local only)</span>
-          </div>
-          <textarea id="feedback-text" placeholder="What would you change in this output? Missing details, tone, formatting, etc." rows="3"></textarea>
-          <button id="apply-feedback-btn" class="btn btn-full mt-10">Apply feedback &amp; refine</button>
-        </div>
-
-        <!-- RELAY -->
-        <div class="relay-card">
-          <div class="relay-header">
-            <span>Phone ↔ Desktop relay · Uploads</span>
-            <span class="pill-label">Clinic-only</span>
-          </div>
-          <div class="relay-id-row">
-            <input type="text" id="relay-id" placeholder="Relay ID (auto or custom)" />
-            <button id="new-relay-id-btn" class="btn-secondary">New</button>
-          </div>
-          <div class="relay-btn-row">
-            <button id="receive-text-btn" class="btn-secondary">Receive text from phone</button>
-            <button id="receive-files-btn" class="btn-secondary">Receive files from phone</button>
-            <button id="upload-from-device-btn" class="btn-secondary">Upload from this device</button>
-          </div>
-          <div class="small-note mt-10" id="relay-status-text">
-            No files uploaded yet. Use “Send output to desktop” on your phone, then “Receive text from phone” here.
-          </div>
+        <div id="relayStatus" class="hint-text" style="margin-top:6px;">
+          No files uploaded yet. Use “Send output to desktop” from your phone, then “Receive text” here.
         </div>
       </div>
-    </section>
+    </div>
   </div>
 </div>
 
 <script>
-  // --- tiny helpers ---
-  function $(id) { return document.getElementById(id); }
+  // -----------------------------
+  // CONFIG
+  // -----------------------------
+  const BACKEND_URL = "https://lohit-soap-app.onrender.com"; // Render backend
 
-  function setOutput(text) {
-    const box = $('output-box');
-    box.innerHTML = '';
-    const pre = document.createElement('pre');
-    pre.textContent = text;
-    box.appendChild(pre);
-  }
+  // -----------------------------
+  // SIMPLE STATE
+  // -----------------------------
+  let currentVisitType = "appointment"; // "appointment" | "surgery"
+  let currentSurgeryMode = "simple";    // "simple" | "advanced"
 
-  function setStatus(text) {
-    $('output-status-pill').textContent = text;
-    $('output-mini-status').textContent = text;
-  }
+  // -----------------------------
+  // ELEMENTS
+  // -----------------------------
+  const visitAppointmentBtn = document.getElementById("visitAppointmentBtn");
+  const visitSurgeryBtn = document.getElementById("visitSurgeryBtn");
+  const modeSimpleBtn = document.getElementById("modeSimpleBtn");
+  const modeAdvancedBtn = document.getElementById("modeAdvancedBtn");
+  const outputStatusDot = document.getElementById("outputStatusDot");
+  const outputStatusText = document.getElementById("outputStatusText");
+  const soapOutputEl = document.getElementById("soapOutput");
+  const generateBtn = document.getElementById("generateSoapBtn");
+  const generateErrorEl = document.getElementById("generateError");
 
-  async function callBackend(path, payload) {
-    try {
-      setStatus('Thinking…');
-      const res = await fetch(path, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload || {})
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      setOutput(data.text || data.output || '[No text returned]');
-      setStatus('Ready');
-    } catch (err) {
-      console.error(err);
-      setOutput('Error calling backend: ' + err.message);
-      setStatus('Error');
+  const relayIdInput = document.getElementById("relayIdInput");
+  const relayStatusEl = document.getElementById("relayStatus");
+
+  // -----------------------------
+  // VISIT TYPE
+  // -----------------------------
+  function setVisitType(type) {
+    currentVisitType = type;
+
+    if (type === "appointment") {
+      visitAppointmentBtn.classList.add("active");
+      visitSurgeryBtn.classList.remove("active");
+    } else {
+      visitSurgeryBtn.classList.add("active");
+      visitAppointmentBtn.classList.remove("active");
     }
   }
 
-  // --- tabs ---
-  function setupTabs() {
-    const tabs = document.querySelectorAll('.tab-btn');
-    tabs.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabs.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const tabId = btn.dataset.tab;
-        document.querySelectorAll('#soap-tab, #toolbox-tab, #consult-tab').forEach(sec => {
-          sec.classList.add('hidden');
-        });
-        document.getElementById(tabId).classList.remove('hidden');
-      });
-    });
-  }
+  visitAppointmentBtn.addEventListener("click", () => setVisitType("appointment"));
+  visitSurgeryBtn.addEventListener("click", () => setVisitType("surgery"));
 
-  // --- visit / surgery mode toggles ---
-  function setupToggles() {
-    const visitButtons = document.querySelectorAll('#visit-type-toggle .toggle-btn');
-    visitButtons.forEach(b => {
-      b.addEventListener('click', () => {
-        visitButtons.forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-      });
-    });
+  // -----------------------------
+  // SIMPLE / ADVANCED MODE
+  // -----------------------------
+  function applySurgeryMode(mode) {
+    currentSurgeryMode = mode;
 
-    const modeButtons = document.querySelectorAll('#surgery-mode-toggle .toggle-btn');
-    modeButtons.forEach(b => {
-      b.addEventListener('click', () => {
-        modeButtons.forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-        const isAdvanced = b.dataset.mode === 'advanced';
-        // In a later version you can show/hide detailed anesthesia fields here.
-        console.log('Surgery mode =', isAdvanced ? 'Advanced' : 'Simple');
-      });
-    });
-  }
+    if (mode === "simple") {
+      modeSimpleBtn.classList.add("active");
+      modeAdvancedBtn.classList.remove("active");
+    } else {
+      modeAdvancedBtn.classList.add("active");
+      modeSimpleBtn.classList.remove("active");
+    }
 
-  // --- SOAP generate ---
-  function setupSoapGenerate() {
-    $('generate-soap-btn').addEventListener('click', () => {
-      const visitType = document.querySelector('#visit-type-toggle .toggle-btn.active').dataset.visit;
-      const mode = document.querySelector('#surgery-mode-toggle .toggle-btn.active').dataset.mode;
-      const payload = {
-        visitType,
-        mode,
-        caseLabel: $('case-label').value,
-        patientName: $('patient-name').value,
-        species: $('species').value,
-        sex: $('sex').value,
-        weightKg: $('weight').value,
-        asa: $('asa').value,
-        appointmentPreset: $('appointment-preset').value,
-        surgeryPreset: $('surgery-preset').value,
-        vaccinesToday: $('vaccines-today').checked,
-        coreNotes: $('core-notes').value,
-        peNotes: $('pe-notes').value,
-        assessmentHints: $('assessment-hints').value,
-        planHints: $('plan-hints').value,
-        extraNotes: $('extra-notes').value,
-        externalTranscript: $('external-transcript').value,
-        voiceNotes: $('voice-notes').value
-      };
-      callBackend('/api/soap', payload);
-    });
-  }
-
-  // --- Toolbox ---
-  function setupToolbox() {
-    $('toolbox-generate-btn').addEventListener('click', () => {
-      const payload = {
-        tool: $('toolbox-tool').value,
-        text: $('toolbox-input').value
-      };
-      callBackend('/api/toolbox', payload);
-    });
-  }
-
-  // --- Consult ---
-  function setupConsult() {
-    $('consult-generate-btn').addEventListener('click', () => {
-      const payload = { question: $('consult-input').value };
-      callBackend('/api/consult', payload);
-    });
-  }
-
-  // --- Copy buttons ---
-  function setupCopyButtons() {
-    $('copy-full-btn').addEventListener('click', async () => {
-      const text = $('output-box').innerText || '';
-      try {
-        await navigator.clipboard.writeText(text);
-        $('output-mini-status').textContent = 'Copied full output';
-      } catch {
-        $('output-mini-status').textContent = 'Copy failed';
-      }
-    });
-
-    $('copy-plan-btn').addEventListener('click', async () => {
-      const text = $('output-box').innerText || '';
-      // Dumb split: in your real server output you’ll keep Plan / Meds / Aftercare group.
-      const idx = text.indexOf('Plan:');
-      const slice = idx >= 0 ? text.slice(idx) : text;
-      try {
-        await navigator.clipboard.writeText(slice);
-        $('output-mini-status').textContent = 'Copied Plan + Meds + Aftercare';
-      } catch {
-        $('output-mini-status').textContent = 'Copy failed';
+    document.querySelectorAll("#anesthesia-block [data-show-when]").forEach(el => {
+      const showWhen = el.getAttribute("data-show-when");
+      const shouldShow = showWhen === "both" || showWhen === mode;
+      if (shouldShow) {
+        el.classList.remove("hidden-by-mode");
+      } else {
+        el.classList.add("hidden-by-mode");
       }
     });
   }
 
-  // --- Feedback ---
-  function setupFeedback() {
-    $('apply-feedback-btn').addEventListener('click', () => {
-      const fb = $('feedback-text').value.trim();
-      if (!fb) return;
-      const current = $('output-box').innerText || '';
-      const combined = current + '\n\n---\nFeedback notes:\n' + fb;
-      setOutput(combined);
-      $('feedback-text').value = '';
-      $('output-mini-status').textContent = 'Feedback attached (local only)';
-    });
+  modeSimpleBtn.addEventListener("click", () => applySurgeryMode("simple"));
+  modeAdvancedBtn.addEventListener("click", () => applySurgeryMode("advanced"));
+
+  // init
+  setVisitType("appointment");
+  applySurgeryMode("simple");
+
+  // -----------------------------
+  // OUTPUT STATUS
+  // -----------------------------
+  function setOutputStatus(state) {
+    // "ready" | "busy" | "error"
+    outputStatusDot.classList.remove("busy", "error");
+    if (state === "busy") {
+      outputStatusDot.classList.add("busy");
+      outputStatusText.textContent = "Thinking…";
+    } else if (state === "error") {
+      outputStatusDot.classList.add("error");
+      outputStatusText.textContent = "Error";
+    } else {
+      outputStatusText.textContent = "Ready";
+    }
   }
 
-  // --- Relay (local-only demo; your server can replace this with real endpoints) ---
-  function setupRelay() {
-    const relayInput = $('relay-id');
+  // -----------------------------
+  // COLLECT FORM DATA
+  // -----------------------------
+  function collectFormData() {
+    const getVal = id => document.getElementById(id)?.value || "";
 
-    $('new-relay-id-btn').addEventListener('click', () => {
-      const id = 'R' + Math.random().toString(36).slice(2, 8).toUpperCase();
-      relayInput.value = id;
-      $('relay-status-text').textContent = 'New relay ID created. Use this on your phone and desktop.';
-    });
-
-    // “Send output to desktop” simply stores in localStorage under relay ID
-    $('send-to-desktop-btn').addEventListener('click', () => {
-      const id = relayInput.value.trim() || 'LOCAL';
-      const text = $('output-box').innerText || '';
-      if (!text) {
-        $('output-mini-status').textContent = 'No output to send';
-        return;
+    return {
+      meta: {
+        visitType: currentVisitType,
+        surgeryMode: currentSurgeryMode,
+        version: "v1.7.6",
+        appName: "Moksha SOAP"
+      },
+      signalment: {
+        caseLabel: getVal("caseLabel"),
+        patientName: getVal("patientName"),
+        weightKg: getVal("weightKg"),
+        species: getVal("species"),
+        sex: getVal("sex"),
+        asa: getVal("asa")
+      },
+      presets: {
+        appointmentPreset: getVal("appointmentPreset"),
+        surgeryPreset: getVal("surgeryPreset")
+      },
+      tprNotes: getVal("tprNotes"),
+      vaccinesDoneToday: document.getElementById("vaccinesDone").checked,
+      notes: {
+        coreNotes: getVal("coreNotes"),
+        peDiagnostics: getVal("peDiagnostics"),
+        assessmentHints: getVal("assessmentHints"),
+        planHints: getVal("planHints"),
+        extraNotes: getVal("extraNotes")
+      },
+      anesthesia: {
+        ivCatheter: getVal("ivCatheter"),
+        fluids: getVal("fluids"),
+        mode: currentSurgeryMode,
+        premedSimple: getVal("premedSimple"),
+        inductionSimple: getVal("inductionSimple"),
+        premedProtocol: getVal("premedProtocol"),
+        premedNotes: getVal("premedNotes"),
+        inductionProtocol: getVal("inductionProtocol"),
+        maintenanceNotes: getVal("maintenanceNotes"),
+        intraOpMeds: getVal("intraOpMeds"),
+        postOpMeds: getVal("postOpMeds")
       }
-      localStorage.setItem('mokshaRelay:' + id, text);
-      $('relay-status-text').textContent = 'Output stored under relay ID ' + id + ' (local demo).';
-      $('output-mini-status').textContent = 'Sent to relay (local demo)';
-    });
-
-    $('receive-text-btn').addEventListener('click', () => {
-      const id = relayInput.value.trim() || 'LOCAL';
-      const text = localStorage.getItem('mokshaRelay:' + id);
-      if (!text) {
-        $('relay-status-text').textContent = 'No text stored for relay ID ' + id + '.';
-        return;
-      }
-      setOutput(text);
-      $('relay-status-text').textContent = 'Received text from relay ID ' + id + '.';
-    });
-
-    $('receive-files-btn').addEventListener('click', () => {
-      $('relay-status-text').textContent = 'File relay not wired in this demo. Use local uploads.';
-    });
-
-    $('upload-from-device-btn').addEventListener('click', () => {
-      $('relay-status-text').textContent = 'For now, attach files directly in the SOAP app or use local tools.';
-    });
+    };
   }
 
-  // INIT
-  document.addEventListener('DOMContentLoaded', () => {
-    setupTabs();
-    setupToggles();
-    setupSoapGenerate();
-    setupToolbox();
-    setupConsult();
-    setupCopyButtons();
-    setupFeedback();
-    setupRelay();
+  // -----------------------------
+  // BACKEND CALL
+  // -----------------------------
+  async function callMokshaSoap(payload) {
+    const res = await fetch(`${BACKEND_URL}/api/soap`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.text || "No text returned from backend.";
+  }
+
+  // -----------------------------
+  // GENERATE SOAP
+  // -----------------------------
+  generateBtn.addEventListener("click", async () => {
+    generateErrorEl.style.display = "none";
+    generateBtn.disabled = true;
+    setOutputStatus("busy");
+    soapOutputEl.textContent = "Generating SOAP…";
+
+    try {
+      const payload = collectFormData();
+      const text = await callMokshaSoap(payload);
+      soapOutputEl.textContent = text;
+      setOutputStatus("ready");
+    } catch (err) {
+      console.error(err);
+      soapOutputEl.textContent = `Error calling backend: ${err.message}`;
+      generateErrorEl.textContent = `Error calling backend: ${err.message}`;
+      generateErrorEl.style.display = "block";
+      setOutputStatus("error");
+    } finally {
+      generateBtn.disabled = false;
+    }
   });
+
+  // -----------------------------
+  // COPY BUTTONS
+  // -----------------------------
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      console.error("Clipboard error", e);
+    }
+  }
+
+  document.getElementById("copyFullBtn").addEventListener("click", () => {
+    const text = soapOutputEl.textContent || "";
+    copyToClipboard(text);
+  });
+
+  document.getElementById("copyPlanBtn").addEventListener("click", () => {
+    // Minimal stub – backend should ideally give explicit Plan / Meds / Aftercare sections.
+    const text = soapOutputEl.textContent || "";
+    copyToClipboard(text);
+  });
+
+  // -----------------------------
+  // FEEDBACK (local only – no backend)
+  // -----------------------------
+  document.getElementById("applyFeedbackBtn").addEventListener("click", () => {
+    const fb = document.getElementById("feedbackText").value.trim();
+    if (!fb) return;
+
+    const current = soapOutputEl.textContent || "";
+    const enhanced = current +
+      "\n\n---\n[Local feedback note: " + fb + "]";
+    soapOutputEl.textContent = enhanced;
+    document.getElementById("feedbackText").value = "";
+  });
+
+  // -----------------------------
+  // SIMPLE RELAY STUB (text only)
+  // -----------------------------
+  function getRelayId() {
+    const val = relayIdInput.value.trim();
+    if (val) return val;
+    // derive a default from localStorage
+    let stored = window.localStorage.getItem("mokshaRelayId");
+    if (!stored) {
+      stored = Math.random().toString(36).slice(2, 7);
+      window.localStorage.setItem("mokshaRelayId", stored);
+    }
+    relayIdInput.value = stored;
+    return stored;
+  }
+
+  document.getElementById("newRelayBtn").addEventListener("click", () => {
+    const fresh = Math.random().toString(36).slice(2, 7);
+    relayIdInput.value = fresh;
+    window.localStorage.setItem("mokshaRelayId", fresh);
+    relayStatusEl.textContent = `New Relay ID created: ${fresh}. Use same ID on phone & desktop.`;
+  });
+
+  document.getElementById("sendToDesktopBtn").addEventListener("click", () => {
+    const id = getRelayId();
+    const text = soapOutputEl.textContent || "";
+    const key = `mokshaRelayText_${id}`;
+    window.localStorage.setItem(key, text);
+    relayStatusEl.textContent = `Output stored locally for Relay ID ${id}. Open this app on desktop with same ID, then press “Receive text from phone”.`;
+  });
+
+  document.getElementById("receiveTextBtn").addEventListener("click", () => {
+    const id = getRelayId();
+    const key = `mokshaRelayText_${id}`;
+    const text = window.localStorage.getItem(key);
+    if (text) {
+      soapOutputEl.textContent = text;
+      relayStatusEl.textContent = `Received text for Relay ID ${id} (local-only test relay).`;
+    } else {
+      relayStatusEl.textContent = `No text stored yet for Relay ID ${id}. Try sending output from your phone first.`;
+    }
+  });
+
+  document.getElementById("receiveFilesBtn").addEventListener("click", () => {
+    relayStatusEl.textContent = "File relay is not wired yet in this stub. Use uploads directly on each device for now.";
+  });
+
+  document.getElementById("uploadFromDeviceBtn").addEventListener("click", () => {
+    relayStatusEl.textContent = "Upload from this device: attach screenshots / docs via your standard browser upload flow.";
+    // You can wire an <input type="file"> here later if you want.
+  });
+
+  // Auto restore relay ID on load
+  (function initRelayId() {
+    const stored = window.localStorage.getItem("mokshaRelayId");
+    if (stored && !relayIdInput.value) {
+      relayIdInput.value = stored;
+    }
+  })();
 </script>
 </body>
 </html>
