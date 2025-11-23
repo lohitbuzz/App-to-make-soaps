@@ -1,214 +1,129 @@
-const OpenAI = require("openai");
+// /netlify/functions/soap.js
+// Moksha SOAP — Netlify Function
+// Assistant ID: asst_4sHUgx1lQ7Ob4KJtgkKQvsTb
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+import { OpenAI } from "openai";
 
-const assistantId = process.env.ASSISTANT_ID;
-const allowedOrigin = process.env.ALLOWED_ORIGIN || "*";
+export const config = {
+  path: "/api/soap",
+};
 
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST,OPTIONS"
-  };
-}
-
-exports.handler = async function (event, context) {
-  if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 200,
-      headers: corsHeaders(),
-      body: ""
-    };
-  }
-
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: corsHeaders(),
-      body: "Method not allowed"
-    };
-  }
-
+export default async (req) => {
   try {
-    const body = JSON.parse(event.body || "{}");
-    const {
-      mode,          // "soap" | "toolbox" | "consult"
-      soapInput,
-      toolboxInput,
-      consultInput,
-      visionNotes,
-      voiceNotes
-    } = body;
-
-    const userPrompt = buildUserPrompt({
-      mode,
-      soapInput,
-      toolboxInput,
-      consultInput,
-      visionNotes,
-      voiceNotes
-    });
-
-    // Use Assistants API so you get your full “brain” instructions
-    const thread = await client.beta.threads.create({
-      messages: [
-        {
-          role: "user",
-          content: userPrompt
-        }
-      ]
-    });
-
-    const run = await client.beta.threads.runs.createAndPoll(thread.id, {
-      assistant_id: assistantId
-    });
-
-    let text = "";
-
-    if (run.status === "completed") {
-      const messages = await client.beta.threads.messages.list(thread.id, {
-        limit: 1
-      });
-
-      const msg = messages.data[0];
-      text = msg.content
-        .filter((p) => p.type === "text")
-        .map((p) => p.text.value)
-        .join("\n\n");
-    } else {
-      text = `Run status: ${run.status}`;
+    if (req.httpMethod !== "POST") {
+      return {
+        statusCode: 405,
+        body: "Method Not Allowed",
+      };
     }
 
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const body = JSON.parse(req.body);
+
+    const {
+      mode,
+      caseType,
+      appointment,
+      surgery,
+      images = [],
+      transcript = "",
+    } = body;
+
+    // Build system prompt
+    const systemPrompt = `
+You are the Moksha SOAP clinical engine for a small-animal veterinary clinic.
+You strictly follow these rules:
+
+• ALWAYS output a full Avimark-compatible SOAP.
+• NO blank lines inside categories; ONE blank line between Plan sections.
+• Objective PE uses Lohit’s full template.
+• Bloodwork in Objective is DATA ONLY. Interpretation ONLY in Assessment.
+• All surgery SOAPs follow the clinic’s surgical Plan category order.
+• Include concentrations in brackets for all drugs in Plan.
+• Never invent data unless "Help Me" mode is selected. In Strict mode, output "__" for missing.
+• If transcript is provided and “useTranscriptForSoap”=true, absorb its content exactly.
+
+CASE TYPE = ${caseType.toUpperCase()}
+MODE = ${mode}
+    `;
+
+    // Assemble user content (appointment or surgery)
+    let userPrompt = "";
+
+    if (caseType === "appointment") {
+      userPrompt = `
+APPOINTMENT INPUTS:
+Reason: ${appointment.reason || ""}
+History: ${appointment.history || ""}
+PE: ${appointment.pe || ""}
+Diagnostics: ${appointment.diagnostics || ""}
+Assessment Hints: ${appointment.assessmentHints || ""}
+Plan Hints: ${appointment.planHints || ""}
+Meds Hints: ${appointment.medsDispensedHints || ""}
+
+Transcript (if any):
+${transcript}
+      `;
+    } else {
+      userPrompt = `
+SURGERY INPUTS:
+Reason: ${surgery.reason || ""}
+History: ${surgery.history || ""}
+PE: ${surgery.pe || ""}
+Diagnostics: ${surgery.diagnostics || ""}
+Procedure Notes: ${surgery.procedureNotes || ""}
+Recovery Notes: ${surgery.recovery || ""}
+Meds Dispensed Hints: ${surgery.medsDispensedHints || ""}
+
+Transcript (if any):
+${transcript}
+      `;
+    }
+
+    // Build message list
+    let messages = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ];
+
+    // Attach images/files to messages
+    for (const file of images) {
+      messages.push({
+        role: "user",
+        content: [
+          { type: "input_text", text: "Attached file for vision analysis" },
+          {
+            type: "input_image",
+            image_url: file.data,
+          },
+        ],
+      });
+    }
+
+    // Call Assistant
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1",
+      messages,
+      max_tokens: 5000,
+      temperature: 0.4,
+    });
+
+    const outputText =
+      completion.choices?.[0]?.message?.content?.trim() ||
+      "Error: no content returned.";
+
     return {
       statusCode: 200,
-      headers: corsHeaders(),
-      body: JSON.stringify({ ok: true, output: text })
+      body: JSON.stringify({ text: outputText }),
     };
   } catch (err) {
-    console.error("SOAP function error:", err);
+    console.error("SOAP ERROR:", err);
     return {
       statusCode: 500,
-      headers: corsHeaders(),
-      body: JSON.stringify({ ok: false, error: err.message })
+      body: JSON.stringify({ error: err.message }),
     };
   }
 };
-
-function buildUserPrompt({
-  mode,
-  soapInput = {},
-  toolboxInput = {},
-  consultInput = {},
-  visionNotes,
-  voiceNotes
-}) {
-  if (mode === "toolbox") {
-    return buildToolboxPrompt(toolboxInput);
-  }
-
-  if (mode === "consult") {
-    return buildConsultPrompt(consultInput);
-  }
-
-  // default = SOAP
-  return buildSoapPrompt(soapInput, visionNotes, voiceNotes);
-}
-
-function buildSoapPrompt(input = {}, visionNotes, voiceNotes) {
-  const {
-    visitType,
-    surgeryMode,
-    caseLabel,
-    patientName,
-    weightKg,
-    species,
-    sex,
-    asa,
-    tprNotes,
-    surgeryPreset,
-    vaccinesDoneToday,
-    coreNotes,
-    peDiagnostics,
-    assessmentHints,
-    planHints,
-    extraInstructions
-  } = input;
-
-  const lines = [];
-
-  lines.push("TASK: Generate a full veterinary SOAP note + discharge for a small animal clinic.");
-  lines.push(
-    "Apply all Moksha SOAP clinic rules: Avimark-compatible S/O/A/P, detailed PE list in Objective, data-only lab summaries there, interpretation in Assessment, fixed Plan category order, anesthesia/dental rules, drug concentrations in brackets, etc."
-  );
-
-  lines.push("");
-  lines.push("=== CASE INFO ===");
-  lines.push(`Visit type: ${visitType || "not specified"}`);
-  if (surgeryMode) lines.push(`Surgery mode: ${surgeryMode}`);
-  if (caseLabel) lines.push(`Case label: ${caseLabel}`);
-  if (patientName) lines.push(`Patient: ${patientName}`);
-  if (weightKg) lines.push(`Weight (kg): ${weightKg}`);
-  if (species) lines.push(`Species: ${species}`);
-  if (sex) lines.push(`Sex: ${sex}`);
-  if (asa) lines.push(`ASA (surgery): ${asa}`);
-  if (tprNotes) lines.push(`TPR / vitals / BCS notes: ${tprNotes}`);
-  if (surgeryPreset) lines.push(`Surgery preset: ${surgeryPreset}`);
-  if (vaccinesDoneToday) lines.push("Vaccines were done at this visit.");
-
-  if (coreNotes) lines.push(`Core notes / history: ${coreNotes}`);
-  if (peDiagnostics) lines.push(`PE & diagnostics (data only): ${peDiagnostics}`);
-  if (assessmentHints) lines.push(`Assessment hints: ${assessmentHints}`);
-  if (planHints) lines.push(`Plan / discharge hints: ${planHints}`);
-  if (extraInstructions) lines.push(`Extra instructions: ${extraInstructions}`);
-
-  if (voiceNotes) {
-    lines.push("");
-    lines.push(`Voice notes transcript: ${voiceNotes}`);
-  }
-
-  if (visionNotes) {
-    lines.push("");
-    lines.push(`Vision / attachments summary: ${visionNotes}`);
-  }
-
-  lines.push("");
-  lines.push(
-    "Output MUST be Avimark-compatible text with headings: Subjective, Objective, Assessment, Plan, Medications Dispensed, Aftercare. No extra blank lines except between Plan categories."
-  );
-
-  return lines.join("\n");
-}
-
-function buildToolboxPrompt(input = {}) {
-  const { toolMode, rawText } = input;
-
-  const modeLine =
-    toolMode ||
-    "auto-detect between bloodwork summary vs client email vs small doc explanation.";
-
-  return [
-    "TASK: Toolbox Lite helper.",
-    `Mode: ${modeLine}`,
-    "",
-    "If it looks like bloodwork: give short and standard summaries plus 3–5 likely differentials, in vet-facing language, then a client-friendly explanation.",
-    "If it looks like a client email or small doc: draft a clear, warm, professional message appropriate for a small animal vet clinic in Ontario.",
-    "",
-    "Source text:",
-    rawText || "(none)"
-  ].join("\n");
-}
-
-function buildConsultPrompt(input = {}) {
-  const { question } = input;
-
-  return [
-    "TASK: Free-form consult for a small animal veterinarian (Ontario).",
-    "Give a concise, practical answer first, then a bit more detail and options if helpful.",
-    "",
-    "Question / context:",
-    question || "(none)"
-  ].join("\n");
-}
