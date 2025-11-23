@@ -1,192 +1,140 @@
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const ASSISTANT_ID = process.env.ASSISTANT_ID;
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
+import OpenAI from "openai";
 
-function corsHeaders(origin) {
-  const allowed =
-    ALLOWED_ORIGIN === "*" ? origin || "*" : ALLOWED_ORIGIN;
-  return {
-    "Access-Control-Allow-Origin": allowed,
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST,OPTIONS",
-  };
-}
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-async function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function runAssistant(prompt) {
-  if (!OPENAI_API_KEY || !ASSISTANT_ID) {
-    throw new Error("Missing OPENAI_API_KEY or ASSISTANT_ID");
-  }
-
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${OPENAI_API_KEY}`,
-    "OpenAI-Beta": "assistants=v1",
-  };
-
-  const threadRes = await fetch("https://api.openai.com/v1/threads", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  if (!threadRes.ok) {
-    throw new Error(await threadRes.text());
-  }
-  const thread = await threadRes.json();
-
-  const runRes = await fetch(
-    `https://api.openai.com/v1/threads/${thread.id}/runs`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ assistant_id: ASSISTANT_ID }),
-    },
-  );
-  if (!runRes.ok) throw new Error(await runRes.text());
-  let run = await runRes.json();
-
-  while (
-    run.status === "queued" ||
-    run.status === "in_progress" ||
-    run.status === "cancelling"
-  ) {
-    await sleep(1000);
-    const check = await fetch(
-      `https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`,
-      { headers },
-    );
-    if (!check.ok) throw new Error(await check.text());
-    run = await check.json();
-  }
-
-  if (run.status !== "completed") {
-    throw new Error(`Run failed: ${run.status}`);
-  }
-
-  const msgRes = await fetch(
-    `https://api.openai.com/v1/threads/${thread.id}/messages?limit=1`,
-    { headers },
-  );
-  if (!msgRes.ok) throw new Error(await msgRes.text());
-  const messages = await msgRes.json();
-  const first = messages.data?.[0];
-  return first?.content?.[0]?.text?.value || "";
-}
-
-exports.handler = async (event) => {
-  const origin = event.headers.origin || "*";
-  const baseHeaders = corsHeaders(origin);
-
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers: baseHeaders, body: "" };
-  }
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: baseHeaders,
-      body: "Method not allowed",
-    };
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const body = JSON.parse(event.body || "{}");
-    const { action, tool, text, visionSummary, existingOutput, feedback } =
-      body;
+    const body = req.body || {};
+    const { mode } = body;
 
-    let prompt = "";
-
-    if (action === "generate") {
-      if (tool === "bloodwork") {
-        prompt = `
-You are the Moksha Bloodwork Helper Lite.
-Make a concise vet-level summary (and short assessment) of this bloodwork and any vision data.
-Do NOT create a full SOAP; just output a short/standard explanation a vet can paste.
-
-Text / labs:
-${text || "(none)"}
-
-Vision summary:
-${visionSummary || "No images."}
-`;
-      } else if (tool === "email") {
-        prompt = `
-You are helping write a client-facing email in small animal practice.
-Use clear, friendly language. Keep it suitable to paste into an email.
-
-Context:
-${text || "(none)"}
-
-Vision summary (labs, rads, etc.):
-${visionSummary || "No images."}
-`;
-      } else if (tool === "weight") {
-        prompt = `
-You are generating a weight consult / weight maintenance handout following the clinic's Wonton template style.
-Create a client handout that the vet can paste into Avimark.
-
-Clinical notes:
-${text || "(none)"}
-
-Vision summary (if any body weight logs were in images):
-${visionSummary || "No images."}
-`;
-      } else if (tool === "handout") {
-        prompt = `
-You turn dense vet text into a clean, bullet-point client handout.
-Use headings, short paragraphs, and clear language.
-
-Source text:
-${text || "(none)"}
-
-Vision summary:
-${visionSummary || "No images."}
-`;
-      } else {
-        // free-form
-        prompt = `
-You are a flexible vet toolbox helper. Respond to the following request in a way that a small animal vet clinic can paste into Avimark.
-
-User request:
-${text || "(none)"}
-
-Vision summary:
-${visionSummary || "No images."}
-`;
-      }
-    } else if (action === "refine") {
-      prompt = `
-Refine the following toolbox output according to the user's feedback.
-Keep the intent and clinical content the same, but improve clarity and formatting.
-
-Existing output:
-${existingOutput || "(none)"}
-
-Feedback:
-${feedback || "(none)"}
-`;
-    } else {
-      throw new Error("Unknown action");
+    if (mode === "transform") {
+      const { transformType, originalSoap } = body;
+      const text = await runTransform(transformType, originalSoap);
+      return res.json({ text });
     }
 
-    const result = await runAssistant(prompt);
+    if (mode === "toolbox-refine") {
+      const { original, feedback, toolboxMode } = body;
+      const text = await runToolboxRefine(original, feedback, toolboxMode);
+      return res.json({ text });
+    }
 
-    return {
-      statusCode: 200,
-      headers: baseHeaders,
-      body: JSON.stringify({ output: result }),
-    };
+    if (mode === "toolbox-main") {
+      const { toolboxMode, text, files = [] } = body;
+      const out = await runToolboxMain(toolboxMode, text, files);
+      return res.json({ text: out });
+    }
+
+    return res.status(400).json({ error: "Invalid toolbox mode" });
   } catch (err) {
-    console.error("Toolbox function error:", err);
-    return {
-      statusCode: 500,
-      headers: baseHeaders,
-      body: `Toolbox error: ${err.message}`,
-    };
+    console.error("Toolbox error:", err);
+    return res.status(500).json({ error: err.message || "Toolbox error" });
   }
-};
+}
+
+async function runTransform(transformType, originalSoap) {
+  const sys = `
+You are a post-processor for veterinary SOAP notes. Keep all medical content accurate.
+Transform according to the requested mode (email, summary, client handout, planOnly, rephrase).
+Do NOT invent new findings; just reformat and adjust tone/length as requested.
+`;
+
+  const user = `
+Transform this SOAP according to mode="${transformType}":
+
+${originalSoap}
+`;
+
+  const resp = await client.responses.create({
+    model: "gpt-4.1-mini",
+    input: [
+      { role: "system", content: [{ type: "text", text: sys }] },
+      { role: "user", content: [{ type: "text", text: user }] },
+    ],
+    metadata: { tool: "toolbox-transform", transformType },
+  });
+
+  return (
+    resp.output?.[0]?.content?.[0]?.text?.value ||
+    resp.output_text ||
+    ""
+  );
+}
+
+async function runToolboxMain(toolboxMode, text, files) {
+  const sys = `
+You are the Moksha SOAP Toolbox assistant.
+You can:
+- Summarize bloodwork (Bloodwork Summary mode).
+- Interpret labwork (Lab Interpretation).
+- Draft client emails (Email Helper).
+- Create weight consult handouts (Weight Tool).
+- Handle free-form requests.
+
+Use concise, Avimark-friendly formatting when appropriate.
+Do NOT mention Vision or files by name; treat them as context only.
+`;
+
+  const user = `
+Toolbox mode: ${toolboxMode}
+User text: ${text || "(none)"}
+Attached files (names only): ${files.map((f) => f.name).join(", ")}
+
+If mode is:
+- "bloodwork": summarize abnormalities + brief assessment + plan.
+- "lab": interpret in more depth but still concise.
+- "email": draft a client-facing email for this medical situation.
+- "weight": create a weight consult/maintenance handout matching the clinic's style.
+- "free": do exactly what the user asked in a clinic-appropriate way.
+`;
+
+  const resp = await client.responses.create({
+    model: "gpt-4.1-mini",
+    input: [
+      { role: "system", content: [{ type: "text", text: sys }] },
+      { role: "user", content: [{ type: "text", text: user }] },
+    ],
+    metadata: { tool: "toolbox-main", toolboxMode },
+  });
+
+  return (
+    resp.output?.[0]?.content?.[0]?.text?.value ||
+    resp.output_text ||
+    ""
+  );
+}
+
+async function runToolboxRefine(original, feedback, toolboxMode) {
+  const sys = `
+You are refining an existing Toolbox output for a veterinary clinic.
+Preserve medical accuracy; adjust tone/length/structure according to feedback.
+`;
+
+  const user = `
+Toolbox mode: ${toolboxMode}
+Original output:
+${original}
+
+Refinement request:
+${feedback}
+`;
+
+  const resp = await client.responses.create({
+    model: "gpt-4.1-mini",
+    input: [
+      { role: "system", content: [{ type: "text", text: sys }] },
+      { role: "user", content: [{ type: "text", text: user }] },
+    ],
+    metadata: { tool: "toolbox-refine", toolboxMode },
+  });
+
+  return (
+    resp.output?.[0]?.content?.[0]?.text?.value ||
+    resp.output_text ||
+    ""
+  );
+}
