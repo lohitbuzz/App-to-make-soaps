@@ -1,75 +1,50 @@
-// /netlify/functions/feedback.js
-// Moksha SOAP — Refinement Engine
-// Assistant ID: asst_4sHUgx1lQ7Ob4KJtgkKQvsTb
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
 
-import { OpenAI } from "openai";
+function corsHeaders(origin) {
+  const allowed =
+    ALLOWED_ORIGIN === "*" ? origin || "*" : ALLOWED_ORIGIN;
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
+  };
+}
 
-export const config = {
-  path: "/api/feedback",
-};
+exports.handler = async (event) => {
+  const origin = event.headers.origin || "*";
+  const baseHeaders = corsHeaders(origin);
 
-export default async (req) => {
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: baseHeaders, body: "" };
+  }
+
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      headers: baseHeaders,
+      body: "Method not allowed",
+    };
+  }
+
   try {
-    if (req.httpMethod !== "POST") {
-      return { statusCode: 405, body: "Method Not Allowed" };
-    }
+    const body = JSON.parse(event.body || "{}");
+    const message = body.message || "";
+    const contact = body.contact || "";
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const body = JSON.parse(req.body);
-    const { text, request, context } = body;
-
-    if (!text || !request) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Missing text or request." }),
-      };
-    }
-
-    // System prompt with clinic rules
-    const systemPrompt = `
-You are the Moksha SOAP Refinement Engine for a veterinary clinic.
-
-Rules:
-• Keep all medical facts EXACTLY the same.
-• Improve clarity, flow, formatting, grammar.
-• Maintain Avimark-safe format (no emojis, no special bullets).
-• No hallucination. No adding missing vitals or data.
-• If context = "soap" → keep SOAP structure exactly (S/O/A/P).
-• If context = "toolbox" → keep short, clinical, vet-friendly.
-• If context = "consult" → concise vet-to-vet tone.
-    `;
-
-    const messages = [
-      { role: "system", content: systemPrompt },
-      {
-        role: "user",
-        content: `CONTEXT: ${context}\n\nREQUEST: ${request}\n\nTEXT TO REFINE:\n${text}`,
-      },
-    ];
-
-    const result = await openai.chat.completions.create({
-      model: "gpt-4.1",
-      messages,
-      max_tokens: 4000,
-      temperature: 0.2,
-    });
-
-    const output =
-      result.choices?.[0]?.message?.content?.trim() ||
-      "Refinement produced no output.";
+    // For now just log to Netlify; later we can email or store.
+    console.log("Moksha SOAP feedback:", { message, contact });
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ text: output }),
+      headers: baseHeaders,
+      body: JSON.stringify({ ok: true }),
     };
   } catch (err) {
-    console.error("FEEDBACK ERROR:", err);
+    console.error("Feedback function error:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
+      headers: baseHeaders,
+      body: `Feedback error: ${err.message}`,
     };
   }
 };
