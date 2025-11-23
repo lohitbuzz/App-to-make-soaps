@@ -1,50 +1,16 @@
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
+// Basic placeholder: currently just echoes the payload.
+// A real cross-device relay would need persistent storage (KV / DB).
 
-function corsHeaders(origin) {
-  const allowed =
-    ALLOWED_ORIGIN === "*" ? origin || "*" : ALLOWED_ORIGIN;
-  return {
-    "Access-Control-Allow-Origin": allowed,
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST,OPTIONS",
-  };
+export default async function handler(req, res) {
+  if (req.method === "POST") {
+    const body = req.body || {};
+    console.log("Relay POST:", body);
+    return res.json({ ok: true, echoed: body });
+  }
+
+  if (req.method === "GET") {
+    return res.json({ ok: true, message: "Relay endpoint placeholder." });
+  }
+
+  return res.status(405).json({ error: "Method not allowed" });
 }
-
-exports.handler = async (event) => {
-  const origin = event.headers.origin || "*";
-  const baseHeaders = corsHeaders(origin);
-
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers: baseHeaders, body: "" };
-  }
-
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: baseHeaders,
-      body: "Method not allowed",
-    };
-  }
-
-  try {
-    const body = JSON.parse(event.body || "{}");
-    const { text } = body;
-
-    // For now just echo back; future versions can store per-session.
-    return {
-      statusCode: 200,
-      headers: baseHeaders,
-      body: JSON.stringify({
-        received: text || "",
-        note: "Relay placeholder – echo only.",
-      }),
-    };
-  } catch (err) {
-    console.error("Relay function error:", err);
-    return {
-      statusCode: 500,
-      headers: baseHeaders,
-      body: `Relay error: ${err.message}`,
-    };
-  }
-};
