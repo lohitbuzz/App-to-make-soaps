@@ -16,7 +16,8 @@ async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function runAssistant(prompt) {
+// Call OpenAI Assistants API (v1) for SOAP
+async function runAssistant(userPrompt) {
   if (!OPENAI_API_KEY || !ASSISTANT_ID) {
     throw new Error("Missing OPENAI_API_KEY or ASSISTANT_ID");
   }
@@ -27,19 +28,27 @@ async function runAssistant(prompt) {
     "OpenAI-Beta": "assistants=v1",
   };
 
+  // 1) Create thread with messages
   const threadRes = await fetch("https://api.openai.com/v1/threads", {
     method: "POST",
     headers,
     body: JSON.stringify({
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        {
+          role: "user",
+          content: userPrompt,
+        },
+      ],
     }),
   });
 
   if (!threadRes.ok) {
-    throw new Error(await threadRes.text());
+    const text = await threadRes.text();
+    throw new Error(`Thread error: ${text}`);
   }
   const thread = await threadRes.json();
 
+  // 2) Run assistant
   const runRes = await fetch(
     `https://api.openai.com/v1/threads/${thread.id}/runs`,
     {
@@ -48,35 +57,58 @@ async function runAssistant(prompt) {
       body: JSON.stringify({ assistant_id: ASSISTANT_ID }),
     },
   );
-  if (!runRes.ok) throw new Error(await runRes.text());
-  let run = await runRes.json();
 
+  if (!runRes.ok) {
+    const text = await runRes.text();
+    throw new Error(`Run error: ${text}`);
+  }
+  const run = await runRes.json();
+
+  // 3) Poll until completed
+  let completedRun = run;
   while (
-    run.status === "queued" ||
-    run.status === "in_progress" ||
-    run.status === "cancelling"
+    completedRun.status === "queued" ||
+    completedRun.status === "in_progress" ||
+    completedRun.status === "cancelling"
   ) {
     await sleep(1000);
-    const check = await fetch(
-      `https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`,
+    const checkRes = await fetch(
+      `https://api.openai.com/v1/threads/${thread.id}/runs/${completedRun.id}`,
       { headers },
     );
-    if (!check.ok) throw new Error(await check.text());
-    run = await check.json();
+    if (!checkRes.ok) {
+      const text = await checkRes.text();
+      throw new Error(`Run check error: ${text}`);
+    }
+    completedRun = await checkRes.json();
   }
 
-  if (run.status !== "completed") {
-    throw new Error(`Run failed: ${run.status}`);
+  if (completedRun.status !== "completed") {
+    throw new Error(`Run failed with status: ${completedRun.status}`);
   }
 
+  // 4) Fetch latest message
   const msgRes = await fetch(
     `https://api.openai.com/v1/threads/${thread.id}/messages?limit=1`,
     { headers },
   );
-  if (!msgRes.ok) throw new Error(await msgRes.text());
-  const messages = await msgRes.json();
-  const first = messages.data?.[0];
-  return first?.content?.[0]?.text?.value || "";
+
+  if (!msgRes.ok) {
+    const text = await msgRes.text();
+    throw new Error(`Message fetch error: ${text}`);
+  }
+  const msgData = await msgRes.json();
+  const first = msgData.data && msgData.data[0];
+  if (
+    !first ||
+    !first.content ||
+    !first.content[0] ||
+    !first.content[0].text
+  ) {
+    throw new Error("No text content from assistant");
+  }
+
+  return first.content[0].text.value;
 }
 
 exports.handler = async (event) => {
@@ -86,6 +118,7 @@ exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 200, headers: baseHeaders, body: "" };
   }
+
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -96,97 +129,108 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const { action, tool, text, visionSummary, existingOutput, feedback } =
+    const { mode, action, fields, visionSummary, existingOutput, feedback } =
       body;
+
+    if (!mode || !action) {
+      throw new Error("Missing mode or action");
+    }
 
     let prompt = "";
 
     if (action === "generate") {
-      if (tool === "bloodwork") {
+      if (mode === "appointment") {
         prompt = `
-You are the Moksha Bloodwork Helper Lite.
-Make a concise vet-level summary (and short assessment) of this bloodwork and any vision data.
-Do NOT create a full SOAP; just output a short/standard explanation a vet can paste.
+You are the Moksha vet SOAP assistant. Generate an Avimark-friendly SOAP for an APPOINTMENT case using the clinic's rules:
+- Subjective: concise owner concerns & history.
+- Objective: full PE using system list, diagnostics as data-only (values, no interpretation).
+- Assessment: problem list + interpretations (including bloodwork) and grades of disease.
+- Plan: diagnostics, treatments, procedures, restrictions, recheck timing, aftercare.
 
-Text / labs:
-${text || "(none)"}
+Format with clear S:, O:, A:, P: headings and no extra blank lines.
 
-Vision summary:
-${visionSummary || "No images."}
+Use this information:
+Reason: ${fields?.reason || ""}
+History: ${fields?.history || ""}
+PE (data-only): ${fields?.pe || ""}
+Diagnostics (data-only): ${fields?.diagnostics || ""}
+Assessment hints: ${fields?.assessmentHints || ""}
+Plan hints: ${fields?.planHints || ""}
+Meds hints: ${fields?.medsHints || ""}
+Transcript (optional): ${fields?.transcript || ""}
+
+Vision summary (from attached photos / labs), if any:
+${visionSummary || "No vision data."}
 `;
-      } else if (tool === "email") {
+      } else if (mode === "surgery") {
         prompt = `
-You are helping write a client-facing email in small animal practice.
-Use clear, friendly language. Keep it suitable to paste into an email.
+You are the Moksha vet SURGERY SOAP assistant. Generate an Avimark-friendly surgical SOAP with these rules:
+- Subjective: presenting complaint, relevant history.
+- Objective: full PE system list and diagnostics as data-only.
+- Assessment: surgical problem list + anesthesia grade (ASA).
+- Plan: use this fixed order:
+  1. IV Catheter / Fluids
+  2. Pre-medications
+  3. Induction / Maintenance
+  4. Surgical Prep
+  5. Surgical Procedure
+  6. Intra-op Medications
+  7. Recovery
+  8. Medications Dispensed
+  9. Aftercare
 
-Context:
-${text || "(none)"}
+Strictly follow the user's preferences for Monocryl sizing and closure style. No extra blank lines inside the plan sections.
 
-Vision summary (labs, rads, etc.):
-${visionSummary || "No images."}
-`;
-      } else if (tool === "weight") {
-        prompt = `
-You are generating a weight consult / weight maintenance handout following the clinic's Wonton template style.
-Create a client handout that the vet can paste into Avimark.
+Case details:
+Reason for surgery: ${fields?.reason || ""}
+History: ${fields?.history || ""}
+Pre-op PE (data-only): ${fields?.pe || ""}
+Diagnostics (data-only): ${fields?.diagnostics || ""}
 
-Clinical notes:
-${text || "(none)"}
+Anesthesia:
+Premed: ${fields?.premed || ""}
+Induction: ${fields?.induction || ""}
+Intra-op meds: ${fields?.intraOp || ""}
+Post-op meds: ${fields?.postOp || ""}
 
-Vision summary (if any body weight logs were in images):
-${visionSummary || "No images."}
-`;
-      } else if (tool === "handout") {
-        prompt = `
-You turn dense vet text into a clean, bullet-point client handout.
-Use headings, short paragraphs, and clear language.
+Procedure notes: ${fields?.procedure || ""}
+Recovery notes: ${fields?.recovery || ""}
+Meds dispensed: ${fields?.medsDispensed || ""}
 
-Source text:
-${text || "(none)"}
-
-Vision summary:
-${visionSummary || "No images."}
+Vision summary from attachments:
+${visionSummary || "No vision data."}
 `;
       } else {
-        // free-form
-        prompt = `
-You are a flexible vet toolbox helper. Respond to the following request in a way that a small animal vet clinic can paste into Avimark.
-
-User request:
-${text || "(none)"}
-
-Vision summary:
-${visionSummary || "No images."}
-`;
+        throw new Error("Unknown mode");
       }
     } else if (action === "refine") {
       prompt = `
-Refine the following toolbox output according to the user's feedback.
-Keep the intent and clinical content the same, but improve clarity and formatting.
+You are refining an EXISTING SOAP. Keep the structure and medical accuracy, but adjust per feedback.
 
-Existing output:
+Existing SOAP:
 ${existingOutput || "(none)"}
 
-Feedback:
+User feedback:
 ${feedback || "(none)"}
-`;
+
+Return ONLY the improved SOAP text.`;
     } else {
       throw new Error("Unknown action");
     }
 
-    const result = await runAssistant(prompt);
+    const resultText = await runAssistant(prompt);
 
     return {
       statusCode: 200,
       headers: baseHeaders,
-      body: JSON.stringify({ output: result }),
+      body: JSON.stringify({ output: resultText }),
     };
   } catch (err) {
-    console.error("Toolbox function error:", err);
+    console.error("SOAP function error:", err);
     return {
       statusCode: 500,
       headers: baseHeaders,
-      body: `Toolbox error: ${err.message}`,
+      body: `SOAP error: ${err.message}`,
     };
   }
 };
