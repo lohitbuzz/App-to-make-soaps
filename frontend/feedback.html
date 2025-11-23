@@ -1,55 +1,51 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Lohit SOAP Feedback</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="app-shell">
-      <header class="app-header">
-        <div>
-          <h1>Feedback / Dev Mode</h1>
-          <p class="subtitle">
-            Quick way to send thoughts to the brain (using /api/feedback).
-          </p>
-        </div>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <title>Moksha SOAP – Feedback</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <img src="logo.PNG" alt="Moksha SOAP" class="logo" />
+    <h1 class="app-title">Moksha SOAP · Feedback</h1>
+  </header>
 
-      <main class="main-layout">
-        <section class="left-column">
-          <section class="card">
-            <h2>Input</h2>
-            <label>
-              Text
-              <textarea
-                id="fbText"
-                placeholder="Paste an output or write what you want to improve..."
-              ></textarea>
-            </label>
+  <section class="card">
+    <h2>Help improve this app</h2>
+    <p class="hint-text">
+      Describe what worked well, what broke, and what you’d like added.
+    </p>
 
-            <label>
-              Request
-              <textarea
-                id="fbRequest"
-                placeholder="e.g. 'Shorter', 'More formal', 'Better client-friendly wording'"
-              ></textarea>
-            </label>
+    <textarea
+      id="feedbackText"
+      class="feedback-box"
+      placeholder="Write your feedback here..."
+    ></textarea>
 
-            <button id="fbSendBtn" class="primary-btn">Send</button>
-          </section>
-        </section>
+    <input
+      id="feedbackContact"
+      type="text"
+      placeholder="Optional contact (email / phone)"
+      style="
+        width: 100%;
+        margin-top: 8px;
+        margin-bottom: 8px;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #d4d7e2;
+      "
+    />
 
-        <section class="right-column">
-          <section class="card">
-            <h2>Response</h2>
-            <textarea id="fbOutput" class="output large"></textarea>
-          </section>
-        </section>
-      </main>
-    </div>
+    <button id="sendFeedbackBtn" class="primary-btn">Send feedback</button>
+    <p id="feedbackStatus" class="hint-text"></p>
 
-    <script src="feedback.js" defer></script>
-  </body>
+    <p style="margin-top: 16px;">
+      <a href="index.html" class="feedback-link">← Back to Moksha SOAP</a>
+    </p>
+  </section>
+
+  <script src="feedback.js"></script>
+</body>
 </html>
