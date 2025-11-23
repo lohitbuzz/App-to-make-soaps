@@ -1,52 +1,81 @@
-const allowedOrigin = process.env.ALLOWED_ORIGIN || "*";
+// /netlify/functions/vision.js
+// Moksha SOAP — Vision function
+// Assistant ID: asst_4sHUgx1lQ7Ob4KJtgkKQvsTb
 
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST,OPTIONS"
-  };
-}
+import { OpenAI } from "openai";
 
-exports.handler = async function (event, context) {
-  if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 200,
-      headers: corsHeaders(),
-      body: ""
-    };
-  }
+export const config = {
+  path: "/api/vision",
+};
 
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: corsHeaders(),
-      body: "Method not allowed"
-    };
-  }
-
+export default async (req) => {
   try {
-    const body = JSON.parse(event.body || "{}");
-    const files = body.files || [];
+    if (req.httpMethod !== "POST") {
+      return { statusCode: 405, body: "Method Not Allowed" };
+    }
 
-    const description =
-      files.length === 0
-        ? "No files attached."
-        : `Attached files for this run: ${files
-            .map((f) => `${f.name} (${f.type || "unknown type"})`)
-            .join(", ")}. Treat this as supporting material when generating the SOAP or email.`;
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const body = JSON.parse(req.body);
+    const { prompt, images = [] } = body;
+
+    // System prompt for Vision
+    const systemPrompt = `
+You are the Moksha SOAP Vision Engine for a veterinary clinic.
+
+Rules:
+• If images show bloodwork → extract values + list abnormalities + give 2 versions (SOAP-ready + Client-friendly).
+• If images show labwork → summarize findings + list differentials.
+• If radiographs → describe findings in plain English only.
+• If cytology → summarize organisms + inflammation + cell types.
+• NEVER invent values; if unreadable, write “unreadable”.
+• Always produce concise, Avimark-safe formatting.
+• No bullet symbols except hyphens ("-"). No emojis in final output.
+    `;
+
+    // Build message list
+    const messages = [
+      { role: "system", content: systemPrompt },
+      {
+        role: "user",
+        content: prompt || "Analyze the attached files.",
+      },
+    ];
+
+    // Attach each file
+    for (const file of images) {
+      messages.push({
+        role: "user",
+        content: [
+          { type: "input_text", text: "Attached file for analysis" },
+          { type: "input_image", image_url: file.data },
+        ],
+      });
+    }
+
+    // Run Vision request
+    const result = await openai.chat.completions.create({
+      model: "gpt-4.1-vision-preview",
+      messages,
+      max_tokens: 4000,
+      temperature: 0.3,
+    });
+
+    const output =
+      result.choices?.[0]?.message?.content?.trim() ||
+      "Vision engine returned no text.";
 
     return {
       statusCode: 200,
-      headers: corsHeaders(),
-      body: JSON.stringify({ ok: true, visionNotes: description })
+      body: JSON.stringify({ text: output }),
     };
   } catch (err) {
-    console.error("Vision stub error:", err);
+    console.error("VISION ERROR:", err);
     return {
       statusCode: 500,
-      headers: corsHeaders(),
-      body: JSON.stringify({ ok: false, error: err.message })
+      body: JSON.stringify({ error: err.message }),
     };
   }
 };
