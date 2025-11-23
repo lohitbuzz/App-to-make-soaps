@@ -1,34 +1,46 @@
-const BACKEND_URL = "https://lohit-soap-app.onrender.com/api/soap";
+function setFeedbackStatus(msg) {
+  const el = document.getElementById("feedbackStatus");
+  if (el) el.textContent = msg;
+}
 
-(function () {
-  const feedbackInput = document.getElementById("feedbackInput");
-  const feedbackOutput = document.getElementById("feedbackOutput");
-  const feedbackMode = document.getElementById("feedbackMode");
+document.addEventListener("DOMContentLoaded", () => {
   const sendBtn = document.getElementById("sendFeedbackBtn");
+  const textBox = document.getElementById("feedbackText");
+  const contactBox = document.getElementById("feedbackContact");
+  if (!sendBtn || !textBox) return;
 
-  async function sendFeedback() {
-    const text = feedbackInput.value.trim();
-    if (!text) return;
-
-    feedbackOutput.value = "Working...";
-
+  sendBtn.addEventListener("click", async () => {
     try {
-      const response = await fetch(BACKEND_URL, {
+      if (!textBox.value.trim()) {
+        setFeedbackStatus("Please enter some feedback first.");
+        return;
+      }
+
+      sendBtn.disabled = true;
+      setFeedbackStatus("Sending feedback...");
+
+      const res = await fetch("/.netlify/functions/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mode: "feedback",
-          text,
-          strictOrHelp: feedbackMode.value
-        })
+          message: textBox.value || "",
+          contact: contactBox ? contactBox.value || "" : "",
+        }),
       });
 
-      const data = await response.json();
-      feedbackOutput.value = data.result || "No response.";
-    } catch (err) {
-      feedbackOutput.value = "Backend error.";
-    }
-  }
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Feedback error");
+      }
 
-  sendBtn.onclick = sendFeedback;
-})();
+      setFeedbackStatus("Thank you! Feedback sent.");
+      textBox.value = "";
+      if (contactBox) contactBox.value = "";
+    } catch (err) {
+      console.error(err);
+      setFeedbackStatus("Could not send feedback.");
+    } finally {
+      sendBtn.disabled = false;
+    }
+  });
+});
