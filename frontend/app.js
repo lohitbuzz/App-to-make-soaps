@@ -1,361 +1,400 @@
-/* ----------------------------------------------------------
-   Moksha SOAP APP — FINAL WORKING FRONTEND LOGIC
-   Netlify + Assistant
-   ---------------------------------------------------------- */
+// ==========================================================
+// Moksha SOAP App - FINAL APP.JS
+// Netlify + Assistant API + Vision + Recorder
+// ==========================================================
 
-/* --------------------------
-   TAB SWITCHING
---------------------------- */
-const tabButtons = document.querySelectorAll('.top-tab-btn');
-const soapSection = document.getElementById('soap-section');
-const toolboxSection = document.getElementById('toolbox-section');
-const consultSection = document.getElementById('consult-section');
-const mainOutput = document.getElementById('mainOutput');
-const refineInput = document.getElementById('refineInput');
-const refineBtn = document.getElementById('refineBtn');
-const helperConsole = document.getElementById('helperConsole');
+// ---------- CONFIG ----------
+const ASSISTANT_ID = "asst_4sHUgx1lQ7Ob4KJtgkKQvsTb";
 
-function showTab(tab) {
-  tabButtons.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === tab);
-  });
-  soapSection.style.display = tab === 'soap' ? 'block' : 'none';
-  toolboxSection.style.display = tab === 'toolbox' ? 'block' : 'none';
-  consultSection.style.display = tab === 'consult' ? 'block' : 'none';
+const API_SOAP = "/.netlify/functions/soap";
+const API_VISION = "/.netlify/functions/vision";
+const API_FEEDBACK = "/.netlify/functions/feedback";
+const API_RELAY = "/.netlify/functions/relay";
 
-  helperConsole.style.display = tab === 'soap' ? 'block' : 'none';
+// ==========================================================
+// Utility Helpers
+// ==========================================================
+function $(id) {
+    return document.getElementById(id);
 }
 
-tabButtons.forEach(btn => {
-  btn.addEventListener('click', () => showTab(btn.dataset.tab));
-});
-
-/* --------------------------
-   SIMPLE / ADVANCED SURGERY
---------------------------- */
-const visitTypeAppointment = document.getElementById("visitTypeAppointment");
-const visitTypeSurgery = document.getElementById("visitTypeSurgery");
-const asaField = document.getElementById("asaField");
-
-const surgeryModeSimple = document.getElementById("surgeryModeSimple");
-const surgeryModeAdvanced = document.getElementById("surgeryModeAdvanced");
-const advancedSurgeryFields = document.getElementById("advancedSurgeryFields");
-
-visitTypeAppointment.addEventListener("click", () => {
-  visitTypeAppointment.classList.add("active");
-  visitTypeSurgery.classList.remove("active");
-  asaField.style.display = "none";
-  advancedSurgeryFields.style.display = "none";
-});
-
-visitTypeSurgery.addEventListener("click", () => {
-  visitTypeSurgery.classList.add("active");
-  visitTypeAppointment.classList.remove("active");
-  asaField.style.display = "block";
-  if (surgeryModeAdvanced.classList.contains("active")) {
-    advancedSurgeryFields.style.display = "block";
-  }
-});
-
-// simple vs advanced
-surgeryModeSimple.addEventListener("click", () => {
-  surgeryModeSimple.classList.add("active");
-  surgeryModeAdvanced.classList.remove("active");
-  advancedSurgeryFields.style.display = "none";
-});
-surgeryModeAdvanced.addEventListener("click", () => {
-  surgeryModeAdvanced.classList.add("active");
-  surgeryModeSimple.classList.remove("active");
-  advancedSurgeryFields.style.display = "block";
-});
-
-/* --------------------------
-   FILE UPLOAD HANDLING
---------------------------- */
-const fileInput = document.getElementById("fileInput");
-const fileList = document.getElementById("fileList");
-const clearFilesBtn = document.getElementById("clearFilesBtn");
-
-let attachedFiles = [];
-
-fileInput.addEventListener("change", () => {
-  attachedFiles = Array.from(fileInput.files);
-  renderFileList();
-});
-
-clearFilesBtn.addEventListener("click", () => {
-  attachedFiles = [];
-  fileInput.value = "";
-  renderFileList();
-});
-
-function renderFileList() {
-  if (attachedFiles.length === 0) {
-    fileList.textContent = "No files attached yet.";
-    return;
-  }
-  fileList.innerHTML = attachedFiles.map(f => `• ${f.name}`).join("<br>");
+function setStatus(msg) {
+    const line = $("statusMessage");
+    if (line) line.textContent = msg;
 }
 
-/* --------------------------
-   BASIC REDACTION (UI ONLY)
---------------------------- */
-const redactToggle = document.getElementById("redactToggle");
-const redactBody = document.getElementById("redactBody");
-const redactSourceSelect = document.getElementById("redactSourceSelect");
-const loadRedactImageBtn = document.getElementById("loadRedactImageBtn");
-const redactImage = document.getElementById("redactImage");
-const redactCanvasWrapper = document.getElementById("redactCanvasWrapper");
-const redactAddRectBtn = document.getElementById("redactAddRectBtn");
-const redactClearBtn = document.getElementById("redactClearBtn");
-
-redactToggle.addEventListener("click", () => {
-  const isOpen = redactBody.style.display === "block";
-  redactBody.style.display = isOpen ? "none" : "block";
-  redactToggle.classList.toggle("open", !isOpen);
-
-  // populate dropdown
-  redactSourceSelect.innerHTML = "";
-  attachedFiles.forEach((f, idx) => {
-    const opt = document.createElement("option");
-    opt.value = idx;
-    opt.textContent = f.name;
-    redactSourceSelect.appendChild(opt);
-  });
-});
-
-loadRedactImageBtn.addEventListener("click", () => {
-  const idx = redactSourceSelect.value;
-  if (!attachedFiles[idx]) return;
-  const file = attachedFiles[idx];
-  const url = URL.createObjectURL(file);
-  redactImage.src = url;
-});
-
-// ADD REDACTION RECT
-function makeRect() {
-  const div = document.createElement("div");
-  div.className = "redact-rect";
-  div.style.left = "20px";
-  div.style.top = "20px";
-  div.style.width = "120px";
-  div.style.height = "60px";
-  enableRectDragging(div);
-  return div;
+function copyText(txt) {
+    navigator.clipboard.writeText(txt || "");
 }
 
-redactAddRectBtn.addEventListener("click", () => {
-  const rect = makeRect();
-  redactCanvasWrapper.appendChild(rect);
-});
+// Read files as base64 Data URLs
+async function readFiles(inputElem) {
+    if (!inputElem || !inputElem.files) return [];
+    const files = Array.from(inputElem.files);
 
-redactClearBtn.addEventListener("click", () => {
-  [...redactCanvasWrapper.querySelectorAll(".redact-rect")].forEach(r => r.remove());
-});
+    const promises = files.map(
+        (file) =>
+            new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () =>
+                    resolve({
+                        name: file.name,
+                        type: file.type,
+                        data: reader.result,
+                    });
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            })
+    );
 
-// draggable
-function enableRectDragging(div) {
-  let x, y, w, h;
-  let dragging = false;
-  div.addEventListener("mousedown", (e) => {
-    dragging = true;
-    x = e.clientX - div.offsetLeft;
-    y = e.clientY - div.offsetTop;
-    e.preventDefault();
-  });
-  window.addEventListener("mousemove", (e) => {
-    if (!dragging) return;
-    div.style.left = (e.clientX - x) + "px";
-    div.style.top = (e.clientY - y) + "px";
-  });
-  window.addEventListener("mouseup", () => dragging = false);
+    return Promise.all(promises);
 }
 
-/* --------------------------
-   VOICE RECORDER (BASIC)
---------------------------- */
-let mediaRecorder = null;
-let chunks = [];
-let savedTranscript = "";
+// POST JSON helper
+async function postJSON(url, body) {
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
 
-const recBtn = document.getElementById("recBtn");
-const useRecBtn = document.getElementById("useRecBtn");
-const insertRecBtn = document.getElementById("insertRecBtn");
-
-recBtn.addEventListener("click", async () => {
-  if (!mediaRecorder || mediaRecorder.state === "inactive") {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      chunks = [];
-
-      mediaRecorder.ondataavailable = e => chunks.push(e.data);
-      mediaRecorder.onstop = () => {
-        savedTranscript = "[Voice note recorded — transcript generated by backend]";
-        alert("Recording saved. Use buttons below.");
-      };
-
-      mediaRecorder.start();
-      recBtn.textContent = "Stop";
-    } catch (err) {
-      alert("Mic permission needed.");
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || res.statusText);
     }
-  } else {
-    mediaRecorder.stop();
-    recBtn.textContent = "Record";
-  }
-});
 
-useRecBtn.addEventListener("click", () => {
-  alert("Voice will be sent to backend as hidden context.");
-});
-
-insertRecBtn.addEventListener("click", () => {
-  const field = document.getElementById("soapCoreNotes");
-  field.value += "\n" + savedTranscript;
-});
-
-/* --------------------------
-   BUILD PAYLOAD FOR ALL MODES
---------------------------- */
-function buildPayload(mode) {
-  return {
-    mode,
-    caseLabel: document.getElementById("caseLabel")?.value ?? "",
-    patientName: document.getElementById("patientName")?.value ?? "",
-    species: document.getElementById("species")?.value ?? "",
-    sex: document.getElementById("sex")?.value ?? "",
-    weightKg: document.getElementById("weightKg")?.value ?? "",
-    asa: document.getElementById("asaStatus")?.value ?? "",
-    tprNotes: document.getElementById("tprNotes")?.value ?? "",
-    coreNotes: document.getElementById("soapCoreNotes")?.value ?? "",
-    pe: document.getElementById("soapPE")?.value ?? "",
-    assessmentHints: document.getElementById("soapAssessmentHints")?.value ?? "",
-    planHints: document.getElementById("soapPlanHints")?.value ?? "",
-    extra: document.getElementById("soapExtra")?.value ?? "",
-    toolboxMode: document.getElementById("toolboxMode")?.value ?? "",
-    toolboxText: document.getElementById("toolboxText")?.value ?? "",
-    consultQuestion: document.getElementById("consultQuestion")?.value ?? "",
-    consultContext: document.getElementById("consultContext")?.value ?? "",
-  };
+    return res.json();
 }
 
-/* --------------------------
-   SEND TO NETLIFY FUNCTION
---------------------------- */
-async function callFunction(url, payload, files) {
-  const form = new FormData();
-  form.append("payload", JSON.stringify(payload));
-  if (savedTranscript) form.append("voice", savedTranscript);
-  (files || []).forEach(f => form.append("files", f));
+// ==========================================================
+// TABS
+// ==========================================================
+function setupTabs() {
+    const map = {
+        tabAppointment: "appointmentSection",
+        tabSurgery: "surgerySection",
+        tabToolbox: "toolboxSection",
+        tabConsult: "consultSection",
+        tabTransfer: "transferSection"
+    };
 
-  const res = await fetch(url, { method: "POST", body: form });
-  const data = await res.json();
-  return data;
+    Object.keys(map).forEach((tabId) => {
+        $(tabId).addEventListener("click", () => {
+            Object.values(map).forEach((sec) => $(sec).classList.add("hidden"));
+            Object.keys(map).forEach((t) => $(t).classList.remove("active"));
+            $(map[tabId]).classList.remove("hidden");
+            $(tabId).classList.add("active");
+        });
+    });
 }
 
-/* --------------------------
-   SOAP BUTTON
---------------------------- */
-document.getElementById("generateSoapBtn").addEventListener("click", async () => {
-  mainOutput.textContent = "Working…";
-  const payload = buildPayload("soap");
-  try {
-    const data = await callFunction("/.netlify/functions/soap", payload, attachedFiles);
-    mainOutput.textContent = data.output || "No output.";
-  } catch (err) {
-    mainOutput.textContent = "Error calling SOAP function.";
-  }
-});
+// ==========================================================
+// SOAP GENERATION (Appointment + Surgery)
+// ==========================================================
+async function generateAppointmentSOAP() {
+    try {
+        setStatus("Generating SOAP...");
+        const imgs = await readFiles($("apptFiles"));
 
-/* --------------------------
-   TOOLBOX BUTTON
---------------------------- */
-document.getElementById("generateToolboxBtn").addEventListener("click", async () => {
-  mainOutput.textContent = "Working…";
-  const payload = buildPayload("toolbox");
-  try {
-    const data = await callFunction("/.netlify/functions/soap", payload, attachedFiles);
-    mainOutput.textContent = data.output || "No output.";
-  } catch (err) {
-    mainOutput.textContent = "Error calling toolbox.";
-  }
-});
+        // transcript if checked
+        let transcript = "";
+        if ($("useTranscriptForSoap").checked)
+            transcript = $("recordingTranscript").value || "";
 
-/* --------------------------
-   CONSULT BUTTON
---------------------------- */
-document.getElementById("generateConsultBtn").addEventListener("click", async () => {
-  mainOutput.textContent = "Working…";
-  const payload = buildPayload("consult");
-  try {
-    const data = await callFunction("/.netlify/functions/soap", payload, attachedFiles);
-    mainOutput.textContent = data.output || "No output.";
-  } catch (err) {
-    mainOutput.textContent = "Error calling consult.";
-  }
-});
+        const payload = {
+            assistantId: ASSISTANT_ID,
+            mode: "appointment",
+            fields: {
+                reason: $("apptReason").value,
+                history: $("apptHistory").value,
+                pe: $("apptPE").value,
+                diagnostics: $("apptDiagnostics").value,
+                assessmentHints: $("apptAssessment").value,
+                planHints: $("apptPlan").value,
+                medsHints: $("apptMeds").value,
+                transcript,
+            },
+            images: imgs,
+        };
 
-/* --------------------------
-   REFINE BUTTON
---------------------------- */
-refineBtn.addEventListener("click", async () => {
-  const extra = refineInput.value.trim();
-  if (!extra) return alert("Type refinement first.");
-  mainOutput.textContent = "Refining…";
+        const data = await postJSON(API_SOAP, payload);
+        $("soapOutput").value = data.output || "";
+        setStatus("SOAP ready.");
+    } catch (e) {
+        $("soapOutput").value = "Error: " + e.message;
+        setStatus("Error.");
+    }
+}
 
-  let payload = {
-    mode: "refine",
-    refineText: extra,
-    previousOutput: mainOutput.textContent
-  };
+async function generateSurgerySOAP() {
+    try {
+        setStatus("Generating Surgery SOAP...");
 
-  try {
-    const data = await callFunction("/.netlify/functions/soap", payload, attachedFiles);
-    mainOutput.textContent = data.output || mainOutput.textContent;
-  } catch (err) {
-    mainOutput.textContent = "Refine error.";
-  }
-});
+        const imgs = await readFiles($("sxFiles"));
+        let transcript = "";
+        if ($("useTranscriptForSx").checked)
+            transcript = $("recordingTranscriptSx").value || "";
 
-/* --------------------------
-   FEEDBACK BUTTON
---------------------------- */
-document.getElementById("sendFeedbackBtn").addEventListener("click", async () => {
-  const text = document.getElementById("feedbackInput").value.trim();
-  if (!text) return alert("Enter feedback.");
-  try {
-    await callFunction("/.netlify/functions/feedback", { text });
-    alert("Thanks for feedback!");
-  } catch (err) {
-    alert("Feedback error.");
-  }
-});
+        const payload = {
+            assistantId: ASSISTANT_ID,
+            mode: "surgery",
+            fields: {
+                reason: $("sxReason").value,
+                history: $("sxHistory").value,
+                pe: $("sxPE").value,
+                diagnostics: $("sxDiagnostics").value,
+                procedureNotes: $("sxProcedureNotes").value,
+                recovery: $("sxRecovery").value,
+                medsDispensed: $("sxMedsDispensed").value,
 
-/* --------------------------
-   SEND TO VISION NOW
---------------------------- */
-document.getElementById("sendToVisionBtn")?.addEventListener("click", async () => {
-  if (attachedFiles.length === 0) return alert("Attach images first.");
-  mainOutput.textContent = "Vision analyzing…";
+                premed: $("premedSelect").value,
+                induction: $("inductionSelect").value,
+                intraOp: $("intraOpMeds").value,
+                postOp: $("postOpMeds").value,
 
-  try {
-    const data = await callFunction("/.netlify/functions/vision", { mode: "visionOnly" }, attachedFiles);
-    mainOutput.textContent = data.output || "Vision returned nothing.";
-  } catch (err) {
-    mainOutput.textContent = "Vision error.";
-  }
-});
+                transcript,
+            },
+            images: imgs,
+        };
 
-/* --------------------------
-   PHONE TO DESKTOP RELAY (placeholder)
---------------------------- */
-document.getElementById("relayBtn")?.addEventListener("click", () => {
-  alert("Relay coming next patch — QR handshake + temp session ID.");
-});
+        const data = await postJSON(API_SOAP, payload);
+        $("soapOutputSx").value = data.output || "";
+        setStatus("Surgery SOAP ready.");
+    } catch (e) {
+        $("soapOutputSx").value = "Error: " + e.message;
+        setStatus("Error.");
+    }
+}
 
-/* --------------------------
-   INIT
---------------------------- */
-showTab("soap");
-renderFileList();
+// ==========================================================
+// FEEDBACK REFINE (SOAP + Surgery + Toolbox + Consult)
+// ==========================================================
+async function refineSOAP() {
+    try {
+        const base = $("soapOutput").value;
+        const req = $("soapFeedbackInput").value || "Improve clarity.";
+        const data = await postJSON(API_FEEDBACK, {
+            assistantId: ASSISTANT_ID,
+            text: base,
+            request: req,
+            context: "soap",
+        });
+        $("soapOutput").value = data.output || "";
+    } catch (e) {
+        setStatus("Feedback error.");
+    }
+}
+
+async function refineSurgerySOAP() {
+    try {
+        const base = $("soapOutputSx").value;
+        const req = $("sxFeedbackInput").value || "Improve clarity.";
+        const data = await postJSON(API_FEEDBACK, {
+            assistantId: ASSISTANT_ID,
+            text: base,
+            request: req,
+            context: "surgery",
+        });
+        $("soapOutputSx").value = data.output || "";
+    } catch (e) {
+        setStatus("Feedback error.");
+    }
+}
+
+async function refineToolbox() {
+    try {
+        const base = $("toolboxOutput").value;
+        const req =
+            $("toolboxFeedbackInput").value ||
+            "Polish and simplify while keeping all clinical details.";
+
+        const data = await postJSON(API_FEEDBACK, {
+            assistantId: ASSISTANT_ID,
+            text: base,
+            request: req,
+            context: "toolbox",
+        });
+
+        $("toolboxOutput").value = data.output || "";
+    } catch (e) {
+        setStatus("Toolbox refine error.");
+    }
+}
+
+async function refineConsult() {
+    try {
+        const base = $("consultOutput").value;
+        const req =
+            $("consultFeedbackInput").value ||
+            "Improve for clarity and vet communication.";
+
+        const data = await postJSON(API_FEEDBACK, {
+            assistantId: ASSISTANT_ID,
+            text: base,
+            request: req,
+            context: "consult",
+        });
+
+        $("consultOutput").value = data.output || "";
+    } catch (e) {
+        setStatus("Consult refine error.");
+    }
+}
+
+// ==========================================================
+// TOOLBOX (Vision + Modes)
+// ==========================================================
+async function runToolbox() {
+    try {
+        setStatus("Running Toolbox...");
+
+        const imgs = await readFiles($("toolboxFiles"));
+        const mode = $("toolboxMode").value;
+        const prompt = $("toolboxInput").value;
+
+        const payload = {
+            assistantId: ASSISTANT_ID,
+            mode,
+            prompt,
+            images: imgs,
+        };
+
+        const data = await postJSON(API_VISION, payload);
+        $("toolboxOutput").value = data.output || "";
+        setStatus("Toolbox ready.");
+    } catch (e) {
+        $("toolboxOutput").value = "Error: " + e.message;
+        setStatus("Error.");
+    }
+}
+
+// ==========================================================
+// CONSULT
+// ==========================================================
+async function runConsult() {
+    try {
+        setStatus("Thinking...");
+        const imgs = await readFiles($("consultFiles"));
+        const payload = {
+            assistantId: ASSISTANT_ID,
+            question: $("consultMessage").value,
+            images: imgs,
+        };
+
+        const data = await postJSON(API_SOAP, payload);
+        $("consultOutput").value = data.output || "";
+        setStatus("Consult ready.");
+    } catch (e) {
+        $("consultOutput").value = "Error: " + e.message;
+        setStatus("Error.");
+    }
+}
+
+// ==========================================================
+// RELAY (Phone → Desktop)
+// ==========================================================
+async function generateRelayQR() {
+    try {
+        const { qr, code } = await postJSON(API_RELAY, {
+            assistantId: ASSISTANT_ID,
+            mode: "create",
+        });
+
+        window.currentRelayCode = code;
+        $("relayQR").src = qr;
+        setStatus("QR ready.");
+    } catch (e) {
+        setStatus("QR error.");
+    }
+}
+
+// Poll messages
+async function pollRelay() {
+    if (!window.currentRelayCode) return;
+
+    try {
+        const data = await postJSON(API_RELAY, {
+            assistantId: ASSISTANT_ID,
+            mode: "check",
+            code: window.currentRelayCode,
+        });
+
+        if (data.newContent) {
+            $("relayOutput").value += "\n" + data.newContent;
+        }
+    } catch {}
+}
+
+setInterval(pollRelay, 4000);
+
+// ==========================================================
+// Voice Recorder
+// ==========================================================
+let mediaRecorder;
+let audioChunks = [];
+
+function setupRecorder() {
+    async function startRecording(target) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+
+        mediaRecorder.onstop = async () => {
+            const blob = new Blob(audioChunks, { type: "audio/webm" });
+            audioChunks = [];
+
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64Audio = reader.result;
+
+                if (target === "appt") $("recordingTranscript").value = "";
+                if (target === "sx") $("recordingTranscriptSx").value = "";
+
+                const data = await postJSON(API_VISION, {
+                    assistantId: ASSISTANT_ID,
+                    audio: base64Audio,
+                    transcribe: true,
+                });
+
+                if (target === "appt")
+                    $("recordingTranscript").value = data.output || "";
+                else $("recordingTranscriptSx").value = data.output || "";
+            };
+
+            reader.readAsDataURL(blob);
+        };
+
+        mediaRecorder.start();
+    }
+
+    $("startRecordBtn").onclick = () => startRecording("appt");
+    $("startRecordBtnSx").onclick = () => startRecording("sx");
+}
+
+// ==========================================================
+// INIT
+// ==========================================================
+window.onload = function () {
+    setupTabs();
+    setupRecorder();
+
+    $("generateApptSoapBtn").onclick = generateAppointmentSOAP;
+    $("generateSxSoapBtn").onclick = generateSurgerySOAP;
+
+    $("improveSoapBtn").onclick = refineSOAP;
+    $("sxImproveBtn").onclick = refineSurgerySOAP;
+
+    $("toolboxGenerateBtn").onclick = runToolbox;
+    $("toolboxRefineBtn").onclick = refineToolbox;
+
+    $("consultAskBtn").onclick = runConsult;
+    $("consultRefineBtn").onclick = refineConsult;
+
+    $("copySoapBtn").onclick = () =>
+        copyText($("soapOutput").value);
+
+    $("generateRelayQR").onclick = generateRelayQR;
+
+    setStatus("Ready.");
+};
