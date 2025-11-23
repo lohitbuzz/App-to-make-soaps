@@ -1,92 +1,50 @@
-// /netlify/functions/relay.js
-// Moksha SOAP — Phone → Desktop Relay Engine
-// Zero database, ephemeral memory, safe for Netlify Functions
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
 
-// -------- TEMP SESSION STORE (auto resets on function cold start) -------- //
-let sessions = {}; // { sessionId: { text, files } }
+function corsHeaders(origin) {
+  const allowed =
+    ALLOWED_ORIGIN === "*" ? origin || "*" : ALLOWED_ORIGIN;
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
+  };
+}
 
-export const config = {
-  path: "/api/relay",
-};
+exports.handler = async (event) => {
+  const origin = event.headers.origin || "*";
+  const baseHeaders = corsHeaders(origin);
 
-export default async (req) => {
-  try {
-    const method = req.httpMethod;
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: baseHeaders, body: "" };
+  }
 
-    // ---------- 1) GENERATE QR SESSION ID ----------
-    if (method === "POST") {
-      const body = JSON.parse(req.body || "{}");
-      const { action } = body;
-
-      // Create a session token
-      if (action === "create") {
-        const sessionId = Math.random().toString(36).substring(2, 10);
-        sessions[sessionId] = { text: "", files: [] };
-
-        return {
-          statusCode: 200,
-          body: JSON.stringify({
-            sessionId,
-            qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${sessionId}`,
-          }),
-        };
-      }
-
-      // Phone uploads text/images to the session
-      if (action === "send") {
-        const { sessionId, text, fileData } = body;
-
-        if (!sessionId || !sessions[sessionId]) {
-          return {
-            statusCode: 400,
-            body: JSON.stringify({ error: "Invalid or expired session ID." }),
-          };
-        }
-
-        if (text) sessions[sessionId].text += text + "\n";
-
-        if (fileData) {
-          sessions[sessionId].files.push(fileData);
-        }
-
-        return {
-          statusCode: 200,
-          body: JSON.stringify({ ok: true }),
-        };
-      }
-
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Unknown action." }),
-      };
-    }
-
-    // ---------- 2) DESKTOP FETCHES CONTENT ----------
-    if (method === "GET") {
-      const sessionId = req.queryStringParameters?.sessionId;
-
-      if (!sessionId || !sessions[sessionId]) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: "Invalid or expired session ID." }),
-        };
-      }
-
-      return {
-        statusCode: 200,
-        body: JSON.stringify(sessions[sessionId]),
-      };
-    }
-
+  if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      body: "Method Not Allowed",
+      headers: baseHeaders,
+      body: "Method not allowed",
+    };
+  }
+
+  try {
+    const body = JSON.parse(event.body || "{}");
+    const { text } = body;
+
+    // For now just echo back; future versions can store per-session.
+    return {
+      statusCode: 200,
+      headers: baseHeaders,
+      body: JSON.stringify({
+        received: text || "",
+        note: "Relay placeholder – echo only.",
+      }),
     };
   } catch (err) {
-    console.error("Relay error:", err);
+    console.error("Relay function error:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
+      headers: baseHeaders,
+      body: `Relay error: ${err.message}`,
     };
   }
 };
