@@ -1,81 +1,106 @@
-// /netlify/functions/vision.js
-// Moksha SOAP — Vision function
-// Assistant ID: asst_4sHUgx1lQ7Ob4KJtgkKQvsTb
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
 
-import { OpenAI } from "openai";
+function corsHeaders(origin) {
+  const allowed =
+    ALLOWED_ORIGIN === "*" ? origin || "*" : ALLOWED_ORIGIN;
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
+  };
+}
 
-export const config = {
-  path: "/api/vision",
-};
+exports.handler = async (event) => {
+  const origin = event.headers.origin || "*";
+  const baseHeaders = corsHeaders(origin);
 
-export default async (req) => {
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: baseHeaders, body: "" };
+  }
+
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      headers: baseHeaders,
+      body: "Method not allowed",
+    };
+  }
+
   try {
-    if (req.httpMethod !== "POST") {
-      return { statusCode: 405, body: "Method Not Allowed" };
+    if (!OPENAI_API_KEY) {
+      throw new Error("Missing OPENAI_API_KEY");
     }
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    const body = JSON.parse(event.body || "{}");
+    const files = body.files || [];
 
-    const body = JSON.parse(req.body);
-    const { prompt, images = [] } = body;
+    if (!files.length) {
+      return {
+        statusCode: 200,
+        headers: baseHeaders,
+        body: JSON.stringify({ summary: "" }),
+      };
+    }
 
-    // System prompt for Vision
-    const systemPrompt = `
-You are the Moksha SOAP Vision Engine for a veterinary clinic.
-
-Rules:
-• If images show bloodwork → extract values + list abnormalities + give 2 versions (SOAP-ready + Client-friendly).
-• If images show labwork → summarize findings + list differentials.
-• If radiographs → describe findings in plain English only.
-• If cytology → summarize organisms + inflammation + cell types.
-• NEVER invent values; if unreadable, write “unreadable”.
-• Always produce concise, Avimark-safe formatting.
-• No bullet symbols except hyphens ("-"). No emojis in final output.
-    `;
-
-    // Build message list
-    const messages = [
-      { role: "system", content: systemPrompt },
-      {
-        role: "user",
-        content: prompt || "Analyze the attached files.",
+    const imageContents = files.map((f) => ({
+      type: "image_url",
+      image_url: {
+        url: `data:${f.type || "image/jpeg"};base64,${f.data}`,
       },
-    ];
+    }));
 
-    // Attach each file
-    for (const file of images) {
-      messages.push({
-        role: "user",
-        content: [
-          { type: "input_text", text: "Attached file for analysis" },
-          { type: "input_image", image_url: file.data },
-        ],
-      });
+    const res = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a veterinary Vision helper. Summarize attached images (labs, forms, documents, anesthesia sheets) into structured, data-only bullet points that can be used in a SOAP. Do NOT interpret; just list values and findings.",
+            },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "Summarize these images for a vet SOAP helper (data only).",
+                },
+                ...imageContents,
+              ],
+            },
+          ],
+        }),
+      },
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Vision error: ${text}`);
     }
 
-    // Run Vision request
-    const result = await openai.chat.completions.create({
-      model: "gpt-4.1-vision-preview",
-      messages,
-      max_tokens: 4000,
-      temperature: 0.3,
-    });
-
-    const output =
-      result.choices?.[0]?.message?.content?.trim() ||
-      "Vision engine returned no text.";
+    const data = await res.json();
+    const summary =
+      data.choices?.[0]?.message?.content || "";
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ text: output }),
+      headers: baseHeaders,
+      body: JSON.stringify({ summary }),
     };
   } catch (err) {
-    console.error("VISION ERROR:", err);
+    console.error("Vision function error:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
+      headers: baseHeaders,
+      body: `Vision error: ${err.message}`,
     };
   }
 };
