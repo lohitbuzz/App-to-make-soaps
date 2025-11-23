@@ -1,231 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Moksha SOAP App</title>
-<link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <title>Moksha SOAP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-
-<header class="header">
-    <img src="logo.png" alt="Moksha SOAP" class="logo" />
+  <header class="header">
+    <img src="logo.PNG" alt="Moksha SOAP" class="logo" />
     <h1 class="app-title">Moksha SOAP</h1>
-</header>
+  </header>
 
-<!-- TOP TAB BAR -->
-<nav class="tab-bar">
-    <button class="tab-button active" data-target="appointmentSection">Appointment</button>
-    <button class="tab-button" data-target="surgerySection">Surgery</button>
-    <button class="tab-button" data-target="toolboxSection">Toolbox</button>
-    <button class="tab-button" data-target="consultSection">Consult</button>
-    <button class="tab-button" data-target="transferSection">Phone → Desktop</button>
-</nav>
+  <nav class="tab-bar">
+    <button class="tab-button active" data-tab="appointment">Appointment</button>
+    <button class="tab-button" data-tab="surgery">Surgery</button>
+    <button class="tab-button" data-tab="toolbox">Toolbox</button>
+    <button class="tab-button" data-tab="consult">Consult</button>
+  </nav>
 
-<div id="statusMessage" class="status-line">Ready.</div>
+  <div id="statusMessage" class="status-line">Ready.</div>
 
-<!-- ========================================================= -->
-<!-- ===================== APPOINTMENT ======================== -->
-<!-- ========================================================= -->
-<section id="appointmentSection" class="section-visible">
+  <!-- ============== ATTACHMENTS (shared) ============== -->
+  <section class="card">
+    <h2>Attach photos / labs / documents</h2>
+    <p class="hint-text">These files will be available to SOAP, Toolbox, and Consult.</p>
+    <input
+      type="file"
+      id="sharedFiles"
+      multiple
+      accept="image/*,.pdf,.txt,.doc,.docx"
+    />
+    <p id="fileSummary" class="hint-text"></p>
+  </section>
 
-    <!-- Vision Upload -->
-    <div class="upload-block">
-        <label class="upload-label">Attach photos/labs/documents:</label>
-        <input type="file" id="apptFiles" multiple accept="image/*,.pdf" />
-    </div>
-
+  <!-- ============== APPOINTMENT ============== -->
+  <section id="appointmentSection" class="card section-visible">
     <h2>Appointment SOAP</h2>
 
     <textarea id="apptReason" placeholder="Reason for visit"></textarea>
     <textarea id="apptHistory" placeholder="History"></textarea>
     <textarea id="apptPE" placeholder="Physical Exam (data-only)"></textarea>
     <textarea id="apptDiagnostics" placeholder="Diagnostics (data-only)"></textarea>
-    <textarea id="apptAssessment" placeholder="Assessment hints"></textarea>
-    <textarea id="apptPlan" placeholder="Plan hints"></textarea>
-    <textarea id="apptMeds" placeholder="Meds dispensed hints"></textarea>
+    <textarea id="apptAssessmentHints" placeholder="Assessment hints (optional)"></textarea>
+    <textarea id="apptPlanHints" placeholder="Plan hints (optional)"></textarea>
+    <textarea id="apptMedsHints" placeholder="Meds dispensed hints (optional)"></textarea>
 
     <button id="generateApptSoapBtn" class="primary-btn">Generate SOAP</button>
 
     <h3>SOAP Output</h3>
-    <textarea id="soapOutput" class="output-box"></textarea>
+    <textarea id="apptSoapOutput" class="output-box" readonly></textarea>
 
-    <textarea id="soapFeedbackInput" class="feedback-box"
-        placeholder="Refine / improve SOAP…"></textarea>
-    <button id="improveSoapBtn" class="secondary-btn">Refine SOAP</button>
-    <button id="copySoapBtn" class="secondary-btn">Copy SOAP</button>
+    <textarea
+      id="apptRefineInput"
+      class="feedback-box"
+      placeholder="Refine / improve SOAP (e.g., 'shorter, more client-friendly')"
+    ></textarea>
 
-    <!-- Recorder -->
-    <details class="recording-panel">
-        <summary>🎙️ Voice Recorder</summary>
-        <div class="recorder-container">
-            <button id="startRecordBtn" class="record-btn">● Record</button>
-            <button id="sendAudioBackendBtn" class="secondary-btn">Send to Backend</button>
-            <button id="sendAudioTextboxBtn" class="secondary-btn">Send to Textbox</button>
-
-            <textarea id="recordingTranscript" placeholder="Transcript will appear here"></textarea>
-
-            <label class="checkbox-line">
-                <input type="checkbox" id="useTranscriptForSoap" />
-                Use transcript to generate SOAP
-            </label>
-        </div>
-    </details>
-
-</section>
-
-<!-- ========================================================= -->
-<!-- ======================== SURGERY ========================= -->
-<!-- ========================================================= -->
-<section id="surgerySection" class="hidden">
-
-    <div class="upload-block">
-        <label class="upload-label">Attach photos/labs/documents:</label>
-        <input type="file" id="sxFiles" multiple accept="image/*,.pdf" />
+    <div class="button-row">
+      <button id="apptRefineBtn" class="secondary-btn">Refine SOAP</button>
+      <button id="apptCopyBtn" class="secondary-btn">Copy SOAP</button>
     </div>
 
+    <details class="recording-panel">
+      <summary>🎙️ Voice notes (tap to expand)</summary>
+      <p class="hint-text">
+        Use your phone keyboard’s microphone to dictate notes directly into this box.
+      </p>
+      <textarea
+        id="apptTranscript"
+        placeholder="Dictate notes here with your keyboard mic."
+      ></textarea>
+      <label class="checkbox-line">
+        <input type="checkbox" id="useTranscriptForAppt" />
+        Include this transcript in SOAP generation
+      </label>
+    </details>
+  </section>
+
+  <!-- ============== SURGERY ============== -->
+  <section id="surgerySection" class="card section-hidden">
     <h2>Surgery SOAP</h2>
 
     <textarea id="sxReason" placeholder="Reason for surgery"></textarea>
-    <textarea id="sxHistory" placeholder="Surgical history"></textarea>
-    <textarea id="sxPE" placeholder="PE (data-only)"></textarea>
+    <textarea id="sxHistory" placeholder="Surgical history / pre-op notes"></textarea>
+    <textarea id="sxPE" placeholder="Pre-op PE (data-only)"></textarea>
     <textarea id="sxDiagnostics" placeholder="Diagnostics (data-only)"></textarea>
 
-    <!-- Collapsible anesthesia block -->
     <details class="collapsible-block">
-        <summary>Anesthesia Settings</summary>
+      <summary>Anesthesia settings</summary>
 
-        <label>Premed Cocktail:</label>
-        <select id="premedSelect">
-            <option value="">Choose premed…</option>
-            <option value="TDK">TDK 1:1:1:1 (Cats)</option>
-            <option value="Methadone+Midaz">Methadone + Midazolam</option>
-            <option value="Methadone+Dex">Methadone + Dexmed</option>
-            <option value="Hydro+Midaz">Hydromorphone + Midazolam</option>
-            <option value="Hydro+Dex">Hydromorphone + Dexmed</option>
-            <option value="BupSR">Buprenorphine SR (post-op)</option>
-        </select>
+      <label class="field-label">Premed:</label>
+      <select id="sxPremed">
+        <option value="">Select premed...</option>
+        <option value="TDK 1:1:1:1 (cats)">TDK 1:1:1:1 (cats)</option>
+        <option value="Methadone + Midazolam">Methadone + Midazolam</option>
+        <option value="Methadone + Dexmedetomidine">Methadone + Dexmedetomidine</option>
+        <option value="Hydromorphone + Midazolam">Hydromorphone + Midazolam</option>
+        <option value="Hydromorphone + Dexmedetomidine">Hydromorphone + Dexmedetomidine</option>
+        <option value="Buprenorphine SR (post-op)">Buprenorphine SR (post-op)</option>
+      </select>
 
-        <label>Induction:</label>
-        <select id="inductionSelect">
-            <option value="">Choose induction…</option>
-            <option value="Propofol">Propofol</option>
-            <option value="Alfaxan">Alfaxan</option>
-            <option value="KetDiaz">Ketamine + Diazepam</option>
-        </select>
+      <label class="field-label">Induction:</label>
+      <select id="sxInduction">
+        <option value="">Select induction...</option>
+        <option value="Propofol">Propofol</option>
+        <option value="Alfaxan">Alfaxan</option>
+        <option value="Ketamine + Diazepam">Ketamine + Diazepam</option>
+      </select>
 
-        <label>Intra-op Medications:</label>
-        <textarea id="intraOpMeds"></textarea>
+      <label class="field-label">Intra-op meds (optional):</label>
+      <textarea id="sxIntraOp" placeholder="CRI, boluses, local blocks, etc."></textarea>
 
-        <label>Post-op Medications:</label>
-        <textarea id="postOpMeds"></textarea>
-
+      <label class="field-label">Post-op meds (optional):</label>
+      <textarea id="sxPostOp" placeholder="Analgesia, antibiotics, take-home meds."></textarea>
     </details>
 
     <textarea id="sxProcedureNotes" placeholder="Procedure notes"></textarea>
     <textarea id="sxRecovery" placeholder="Recovery notes"></textarea>
-    <textarea id="sxMedsDispensed" placeholder="Meds dispensed"></textarea>
+    <textarea id="sxMedsDispensed" placeholder="Meds dispensed (optional)"></textarea>
 
     <button id="generateSxSoapBtn" class="primary-btn">Generate Surgery SOAP</button>
 
     <h3>Surgery SOAP Output</h3>
-    <textarea id="soapOutputSx" class="output-box"></textarea>
+    <textarea id="sxSoapOutput" class="output-box" readonly></textarea>
 
-    <textarea id="sxFeedbackInput" class="feedback-box"
-        placeholder="Refine/Improve surgery SOAP…"></textarea>
-    <button id="sxImproveBtn" class="secondary-btn">Refine</button>
+    <textarea
+      id="sxRefineInput"
+      class="feedback-box"
+      placeholder="Refine surgery SOAP (e.g., 'shorter', 'more detail in Plan')"
+    ></textarea>
 
-    <!-- Recorder -->
-    <details class="recording-panel">
-        <summary>🎙️ Voice Recorder</summary>
-        <div class="recorder-container">
-            <button id="startRecordBtnSx" class="record-btn">● Record</button>
-            <button id="sendAudioBackendBtnSx" class="secondary-btn">Send to Backend</button>
-            <button id="sendAudioTextboxBtnSx" class="secondary-btn">Send to Textbox</button>
-
-            <textarea id="recordingTranscriptSx"></textarea>
-
-            <label class="checkbox-line">
-                <input type="checkbox" id="useTranscriptForSx" />
-                Use transcript in surgery SOAP
-            </label>
-        </div>
-    </details>
-
-</section>
-
-<!-- ========================================================= -->
-<!-- ======================== TOOLBOX ========================= -->
-<!-- ========================================================= -->
-<section id="toolboxSection" class="hidden">
-
-    <div class="upload-block">
-        <label>Upload images for Vision:</label>
-        <input type="file" id="toolboxFiles" multiple accept="image/*,.pdf" />
+    <div class="button-row">
+      <button id="sxRefineBtn" class="secondary-btn">Refine SOAP</button>
+      <button id="sxCopyBtn" class="secondary-btn">Copy SOAP</button>
     </div>
+  </section>
 
-    <label>Toolbox Mode:</label>
+  <!-- ============== TOOLBOX ============== -->
+  <section id="toolboxSection" class="card section-hidden">
+    <h2>Toolbox</h2>
+
+    <label class="field-label">Tool:</label>
     <select id="toolboxMode">
-        <option value="bloodwork">Bloodwork Summary</option>
-        <option value="lab">Lab Interpretation</option>
-        <option value="email">Client Email</option>
-        <option value="weight">Weight Consult</option>
-        <option value="free">Free-form Mode</option>
+      <option value="bloodwork">Bloodwork Helper Lite</option>
+      <option value="email">Client email / communication</option>
+      <option value="weight">Weight consult helper</option>
+      <option value="handout">Client handout helper</option>
+      <option value="free">Free-form</option>
     </select>
 
-    <textarea id="toolboxInput" placeholder="Add optional notes…"></textarea>
+    <textarea
+      id="toolboxInput"
+      placeholder="Paste labs, Covet SOAP, or describe what you want."
+    ></textarea>
 
-    <button id="toolboxGenerateBtn" class="primary-btn">Generate Toolbox Output</button>
+    <button id="toolboxGenerateBtn" class="primary-btn">Generate toolbox output</button>
 
     <h3>Toolbox Output</h3>
-    <textarea id="toolboxOutput" class="output-box"></textarea>
+    <textarea id="toolboxOutput" class="output-box" readonly></textarea>
 
-    <textarea id="toolboxFeedbackInput" class="feedback-box"
-        placeholder="Refine Toolbox output…"></textarea>
-    <button id="toolboxRefineBtn" class="secondary-btn">Refine</button>
-
-</section>
-
-<!-- ========================================================= -->
-<!-- ======================== CONSULT ========================= -->
-<!-- ========================================================= -->
-<section id="consultSection" class="hidden">
-
-    <div class="upload-block">
-        <label>Upload images/documents:</label>
-        <input type="file" id="consultFiles" multiple accept="image/*,.pdf" />
+    <textarea
+      id="toolboxRefineInput"
+      class="feedback-box"
+      placeholder="Refine / adjust toolbox output..."
+    ></textarea>
+    <div class="button-row">
+      <button id="toolboxRefineBtn" class="secondary-btn">Refine output</button>
+      <button id="toolboxCopyBtn" class="secondary-btn">Copy toolbox output</button>
     </div>
+  </section>
 
-    <textarea id="consultMessage" placeholder="Ask a clinical question…"></textarea>
-    <button id="consultAskBtn" class="primary-btn">Ask</button>
+  <!-- ============== CONSULT ============== -->
+  <section id="consultSection" class="card section-hidden">
+    <h2>Consult</h2>
+
+    <textarea
+      id="consultQuestion"
+      placeholder="What do you want help with? e.g., chronic diarrhea differentials."
+    ></textarea>
+    <textarea
+      id="consultContext"
+      placeholder="Case context: signalment, main problems, key labs, imaging."
+    ></textarea>
+
+    <button id="consultGenerateBtn" class="primary-btn">Generate consult</button>
 
     <h3>Consult Output</h3>
-    <textarea id="consultOutput" class="output-box"></textarea>
+    <textarea id="consultOutput" class="output-box" readonly></textarea>
 
-    <textarea id="consultFeedbackInput" class="feedback-box"
-        placeholder="Refine consult output…"></textarea>
-    <button id="consultRefineBtn" class="secondary-btn">Refine</button>
-
-</section>
-
-<!-- ========================================================= -->
-<!-- ========================= RELAY ========================== -->
-<!-- ========================================================= -->
-<section id="transferSection" class="hidden">
-
-    <h2>Phone → Desktop Transfer</h2>
-
-    <div class="relay-block">
-        <button id="generateRelayQR" class="primary-btn">Generate QR</button>
-        <img id="relayQR" class="qr-preview" />
+    <textarea
+      id="consultRefineInput"
+      class="feedback-box"
+      placeholder="Refine consult output (e.g., 'shorter', 'more focus on next steps')."
+    ></textarea>
+    <div class="button-row">
+      <button id="consultRefineBtn" class="secondary-btn">Refine consult</button>
+      <button id="consultCopyBtn" class="secondary-btn">Copy consult output</button>
     </div>
+  </section>
 
-    <h3>Received Content</h3>
-    <textarea id="relayOutput" class="output-box"></textarea>
+  <footer class="footer">
+    <a href="feedback.html" class="feedback-link">Send app feedback</a>
+  </footer>
 
-</section>
-
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
