@@ -1,16 +1,37 @@
-// Basic placeholder: currently just echoes the payload.
-// A real cross-device relay would need persistent storage (KV / DB).
+function jsonResponse(statusCode, data) {
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  };
+}
 
-export default async function handler(req, res) {
-  if (req.method === "POST") {
-    const body = req.body || {};
-    console.log("Relay POST:", body);
-    return res.json({ ok: true, echoed: body });
+export async function handler(event) {
+  if (event.httpMethod === "GET") {
+    return jsonResponse(200, {
+      ok: true,
+      message:
+        "Relay stub is alive. This is a safe placeholder for future phone → desktop / QR flows.",
+    });
   }
 
-  if (req.method === "GET") {
-    return res.json({ ok: true, message: "Relay endpoint placeholder." });
+  if (event.httpMethod === "POST") {
+    try {
+      const body = JSON.parse(event.body || "{}");
+      console.log("Relay POST payload:", body);
+      // Echo back the payload for now
+      return jsonResponse(200, {
+        ok: true,
+        echo: body,
+        note: "Relay is currently a simple echo. Case storage / QR routing can be added later.",
+      });
+    } catch (err) {
+      console.error("Relay error:", err);
+      return jsonResponse(500, { error: "Relay failed" });
+    }
   }
 
-  return res.status(405).json({ error: "Method not allowed" });
+  return jsonResponse(405, { error: "Method not allowed" });
 }
