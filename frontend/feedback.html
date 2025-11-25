@@ -7,45 +7,55 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="header">
+<header class="header">
+  <div class="header-left">
     <img src="logo.PNG" alt="Moksha SOAP" class="logo" />
-    <h1 class="app-title">Moksha SOAP · Feedback</h1>
-  </header>
+    <div class="header-text">
+      <h1 class="app-title">Moksha SOAP · Feedback</h1>
+      <p class="app-subtitle">Tell me what to improve next</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <a href="index.html" class="feedback-link">← Back to app</a>
+  </div>
+</header>
 
-  <section class="card">
-    <h2>Help improve this app</h2>
-    <p class="hint-text">
-      Describe what worked well, what broke, and what you’d like added.
-    </p>
+<main class="main-layout">
+  <section class="main-left">
+    <div class="card">
+      <h2>Help improve this app</h2>
+      <p class="hint-text">
+        Short comments are perfect – what feels clunky, what’s missing, or what would save you the most time.
+      </p>
 
-    <textarea
-      id="feedbackText"
-      class="feedback-box"
-      placeholder="Write your feedback here..."
-    ></textarea>
+      <label class="field-label" for="feedbackText">Feedback</label>
+      <textarea id="feedbackText" rows="8" placeholder="e.g. 'Make surgery tab default to Advanced', 'Add default premeds to dropdown', 'Make fonts a bit larger on iPhone'"></textarea>
 
-    <input
-      id="feedbackContact"
-      type="text"
-      placeholder="Optional contact (email / phone)"
-      style="
-        width: 100%;
-        margin-top: 8px;
-        margin-bottom: 8px;
-        padding: 8px;
-        border-radius: 8px;
-        border: 1px solid #d4d7e2;
-      "
-    />
+      <label class="field-label" for="feedbackContact">Optional – how to reach you</label>
+      <input id="feedbackContact" type="text" placeholder="Email / phone / 'no contact needed'">
 
-    <button id="sendFeedbackBtn" class="primary-btn">Send feedback</button>
-    <p id="feedbackStatus" class="hint-text"></p>
+      <div class="button-row">
+        <button id="sendFeedbackBtn" type="button" class="primary-btn">Send feedback</button>
+      </div>
 
-    <p style="margin-top: 16px;">
-      <a href="index.html" class="feedback-link">← Back to Moksha SOAP</a>
-    </p>
+      <p id="feedbackStatus" class="hint-text" style="margin-top: 0.6rem;"></p>
+    </div>
   </section>
 
-  <script src="feedback.js"></script>
+  <aside class="main-right">
+    <div class="card">
+      <h2>What happens with feedback?</h2>
+      <p class="hint-text small">
+        Feedback is sent to a simple Netlify function (<code>/.netlify/functions/feedback</code>)
+        so we can log it and use it to tweak future versions of the app and the SOAP brain.
+      </p>
+      <p class="hint-text small">
+        No medical record data should be pasted here – this is only for UX, workflow, and feature comments.
+      </p>
+    </div>
+  </aside>
+</main>
+
+<script src="feedback.js"></script>
 </body>
 </html>
