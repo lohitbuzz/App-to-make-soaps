@@ -1,46 +1,43 @@
-function setFeedbackStatus(msg) {
-  const el = document.getElementById("feedbackStatus");
-  if (el) el.textContent = msg;
+const feedbackText = document.getElementById("feedbackText");
+const feedbackContact = document.getElementById("feedbackContact");
+const sendFeedbackBtn = document.getElementById("sendFeedbackBtn");
+const feedbackStatus = document.getElementById("feedbackStatus");
+
+async function postFeedback() {
+  if (!feedbackText || !feedbackStatus) return;
+
+  const text = feedbackText.value.trim();
+  if (!text) {
+    feedbackStatus.textContent = "Please add some feedback first.";
+    return;
+  }
+
+  feedbackStatus.textContent = "Sending feedback…";
+
+  try {
+    const res = await fetch("/.netlify/functions/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "app-feedback",
+        feedback: text,
+        contact: (feedbackContact && feedbackContact.value) || "",
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    await res.json().catch(() => ({}));
+
+    feedbackStatus.textContent = "Thank you! Feedback sent.";
+    feedbackText.value = "";
+  } catch (err) {
+    console.error(err);
+    feedbackStatus.textContent = "Error sending feedback. Please try again later.";
+  }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const sendBtn = document.getElementById("sendFeedbackBtn");
-  const textBox = document.getElementById("feedbackText");
-  const contactBox = document.getElementById("feedbackContact");
-  if (!sendBtn || !textBox) return;
-
-  sendBtn.addEventListener("click", async () => {
-    try {
-      if (!textBox.value.trim()) {
-        setFeedbackStatus("Please enter some feedback first.");
-        return;
-      }
-
-      sendBtn.disabled = true;
-      setFeedbackStatus("Sending feedback...");
-
-      const res = await fetch("/.netlify/functions/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: textBox.value || "",
-          contact: contactBox ? contactBox.value || "" : "",
-        }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Feedback error");
-      }
-
-      setFeedbackStatus("Thank you! Feedback sent.");
-      textBox.value = "";
-      if (contactBox) contactBox.value = "";
-    } catch (err) {
-      console.error(err);
-      setFeedbackStatus("Could not send feedback.");
-    } finally {
-      sendBtn.disabled = false;
-    }
-  });
-});
+if (sendFeedbackBtn) {
+  sendFeedbackBtn.addEventListener("click", postFeedback);
+}
