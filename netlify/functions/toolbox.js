@@ -2,139 +2,119 @@ import OpenAI from "openai";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+function jsonResponse(statusCode, data) {
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  };
+}
+
+function buildToolboxPrompt(body) {
+  const { mode = "bloodwork-summary", text = "", notes = "", files = [] } = body;
+
+  const fileSummary =
+    files && files.length
+      ? files.map((f) => `${f.name} (${f.type || "unknown"})`).join(", ")
+      : "No files";
+
+  if (mode === "soap-transform") {
+    const { transformType = "summary", sourceText = "" } = body;
+    return {
+      role: "user",
+      content: `
+You are a veterinary documentation assistant. You are given a SOAP note as plain text
+and asked to transform it in a specific way.
+
+Transform type: ${transformType}
+
+Rules:
+- Preserve the underlying medical meaning.
+- Do NOT invent new findings or treatments.
+- Do NOT change drug names or dosages.
+- You may reword for tone, length, or client-friendliness depending on the transform type.
+
+Transform types:
+- "email": create a client-friendly email body explaining the visit, findings, and plan.
+- "summary": create a short, vet-facing summary (3–6 sentences).
+- "handout": create a client handout-style paragraph or two, in plain language.
+- "plan-meds-aftercare": extract the Plan + medications + aftercare content only, in Avimark-friendly text.
+- "rephrase": keep same structure and content but make wording slightly more concise and polished.
+
+SOAP to transform:
+${sourceText}
+`,
+    };
+  }
+
+  let taskDescription = "";
+  if (mode === "bloodwork-summary") {
+    taskDescription = `Summarize the key abnormalities and their likely significance in 2–4 sentences, veterinarian-facing.`;
+  } else if (mode === "lab-interpretation") {
+    taskDescription = `Provide a more detailed interpretation (1–2 short paragraphs) of the lab results, including likely differentials and suggested next steps.`;
+  } else if (mode === "client-email") {
+    taskDescription = `Write a client-friendly email explaining what these results mean, what we're doing about it, and what to watch for at home.`;
+  } else if (mode === "weight-consult") {
+    taskDescription = `Create a weight maintenance / weight management handout in the style of an organized vet clinic document (similar to Wonton’s weight consult): include sections for current status, daily calories, food amounts, treats guidelines, exercise, and recheck timing.`;
+  } else {
+    taskDescription = `Perform the transformation or help requested in plain language. The user may have asked for bullet points, a summary, a rewrite, etc.`;
+  }
+
+  return {
+    role: "user",
+    content: `
+You are a small-animal veterinary "Toolbox" helper.
+
+Task:
+${taskDescription}
+
+Guidelines:
+- Assume the reader is another veterinarian, EXCEPT when the task is clearly client-facing (like client-email or weight-consult).
+- Do not invent new lab values or clinical data beyond what would be standard context.
+- When medications are mentioned, include drug concentrations in brackets if known, but do NOT fabricate specific mg/kg doses that are not hinted at.
+- Keep output Avimark-friendly (plain text and line breaks only).
+
+Additional instructions from vet:
+${notes || "(none)"}
+
+Pasted text (CBC/chem/UA/notes or other input):
+${text || "(none provided)"}
+
+Attached files (names only):
+${fileSummary}
+`,
+  };
+}
+
+export async function handler(event) {
+  if (event.httpMethod !== "POST") {
+    return jsonResponse(405, { error: "Method not allowed" });
   }
 
   try {
-    const body = req.body || {};
-    const { mode } = body;
+    const body = JSON.parse(event.body || "{}");
 
-    if (mode === "transform") {
-      const { transformType, originalSoap } = body;
-      const text = await runTransform(transformType, originalSoap);
-      return res.json({ text });
-    }
+    const userMessage = buildToolboxPrompt(body);
 
-    if (mode === "toolbox-refine") {
-      const { original, feedback, toolboxMode } = body;
-      const text = await runToolboxRefine(original, feedback, toolboxMode);
-      return res.json({ text });
-    }
+    const completion = await client.chat.completions.create({
+      model: "gpt-4.1-mini",
+      temperature: 0.4,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a veterinary documentation and communication helper (Toolbox) for a busy small-animal clinic.",
+        },
+        userMessage,
+      ],
+    });
 
-    if (mode === "toolbox-main") {
-      const { toolboxMode, text, files = [] } = body;
-      const out = await runToolboxMain(toolboxMode, text, files);
-      return res.json({ text: out });
-    }
-
-    return res.status(400).json({ error: "Invalid toolbox mode" });
+    const result = completion.choices?.[0]?.message?.content || "";
+    return jsonResponse(200, { ok: true, result });
   } catch (err) {
-    console.error("Toolbox error:", err);
-    return res.status(500).json({ error: err.message || "Toolbox error" });
+    console.error("Toolbox function error:", err);
+    return jsonResponse(500, { error: "Failed to run Toolbox" });
   }
-}
-
-async function runTransform(transformType, originalSoap) {
-  const sys = `
-You are a post-processor for veterinary SOAP notes. Keep all medical content accurate.
-Transform according to the requested mode (email, summary, client handout, planOnly, rephrase).
-Do NOT invent new findings; just reformat and adjust tone/length as requested.
-`;
-
-  const user = `
-Transform this SOAP according to mode="${transformType}":
-
-${originalSoap}
-`;
-
-  const resp = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
-      { role: "system", content: [{ type: "text", text: sys }] },
-      { role: "user", content: [{ type: "text", text: user }] },
-    ],
-    metadata: { tool: "toolbox-transform", transformType },
-  });
-
-  return (
-    resp.output?.[0]?.content?.[0]?.text?.value ||
-    resp.output_text ||
-    ""
-  );
-}
-
-async function runToolboxMain(toolboxMode, text, files) {
-  const sys = `
-You are the Moksha SOAP Toolbox assistant.
-You can:
-- Summarize bloodwork (Bloodwork Summary mode).
-- Interpret labwork (Lab Interpretation).
-- Draft client emails (Email Helper).
-- Create weight consult handouts (Weight Tool).
-- Handle free-form requests.
-
-Use concise, Avimark-friendly formatting when appropriate.
-Do NOT mention Vision or files by name; treat them as context only.
-`;
-
-  const user = `
-Toolbox mode: ${toolboxMode}
-User text: ${text || "(none)"}
-Attached files (names only): ${files.map((f) => f.name).join(", ")}
-
-If mode is:
-- "bloodwork": summarize abnormalities + brief assessment + plan.
-- "lab": interpret in more depth but still concise.
-- "email": draft a client-facing email for this medical situation.
-- "weight": create a weight consult/maintenance handout matching the clinic's style.
-- "free": do exactly what the user asked in a clinic-appropriate way.
-`;
-
-  const resp = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
-      { role: "system", content: [{ type: "text", text: sys }] },
-      { role: "user", content: [{ type: "text", text: user }] },
-    ],
-    metadata: { tool: "toolbox-main", toolboxMode },
-  });
-
-  return (
-    resp.output?.[0]?.content?.[0]?.text?.value ||
-    resp.output_text ||
-    ""
-  );
-}
-
-async function runToolboxRefine(original, feedback, toolboxMode) {
-  const sys = `
-You are refining an existing Toolbox output for a veterinary clinic.
-Preserve medical accuracy; adjust tone/length/structure according to feedback.
-`;
-
-  const user = `
-Toolbox mode: ${toolboxMode}
-Original output:
-${original}
-
-Refinement request:
-${feedback}
-`;
-
-  const resp = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
-      { role: "system", content: [{ type: "text", text: sys }] },
-      { role: "user", content: [{ type: "text", text: user }] },
-    ],
-    metadata: { tool: "toolbox-refine", toolboxMode },
-  });
-
-  return (
-    resp.output?.[0]?.content?.[0]?.text?.value ||
-    resp.output_text ||
-    ""
-  );
 }
