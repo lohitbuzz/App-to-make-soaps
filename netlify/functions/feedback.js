@@ -2,98 +2,99 @@ import OpenAI from "openai";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+function jsonResponse(statusCode, data) {
+  return {
+    statusCode,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  };
+}
+
+async function refineText(kind, original, feedback, extra = {}) {
+  const baseInstr =
+    kind === "soap"
+      ? "You are refining a veterinary SOAP note for Avimark. Preserve all clinical content and structure; adjust only wording, clarity, and emphasis as requested."
+      : kind === "toolbox"
+      ? "You are refining a veterinary Toolbox output. Keep the same meaning; adjust tone/length/clarity based on feedback."
+      : "You are refining a veterinary consult answer for a GP vet. Preserve meaning; adjust clarity/ordering/tone as requested.";
+
+  const extraContext =
+    kind === "soap"
+      ? `Mode: ${extra.mode || "general"}`
+      : kind === "toolbox"
+      ? ""
+      : "";
+
+  const completion = await client.chat.completions.create({
+    model: "gpt-4.1-mini",
+    temperature: 0.3,
+    messages: [
+      {
+        role: "system",
+        content: baseInstr,
+      },
+      {
+        role: "user",
+        content: `
+${extraContext}
+
+Original text:
+${original}
+
+Requested refinements:
+${feedback}
+
+Return the improved version as plain text, same general format as the original.
+`,
+      },
+    ],
+  });
+
+  return completion.choices?.[0]?.message?.content || original;
+}
+
+export async function handler(event) {
+  if (event.httpMethod !== "POST") {
+    return jsonResponse(405, { error: "Method not allowed" });
   }
 
   try {
-    const body = req.body || {};
-    const { mode } = body;
+    const body = JSON.parse(event.body || "{}");
+    const { type } = body || {};
 
-    if (mode === "soap-refine") {
-      const { originalSoap, feedback } = body;
-      const text = await refineSoap(originalSoap, feedback);
-      return res.json({ soap: text });
+    // App feedback (UX comments)
+    if (type === "app-feedback") {
+      const { feedback = "", contact = "" } = body;
+      console.log("App feedback:", { feedback, contact });
+      return jsonResponse(200, { ok: true });
     }
 
-    if (mode === "consult-refine") {
-      const { original, feedback } = body;
-      const text = await refineConsult(original, feedback);
-      return res.json({ text });
+    // SOAP refine
+    if (type === "soap-refine") {
+      const { original = "", feedback = "", mode = "appointment" } = body;
+      const improved = await refineText("soap", original, feedback, { mode });
+      return jsonResponse(200, { ok: true, improved });
     }
 
-    if (mode === "voice") {
-      // For now just acknowledge receipt of transcript
-      const { transcript, context } = body;
-      console.log("Voice feedback:", context, transcript?.slice(0, 200));
-      return res.json({ ok: true, message: "Transcript received." });
+    // Toolbox refine
+    if (type === "toolbox-refine") {
+      const { original = "", feedback = "" } = body;
+      const improved = await refineText("toolbox", original, feedback);
+      return jsonResponse(200, { ok: true, improved });
     }
 
-    return res.status(400).json({ error: "Invalid feedback mode" });
+    // Consult refine
+    if (type === "consult-refine") {
+      const { original = "", feedback = "" } = body;
+      const improved = await refineText("consult", original, feedback);
+      return jsonResponse(200, { ok: true, improved });
+    }
+
+    return jsonResponse(400, { error: "Unknown feedback type" });
   } catch (err) {
-    console.error("Feedback error:", err);
-    return res.status(500).json({ error: err.message || "Feedback error" });
+    console.error("Feedback function error:", err);
+    return jsonResponse(500, { error: "Failed to handle feedback" });
   }
-}
-
-async function refineSoap(original, feedback) {
-  const sys = `
-You refine existing veterinary SOAPs.
-Preserve clinical meaning; apply the user's feedback.
-Maintain Avimark-compatible formatting and the clinic's SOAP rules.
-`;
-
-  const user = `
-Original SOAP:
-${original}
-
-Refinement request:
-${feedback}
-`;
-
-  const resp = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
-      { role: "system", content: [{ type: "text", text: sys }] },
-      { role: "user", content: [{ type: "text", text: user }] },
-    ],
-    metadata: { tool: "feedback-soap" },
-  });
-
-  return (
-    resp.output?.[0]?.content?.[0]?.text?.value ||
-    resp.output_text ||
-    ""
-  );
-}
-
-async function refineConsult(original, feedback) {
-  const sys = `
-You refine existing veterinary consult answers.
-Preserve medical content, adjust clarity/tone/length based on the request.
-`;
-
-  const user = `
-Original answer:
-${original}
-
-Refinement request:
-${feedback}
-`;
-
-  const resp = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
-      { role: "system", content: [{ type: "text", text: sys }] },
-      { role: "user", content: [{ type: "text", text: user }] },
-    ],
-    metadata: { tool: "feedback-consult" },
-  });
-
-  return (
-    resp.output?.[0]?.content?.[0]?.text?.value ||
-    resp.output_text ||
-    ""
-  );
 }
