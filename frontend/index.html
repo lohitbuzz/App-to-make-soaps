@@ -46,11 +46,12 @@
             <label class="field-label">Attachments (photos / PDFs / lab / Avimark screenshots)</label>
             <input id="apptFiles" type="file" multiple />
             <p class="hint-text small">
-              Files are summarized by name only for now. Vision parsing can be wired later.
+              You can select multiple images. Vision will try to read any clear lab sheets / UA / reports from them.
+              Non-image files are sent by name only.
             </p>
           </div>
           <button class="secondary-btn" type="button" data-privacy-target="apptFiles">
-            ✏️ Privacy / Redact (stub)
+            ✏️ Privacy / Redact
           </button>
         </div>
 
@@ -160,10 +161,12 @@
           <div>
             <label class="field-label">Attachments (anesthesia sheet / rads / labs / Avimark)</label>
             <input id="sxFiles" type="file" multiple />
-            <p class="hint-text small">Names only for now; safe Vision later.</p>
+            <p class="hint-text small">
+              You can attach multiple anesthesia sheet photos or rads screenshots. Vision will try to read any legible numbers/text.
+            </p>
           </div>
           <button class="secondary-btn" type="button" data-privacy-target="sxFiles">
-            ✏️ Privacy / Redact (stub)
+            ✏️ Privacy / Redact
           </button>
         </div>
 
@@ -360,10 +363,12 @@
           <div>
             <label class="field-label">Attachments (optional)</label>
             <input id="toolboxFiles" type="file" multiple />
-            <p class="hint-text small">Pasted text is primary. Files are listed by name for now.</p>
+            <p class="hint-text small">
+              Attach multiple lab screenshots / UA photos. Vision will try to read and include them in the summary.
+            </p>
           </div>
           <button class="secondary-btn" type="button" data-privacy-target="toolboxFiles">
-            ✏️ Privacy / Redact (stub)
+            ✏️ Privacy / Redact
           </button>
         </div>
 
@@ -386,7 +391,7 @@
 
         <div>
           <label class="field-label" for="toolboxInput">Paste text here</label>
-          <textarea id="toolboxInput" rows="7" placeholder="Paste CBC/chem, urinalysis, or any text you want transformed."></textarea>
+          <textarea id="toolboxInput" rows="7" placeholder="Paste CBC/chem, urinalysis, or any text you want transformed. Vision will also use attached images if present."></textarea>
         </div>
 
         <div class="button-row">
@@ -427,10 +432,12 @@
           <div>
             <label class="field-label">Attachments (optional)</label>
             <input id="consultFiles" type="file" multiple />
-            <p class="hint-text small">File names are passed through; full Vision later.</p>
+            <p class="hint-text small">
+              You can attach multiple rads or lab report screenshots. Vision will try to read any clear text / labels.
+            </p>
           </div>
           <button class="secondary-btn" type="button" data-privacy-target="consultFiles">
-            ✏️ Privacy / Redact (stub)
+            ✏️ Privacy / Redact
           </button>
         </div>
 
@@ -515,15 +522,15 @@
   </aside>
 </main>
 
-<!-- SIMPLE PRIVACY MODAL (SAFE STUB) -->
+<!-- PRIVACY MODAL -->
 <div id="privacyModal" class="modal hidden" aria-hidden="true">
   <div class="modal-backdrop"></div>
   <div class="modal-content">
-    <h3>Privacy / Redaction (stub)</h3>
+    <h3>Privacy / Redaction</h3>
     <p class="hint-text">
-      This is a safe placeholder. It does <strong>not</strong> send any files to the server.
-      For now, please manually redact sensitive info (owner names, phone, address, microchip, etc.)
-      before uploading. This spot is reserved for your future local “Tap for Privacy” redaction tool.
+      This prototype <strong>does</strong> send images to OpenAI for Vision/OCR.
+      Please only upload photos that you are comfortable sending to the cloud, and
+      manually redact owner names, phone, address, microchip, and other identifiers first.
     </p>
     <p class="hint-text small">
       Target: <span id="privacyTargetLabel">Unknown</span>
