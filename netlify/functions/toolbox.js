@@ -13,7 +13,13 @@ function jsonResponse(statusCode, data) {
 }
 
 function buildToolboxPrompt(body) {
-  const { mode = "bloodwork-summary", text = "", notes = "", files = [] } = body;
+  const {
+    mode = "bloodwork-summary",
+    text = "",
+    notes = "",
+    files = [],
+    images = [],
+  } = body;
 
   const fileSummary =
     files && files.length
@@ -24,7 +30,10 @@ function buildToolboxPrompt(body) {
     const { transformType = "summary", sourceText = "" } = body;
     return {
       role: "user",
-      content: `
+      content: [
+        {
+          type: "text",
+          text: `
 You are a veterinary documentation assistant. You are given a SOAP note as plain text
 and asked to transform it in a specific way.
 
@@ -46,6 +55,8 @@ Transform types:
 SOAP to transform:
 ${sourceText}
 `,
+        },
+      ],
     };
   }
 
@@ -62,9 +73,7 @@ ${sourceText}
     taskDescription = `Perform the transformation or help requested in plain language. The user may have asked for bullet points, a summary, a rewrite, etc.`;
   }
 
-  return {
-    role: "user",
-    content: `
+  const baseText = `
 You are a small-animal veterinary "Toolbox" helper.
 
 Task:
@@ -74,6 +83,7 @@ Guidelines:
 - Assume the reader is another veterinarian, EXCEPT when the task is clearly client-facing (like client-email or weight-consult).
 - Do not invent new lab values or clinical data beyond what would be standard context.
 - When medications are mentioned, include drug concentrations in brackets if known, but do NOT fabricate specific mg/kg doses that are not hinted at.
+- If lab/UA reports are supplied as images, OCR any legible values and use them as part of the summary.
 - Keep output Avimark-friendly (plain text and line breaks only).
 
 Additional instructions from vet:
@@ -84,7 +94,30 @@ ${text || "(none provided)"}
 
 Attached files (names only):
 ${fileSummary}
-`,
+`;
+
+  const imageParts =
+    images && images.length
+      ? images
+          .filter((img) => img && img.data)
+          .slice(0, 6)
+          .map((img) => ({
+            type: "image_url",
+            image_url: {
+              url: `data:${img.type || "image/png"};base64,${img.data}`,
+            },
+          }))
+      : [];
+
+  return {
+    role: "user",
+    content: [
+      {
+        type: "text",
+        text: baseText,
+      },
+      ...imageParts,
+    ],
   };
 }
 
@@ -105,7 +138,7 @@ export async function handler(event) {
         {
           role: "system",
           content:
-            "You are a veterinary documentation and communication helper (Toolbox) for a busy small-animal clinic.",
+            "You are a veterinary documentation and communication helper (Toolbox) for a busy small-animal clinic, and you can read attached images of lab/UA reports.",
         },
         userMessage,
       ],
