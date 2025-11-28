@@ -43,6 +43,8 @@ Rules:
     (plain text, line breaks only, no bullet symbols).
   - Under "Diagnostics" inside Objective, list diagnostics as DATA ONLY
     (values and descriptive findings). Do NOT interpret lab values or imaging here.
+  - If lab sheets / UA reports / imaging summaries are visible in the attached images,
+    carefully OCR any legible values or descriptive lines and include them in Diagnostics.
 - Assessment:
   - Provide a concise problem list and your assessment/interpretation of findings.
   - Interpret all labs/imaging here, not in Objective.
@@ -69,7 +71,7 @@ ${history || "(not provided)"}
 Physical exam (data-only):
 ${pe || "(not provided)"}
 
-Diagnostics (data-only):
+Diagnostics (data-only from text):
 ${diagnostics || "(not provided)"}
 
 Assessment hints from vet:
@@ -83,6 +85,8 @@ ${medsHints || "(none)"}
 
 Attached files (names only):
 ${fileSummary}
+
+If images of lab or UA reports are attached, use them as additional data.
 `;
 }
 
@@ -128,6 +132,8 @@ Global rules:
     Urogenital, Musculoskeletal, Neurological, Integument, Lymphatic, Diagnostics.
   - Diagnostics sub-section: list pre-anesthetic bloodwork and imaging as DATA ONLY.
     Do NOT interpret lab values or imaging in Objective.
+  - If you can read any lab values / UA results / radiology text from attached images,
+    include those values or descriptions as additional data in Diagnostics.
 - Assessment:
   - Include problem list and overall assessment.
   - Assign and state ASA physical status (e.g. "ASA II") with a brief explanation.
@@ -169,7 +175,7 @@ ${history || "(not provided)"}
 Physical exam (data-only):
 ${pe || "(not provided)"}
 
-Diagnostics (data-only):
+Diagnostics (data-only from text):
 ${diagnostics || "(not provided)"}
 
 Anesthesia detail mode: ${sxMode}
@@ -205,8 +211,31 @@ Attached files (names only):
 ${fileSummary}
 
 This ${isDental ? "appears to be a dental / COHAT case" : "is not clearly a dental case; treat as general surgery"}.
-Generate ONE complete SOAP note following the rules above.
+Generate ONE complete SOAP note following the rules above, using any legible data from attached images.
 `;
+}
+
+function buildUserContent(promptText, images = []) {
+  const imageParts =
+    images && images.length
+      ? images
+          .filter((img) => img && img.data)
+          .slice(0, 6)
+          .map((img) => ({
+            type: "image_url",
+            image_url: {
+              url: `data:${img.type || "image/png"};base64,${img.data}`,
+            },
+          }))
+      : [];
+
+  return [
+    {
+      type: "text",
+      text: promptText,
+    },
+    ...imageParts,
+  ];
 }
 
 export async function handler(event) {
@@ -216,7 +245,7 @@ export async function handler(event) {
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const { mode = "appointment" } = body;
+    const { mode = "appointment", images = [] } = body;
 
     let prompt;
     if (mode === "surgery") {
@@ -225,20 +254,22 @@ export async function handler(event) {
       prompt = buildAppointmentPrompt(body);
     }
 
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are a small-animal veterinarian generating Avimark-compatible SOAP notes, following clinic-specific rules exactly, and you can read attached images of lab/UA reports when present.",
+      },
+      {
+        role: "user",
+        content: buildUserContent(prompt, images),
+      },
+    ];
+
     const completion = await client.chat.completions.create({
       model: "gpt-4.1-mini",
       temperature: 0.3,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a small-animal veterinarian generating Avimark-compatible SOAP notes, following clinic-specific rules exactly.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+      messages,
     });
 
     const soap = completion.choices?.[0]?.message?.content || "";
