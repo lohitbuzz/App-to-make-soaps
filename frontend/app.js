@@ -15,15 +15,6 @@ function appendConsole(msg) {
   consoleEl.scrollTop = consoleEl.scrollHeight;
 }
 
-function describeFiles(inputEl) {
-  if (!inputEl || !inputEl.files) return [];
-  return Array.from(inputEl.files).map((f) => ({
-    name: f.name,
-    type: f.type || "",
-    size: f.size || 0,
-  }));
-}
-
 async function postJSON(path, payload) {
   const url = `/.netlify/functions/${path}`;
   appendConsole(`POST ${url}`);
@@ -42,6 +33,61 @@ async function postJSON(path, payload) {
   const data = await res.json();
   appendConsole(`Response from ${path}: ${JSON.stringify(data).slice(0, 400)}…`);
   return data;
+}
+
+// Read up to maxCount images as base64 + collect metadata
+async function readFilesAsBase64Array(inputEl, maxCount = 6) {
+  if (!inputEl || !inputEl.files || !inputEl.files.length) {
+    return { files: [], images: [] };
+  }
+
+  const filesArr = Array.from(inputEl.files).slice(0, maxCount);
+
+  const filesMeta = filesArr.map((f) => ({
+    name: f.name,
+    type: f.type || "",
+    size: f.size || 0,
+  }));
+
+  const imagePromises = filesArr
+    .filter((f) => f.type && f.type.startsWith("image/"))
+    .map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result;
+            if (typeof result === "string") {
+              const base64 = result.split(",")[1] || "";
+              resolve({
+                name: file.name,
+                type: file.type || "image/png",
+                data: base64,
+              });
+            } else {
+              resolve({
+                name: file.name,
+                type: file.type || "image/png",
+                data: "",
+              });
+            }
+          };
+          reader.onerror = () =>
+            resolve({
+              name: file.name,
+              type: file.type || "image/png",
+              data: "",
+            });
+          reader.readAsDataURL(file);
+        })
+    );
+
+  const images = await Promise.all(imagePromises);
+  appendConsole(
+    `Prepared ${filesMeta.length} file meta entries and ${images.length} image(s) for Vision.`
+  );
+
+  return { files: filesMeta, images };
 }
 
 // ===== Tab switching =====
@@ -69,7 +115,7 @@ async function postJSON(path, payload) {
   });
 })();
 
-// ===== Privacy modal (stub, but safe) =====
+// ===== Privacy modal =====
 
 (function setupPrivacyModal() {
   const modal = document.getElementById("privacyModal");
@@ -137,10 +183,12 @@ async function postJSON(path, payload) {
       try {
         logStatus("Generating appointment SOAP…");
 
-        const files = describeFiles(apptFiles);
+        const { files, images } = await readFilesAsBase64Array(apptFiles);
+
         const body = {
           mode: "appointment",
           files,
+          images,
           reason: apptReason?.value || "",
           history: apptHistory?.value || "",
           pe: apptPE?.value || "",
@@ -294,12 +342,14 @@ async function postJSON(path, payload) {
     generateBtn.addEventListener("click", async () => {
       try {
         logStatus("Generating surgery SOAP…");
-        const files = describeFiles(sxFiles);
+
+        const { files, images } = await readFilesAsBase64Array(sxFiles);
 
         const body = {
           mode: "surgery",
           sxMode,
           files,
+          images,
           preset: sxPreset?.value || "",
           reason: sxReason?.value || "",
           history: sxHistory?.value || "",
@@ -369,7 +419,7 @@ async function postJSON(path, payload) {
         await navigator.clipboard.writeText(sxTransformOutput.value || "");
         logStatus("Transformed surgery text copied.");
       } catch {
-        alert("Could not copy transformed text.");
+        alert("Could not copy surgery transform.");
       }
     });
   }
@@ -383,7 +433,7 @@ async function postJSON(path, payload) {
           return;
         }
         if (!feedback.trim()) {
-          alert("Add some feedback / instructions first.");
+          alert("Add feedback / instructions first.");
           return;
         }
         logStatus("Refining surgery SOAP…");
@@ -423,12 +473,15 @@ async function postJSON(path, payload) {
     runBtn.addEventListener("click", async () => {
       try {
         logStatus("Running Toolbox…");
-        const files = describeFiles(toolboxFiles);
+
+        const { files, images } = await readFilesAsBase64Array(toolboxFiles);
+
         const data = await postJSON("toolbox", {
           mode: toolboxMode?.value || "bloodwork-summary",
           notes: toolboxNotes?.value || "",
           text: toolboxInput?.value || "",
           files,
+          images,
         });
         toolboxOutput.value = data.result || "";
         logStatus("Toolbox output ready.");
@@ -496,10 +549,13 @@ async function postJSON(path, payload) {
     runBtn.addEventListener("click", async () => {
       try {
         logStatus("Sending consult…");
-        const files = describeFiles(consultFiles);
+
+        const { files, images } = await readFilesAsBase64Array(consultFiles);
+
         const data = await postJSON("consult", {
           question: consultQuestion?.value || "",
           files,
+          images,
         });
         consultOutput.value = data.answer || "";
         logStatus("Consult answer ready.");
