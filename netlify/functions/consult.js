@@ -19,14 +19,14 @@ export async function handler(event) {
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const { question = "", files = [] } = body;
+    const { question = "", files = [], images = [] } = body;
 
     const fileSummary =
       files && files.length
         ? files.map((f) => `${f.name} (${f.type || "unknown"})`).join(", ")
         : "No files provided";
 
-    const prompt = `
+    const promptText = `
 You are a small animal veterinary consultant in Canada.
 Give succinct, practical advice for a GP veterinarian working in a busy clinic.
 
@@ -39,15 +39,30 @@ Rules:
 - When suggesting medications, do NOT provide exact mg/kg doses unless clearly standard;
   focus on drug choices, routes, and general duration.
 - Keep tone supportive but concise.
+- If you can read lab values / UA findings / radiology descriptions from the attached images,
+  treat them as part of the case data.
 
 Vet's case/question:
 ${question || "(no question text provided)"}
 
-Attached files (names only, no images visible):
+Attached files (names only):
 ${fileSummary}
 
 Now provide your consult answer.
 `;
+
+    const imageParts =
+      images && images.length
+        ? images
+            .filter((img) => img && img.data)
+            .slice(0, 6)
+            .map((img) => ({
+              type: "image_url",
+              image_url: {
+                url: `data:${img.type || "image/png"};base64,${img.data}`,
+              },
+            }))
+        : [];
 
     const completion = await client.chat.completions.create({
       model: "gpt-4.1-mini",
@@ -56,9 +71,18 @@ Now provide your consult answer.
         {
           role: "system",
           content:
-            "You are a concise, practical small-animal internal medicine/surgery consultant for Canadian GP veterinarians.",
+            "You are a concise, practical small-animal internal medicine/surgery consultant for Canadian GP veterinarians, able to read attached images of lab or imaging reports.",
         },
-        { role: "user", content: prompt },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: promptText,
+            },
+            ...imageParts,
+          ],
+        },
       ],
     });
 
